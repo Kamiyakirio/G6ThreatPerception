@@ -20,6 +20,7 @@ class PcInfo:
 
         self.os_name = platform.system()
         self.os_name_detailed = platform.version()
+        self.os_bit = platform.architecture()[0]
 
         # 将 MAC 地址从十六进制转换为标准的格式（XX:XX:XX:XX:XX:XX）
         self.mac_address = ":".join(
@@ -34,6 +35,8 @@ class PcInfo:
         if "Windows" in self.os_name:
             output = os.popen("wmic cpu get name").read().strip().replace("\n\n", "\n")
             self.cpu_info = output.split("\n")[1]  # 去掉标题行
+        else:
+            self.cpu_info = ""
 
         # Unit: MB
         self.memory_size = psutil.virtual_memory().total // 1024 // 1024
@@ -46,11 +49,12 @@ class PcInfo:
             "ip_address": self.ip_address,
             "os_name": self.os_name,
             "os_name_detailed": self.os_name_detailed,
+            "os_bit": self.os_bit,
             "mac_address": self.mac_address,
             "cpu_info": self.cpu_info,
             "memory_size": self.memory_size,
         }
-        return json.dumps(data)
+        return json.dumps(data, ensure_ascii=False)
 
 
 if __name__ == "__main__":
