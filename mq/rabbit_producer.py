@@ -15,9 +15,10 @@ class RabbitProducer:
         params = pika.ConnectionParameters(host=host, port=port, credentials=creds)
         self.connection = pika.BlockingConnection(params)
         self.channel = self.connection.channel()
-        self.channel.queue_declare(queue="hello", durable=True)
+        # self.channel.queue_declare(queue="hello", durable=True)
 
     def publish_message(self, exchange: str, routing_key: str, message: str):
+        self.channel.queue_declare(queue=routing_key, durable=True)
         self.channel.basic_publish(
             exchange=exchange, routing_key=routing_key, body=message
         )

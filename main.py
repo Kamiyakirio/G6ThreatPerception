@@ -1,30 +1,35 @@
-# main.py（扩展）
-
 from mq.rabbit_producer import RabbitProducer
-from mq.rabbit_consumer import RabbitConsumer  # ← 新导入
+from mq.rabbit_consumer import RabbitConsumer
 from system.pc_information import PcInfo
-from utils.naming_convert import underscore_to_camelcase
+from utils.naming_convert import underscore_to_camelcase, camelcase_to_underscore
+from detect.asset_detect import asset_detect
 
 import json
 import time
 import requests
 import threading
-import sys
+import os
 
 
 def send_heart_beat(mac_address):
     while True:
-        requests.post(
-            "http://127.0.0.1:8080/heartbeat",
-            json={"heartbeat": "1", "macAddress": mac_address},
-        )
-        time.sleep(1)
+        try:
+            requests.post(
+                "http://127.0.0.1:8080/heartbeat",
+                json={"heartbeat": "1", "macAddress": mac_address},
+            )
+            time.sleep(1)
+        except:
+            os._exit(0)
 
 
-def on_message_callback(ch, method, properties, body):
-    data = body.decode()
-    data_dict = json.loads(data)
-    print(f"[✔] Received message: {body.decode()}")
+def create_asset_detect_message_callback(mac_address):
+    def callback(ch, method, properties, body):
+        data = json.loads(body.decode())
+        data = {camelcase_to_underscore(k): v for k, v in data.items()}
+        asset_detect(data)
+
+    return callback
 
 
 if __name__ == "__main__":
@@ -41,13 +46,17 @@ if __name__ == "__main__":
     )
     heartbeat_thread.start()
 
-    # 启动消费者线程
-    consumer = RabbitConsumer(
+    asset_detect_message_consumer = RabbitConsumer(
         queue_name=f"agentQueue" + info_data["macAddress"].replace(":", "")
     )
-    consumer_thread = threading.Thread(
-        target=consumer.start_consuming, args=(on_message_callback,), daemon=True
+    asset_detect_message_callback = create_asset_detect_message_callback(
+        info_data["macAddress"]
     )
-    consumer_thread.start()
+    asset_detect_consumer_thread = threading.Thread(
+        target=asset_detect_message_consumer.start_consuming,
+        args=(asset_detect_message_callback,),
+        daemon=True,
+    )
+    asset_detect_consumer_thread.start()
 
     input()
