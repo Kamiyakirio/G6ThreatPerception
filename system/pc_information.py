@@ -41,11 +41,8 @@ class PcInfo:
         # Unit: MB
         self.memory_size = psutil.virtual_memory().total // 1024 // 1024
 
-        pass
-
-    def get_info_json(self):
-        data = {
-            "pcName": self.pc_name,
+        self.data = {
+            "pc_name": self.pc_name,
             "ip_address": self.ip_address,
             "os_name": self.os_name,
             "os_name_detailed": self.os_name_detailed,
@@ -54,7 +51,14 @@ class PcInfo:
             "cpu_info": self.cpu_info,
             "memory_size": self.memory_size,
         }
-        return json.dumps(data, ensure_ascii=False)
+
+        pass
+
+    def get_info_json(self):
+        return json.dumps(self.data, ensure_ascii=False)
+
+    def get_info_dict(self):
+        return self.data
 
 
 if __name__ == "__main__":
