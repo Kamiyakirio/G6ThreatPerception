@@ -1,0 +1,59 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+out/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven
+target/
+
+# Gradle
+.gradle/
+build/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Web/Node.js/Frontend
+node_modules/
+dist/
+build/
+
+# NPM/Yarn/PNPM logs and lockfiles (optional)
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment files
+.env
+.env.* 
+
+# VS Code settings (if team doesn't use it)
+.vscode/
+
+# Optional: JetBrains WebStorm/Web IDE configs
+.webstorm/
+
+# Optional: Ignore test coverage reports
+coverage/
+*.lcov
