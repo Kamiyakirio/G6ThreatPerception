@@ -27,7 +27,9 @@ def create_asset_detect_message_callback(mac_address):
     def callback(ch, method, properties, body):
         data = json.loads(body.decode())
         data = {camelcase_to_underscore(k): v for k, v in data.items()}
-        asset_detect(data)
+        detect_result = asset_detect(data)
+        producer = RabbitProducer()
+        producer.publish_message("", "detect_result", detect_result)
 
     return callback
 
