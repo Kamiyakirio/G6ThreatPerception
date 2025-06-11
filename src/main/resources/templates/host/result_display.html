@@ -104,6 +104,7 @@
         var table = layui.table;
 
         function renderTable(urlName, tableId, data, cols, noDataId) {
+
             var formData = layui.form.val('result-display-form');
             var macAddress = formData.macAddress;
             table.render({
@@ -113,11 +114,8 @@
                 , headers: {
                     'Authorization': localStorage.getItem('token')
                 }
-                , where: {
-                    page: 1,
-                    limit: 10,
-                    macAddress: macAddress
-                }
+
+                , where: {"macAddress": macAddress}
                 , cols: [cols]
                 , page: true // 开启分页
                 , limit: 10
