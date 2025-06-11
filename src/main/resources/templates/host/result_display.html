@@ -104,6 +104,7 @@
         var table = layui.table;
 
         function renderTable(urlName, tableId, data, cols, noDataId) {
+
             var formData = layui.form.val('result-display-form');
             var macAddress = formData.macAddress;
             table.render({
@@ -120,6 +121,7 @@
                 , limits: [5, 10, 15, 20, 30]
                 , autoSort: false
                 , height: 'full-150'
+
                 , done: function(res) {
                     if (res.data && res.data.length === 0) {
                         document.getElementById(noDataId).style.display = 'block';
@@ -127,8 +129,10 @@
                         document.getElementById(noDataId).style.display = 'none';
                     }
                 }
+
             });
         }
+
 
         var accountCols = [
             {field: 'sid', title: 'SID', fixed: 'left', minWidth: 100}
