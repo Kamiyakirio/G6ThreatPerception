@@ -104,6 +104,39 @@
             }
         });
 
+        // 表单提交
+        form.on('submit(LAY-user-front-submit)', function(data){
+            // 获取表单数据
+            var hostName = data.field.hostName;
+            var macAddress = data.field.macAddress;
+            var detectAccount = data.field.detectAccount ? 1 : 0;
+            var detectService = data.field.detectService ? 1 : 0;
+            var detectProcess = data.field.detectProcess ? 1 : 0;
+            var detectApp = data.field.detectApp ? 1 : 0;
+
+            // 发送请求
+            $.ajax({
+                url: '/host/detect',
+                type: 'POST',
+                data: {
+                    hostName: hostName,
+                    macAddress: macAddress,
+                    detectAccount: detectAccount,
+                    detectService: detectService,
+                    detectProcess: detectProcess,
+                    detectApp: detectApp
+                },
+                success: function (res) {
+                    if (res.code == 0) {//成功
+                        layer.msg(res.msg);//弹出提示
+                        table.reload('LAY-user-manage'); //数据刷新
+                        layer.close(index); //关闭弹层
+                    } else {//系统出问题
+                        layer.msg(res.msg, {icon: 5});//弹出提示
+                    }
+                }
+            });
+        });
     })
 </script>
 </body>

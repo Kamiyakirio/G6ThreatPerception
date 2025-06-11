@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>探测结果</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
+    <style>
+        .layui-tab-title {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .layui-tab-title li {
+            text-align: center;
+            flex-grow: 1;
+            flex-basis: 0;
+        }
+        .content-display-area {
+            padding: 20px;
+            border: 1px solid #e6e6e6;
+            min-height: 300px;
+            background-color: #f8f8f8;
+            color: #333;
+            overflow-y: auto;
+        }
+        #detectCountInputGroup {
+            display: inline-flex;
+            align-items: center;
+            gap: 0;
+            padding: 0 !important;
+            margin-right: 5px;
+            vertical-align: middle;
+            min-width: unset !important;
+            width: auto !important;
+            border: none !important;
+            background: none !important;
+        }
+        #detectCountInputGroup .detect-count-label {
+            padding: 0 1px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        #detectCountInputGroup select {
+            /* ... existing code ... */
+        }
+    </style>
+</head>
+<body>
+
+<div class="layui-fluid" style="padding: 20px;">
+    <div class="layui-card">
+        <div class="layui-card-header">探测结果查询</div>
+        <div class="layui-card-body layui-form" lay-filter="detect-search-form">
+            <div class="layui-form-item">
+                <label class="layui-form-label">MAC地址:</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="macAddress" id="searchMacAddress" placeholder="请输入MAC地址" autocomplete="off" class="layui-input">
+                </div>
+                <label class="layui-form-label">第几次探测:</label>
+                <div class="layui-input-inline" id="detectCountInputGroup">
+                    <select name="detectCount" lay-verify="required">
+                        <option value="">请选择</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <!-- Add more options as needed -->
+                    </select>
+                </div>
+                <div class="layui-input-inline">
+                    <button class="layui-btn" lay-submit lay-filter="search-btn">查询</button>
+                    <button type="button" class="layui-btn layui-btn-primary" id="returnBtn">返回</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="layui-tab layui-tab-brief" lay-filter="detect-tabs">
+        <ul class="layui-tab-title">
+            <li class="layui-this">账号探测</li>
+            <li>服务探测</li>
+            <li>进程探测</li>
+            <li>软件探测</li>
+        </ul>
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <div class="content-display-area" id="account-content">
+                    <table id="accountTable" lay-filter="accountTable"></table>
+                    <p id="account-no-data" style="display:none; text-align: center; color: #999;">未选择探测或无数据</p>
+                </div>
+            </div>
+            <div class="layui-tab-item">
+                <div class="content-display-area" id="service-content">
+                    <table id="serviceTable" lay-filter="serviceTable"></table>
+                    <p id="service-no-data" style="display:none; text-align: center; color: #999;">未选择探测或无数据</p>
+                </div>
+            </div>
+            <div class="layui-tab-item">
+                <div class="content-display-area" id="process-content">
+                    <table id="processTable" lay-filter="processTable"></table>
+                    <p id="process-no-data" style="display:none; text-align: center; color: #999;">未选择探测或无数据</p>
+                </div>
+            </div>
+            <div class="layui-tab-item">
+                <div class="content-display-area" id="app-content">
+                    <table id="appTable" lay-filter="appTable"></table>
+                    <p id="app-no-data" style="display:none; text-align: center; color: #999;">未选择探测或无数据</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/layui/layui.js"></script>
+<script>
+    layui.config({
+        base: '/layui/layuiAdmin/' //静态资源所在路径
+    }).extend({
+        index: 'lib/index' //主入口模块
+    }).use(['element', 'form', 'table'], function(){
+        var element = layui.element;
+        var form = layui.form;
+        var table = layui.table;
+
+        // Function to get URL parameters
+        function getUrlParam(name) {
+            var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+            var r = window.location.search.substr(1).match(reg);
+            if (r != null) return decodeURIComponent(r[2]);
+            return null;
+        }
+
+        // Pre-fill MAC address if available in URL
+        var macFromUrl = getUrlParam('mac');
+        if (macFromUrl) {
+            form.val('detect-search-form', {
+                "macAddress": macFromUrl
+            });
+        }
+
+        function renderTable(tableId, data, cols, noDataId) {
+            if (data && data.length > 0) {
+                document.getElementById(tableId).style.display = '';
+                document.getElementById(noDataId).style.display = 'none';
+                table.render({
+                    elem: '#' + tableId,
+                    cols: [cols],
+                    data: data,
+                    page: true,
+                    limit: 10,
+                    limits: [5, 10, 15, 20, 30],
+                    autoSort: false,
+                    height: 'full-150'
+                });
+            } else {
+                document.getElementById(tableId).style.display = 'none';
+                document.getElementById(noDataId).style.display = '';
+                document.getElementById(noDataId).innerText = '未选择探测或无数据';
+            }
+        }
+
+        var accountCols = [
+            {field: 'sid', title: 'SID', fixed: 'left', minWidth: 100}
+            , {field: 'name', title: '名称', minWidth: 100}
+            , {field: 'full_name', title: '全称', minWidth: 150}
+            , {field: 'sid_type', title: 'SID类型', minWidth: 100}
+            , {field: 'status', title: '状态', minWidth: 80}
+            , {field: 'disabled', title: '禁用', templet: '<div>{{d.disabled == 1 ? "是" : "否"}}</div>', minWidth: 80}
+            , {field: 'lockout', title: '锁定', templet: '<div>{{d.lockout == 1 ? "是" : "否"}}</div>', minWidth: 80}
+            , {field: 'password_changeable', title: '可更改密码', templet: '<div>{{d.password_changeable == 1 ? "是" : "否"}}</div>', minWidth: 120}
+            , {field: 'password_expires', title: '密码过期', templet: '<div>{{d.password_expires == 1 ? "是" : "否"}}</div>', minWidth: 120}
+            , {field: 'password_required', title: '需要密码', templet: '<div>{{d.password_required == 1 ? "是" : "否"}}</div>', minWidth: 120}
+            , {field: 'host_name', title: '主机名', minWidth: 120}
+            , {field: 'mac_address', title: 'MAC地址', minWidth: 150}
+            , {field: 'id', title: 'ID', minWidth: 80}
+            , {field: 'time', title: '时间', minWidth: 180}
+        ];
+
+        var serviceCols = [
+            {field: 'service_id', title: '服务ID', fixed: 'left', minWidth: 100}
+            , {field: 'protocol', title: '协议', minWidth: 80}
+            , {field: 'port', title: '端口', minWidth: 80}
+            , {field: 'state', title: '状态', minWidth: 100}
+            , {field: 'name', title: '名称', minWidth: 120}
+            , {field: 'product', title: '产品', minWidth: 120}
+            , {field: 'version', title: '版本', minWidth: 100}
+            , {field: 'extrainfo', title: '额外信息', minWidth: 180}
+            , {field: 'host_name', title: '主机名', minWidth: 120}
+            , {field: 'mac_address', title: 'MAC地址', minWidth: 150}
+            , {field: 'id', title: 'ID', minWidth: 80}
+            , {field: 'time', title: '时间', minWidth: 180}
+        ];
+
+        var processCols = [
+            {field: 'process_id', title: '进程ID', fixed: 'left', minWidth: 120}
+            , {field: 'name', title: '名称', minWidth: 120}
+            , {field: 'pid', title: 'PID', minWidth: 80}
+            , {field: 'ppid', title: 'PPID', minWidth: 80}
+            , {field: 'cmd', title: '命令行', minWidth: 250}
+            , {field: 'priority', title: '优先级', minWidth: 90}
+            , {field: 'description', title: '描述', minWidth: 200}
+            , {field: 'host_name', title: '主机名', minWidth: 120}
+            , {field: 'mac_address', title: 'MAC地址', minWidth: 150}
+            , {field: 'id', title: 'ID', minWidth: 80}
+            , {field: 'time', title: '时间', minWidth: 180}
+        ];
+
+        var appCols = [
+            {field: 'app_id', title: '应用ID', fixed: 'left', minWidth: 100}
+            , {field: 'display_name', title: '显示名称', minWidth: 200}
+            , {field: 'install_location', title: '安装位置', minWidth: 250}
+            , {field: 'uninstall_string', title: '卸载字符串', minWidth: 250}
+            , {field: 'host_name', title: '主机名', minWidth: 120}
+            , {field: 'mac_address', title: 'MAC地址', minWidth: 150}
+            , {field: 'id', title: 'ID', minWidth: 80}
+            , {field: 'time', title: '时间', minWidth: 180}
+        ];
+
+        // --- Initial render with empty data or mock data for testing ---
+        // You would typically fetch this data from a backend based on search criteria
+        renderTable('accountTable', [], accountCols, 'account-no-data');
+        renderTable('serviceTable', [], serviceCols, 'service-no-data');
+        renderTable('processTable', [], processCols, 'process-no-data');
+        renderTable('appTable', [], appCols, 'app-no-data');
+
+
+        // Listen for search button click
+        form.on('submit(search-btn)', function(data){
+            var searchData = data.field; // Get form data
+            console.log('Search Data:', searchData);
+            // Here you would typically make an AJAX request to your backend
+            // to fetch data based on macAddress and detectCount
+            // For now, let's simulate some data based on MAC address for demonstration
+            if (searchData.macAddress === '64:92:4a:2a:aa:ab' && searchData.detectCount === '1') {
+                var mockAccountResults = [
+                    {name: 'testuser1', full_name: 'Test User One', sid: 'S-1-5-21-mock1', status: '正常', disabled: 0, lockout: 0, host_name: 'LAPTOP-DHV96MUQ', mac_address: '64:92:4a:2a:aa:ab', time: '2024-07-26 10:00:00'},
+                    {name: 'testuser2', full_name: 'Test User Two', sid: 'S-1-5-21-mock2', status: '禁用', disabled: 1, lockout: 0, host_name: 'LAPTOP-DHV96MUQ', mac_address: '64:92:4a:2a:aa:ab', time: '2024-07-26 10:01:00'}
+                ];
+                var mockAppResults = [
+                    {display_name: 'Mock App C', install_location: 'C:\Program Files\MockAppC', host_name: 'LAPTOP-DHV96MUQ', mac_address: '64:92:4a:2a:aa:ab', time: '2024-07-26 10:12:00'},
+                    {display_name: 'Mock App D', install_location: 'D:\Apps\MockAppD', host_name: 'LAPTOP-DHV96MUQ', mac_address: '64:92:4a:2a:aa:ab', time: '2024-07-26 10:13:00'}
+                ];
+                renderTable('accountTable', mockAccountResults, accountCols, 'account-no-data');
+                renderTable('serviceTable', [], serviceCols, 'service-no-data');
+                renderTable('processTable', [], processCols, 'process-no-data');
+                renderTable('appTable', mockAppResults, appCols, 'app-no-data');
+            } else {
+                layer.msg('暂无数据');
+                renderTable('accountTable', [], accountCols, 'account-no-data');
+                renderTable('serviceTable', [], serviceCols, 'service-no-data');
+                renderTable('processTable', [], processCols, 'process-no-data');
+                renderTable('appTable', [], appCols, 'app-no-data');
+            }
+            return false; // Prevent default form submission
+        });
+
+        //监听Tab切换
+        element.on('tab(detect-tabs)', function(data){
+            // console.log(this); //当前Tab标题所在的dom对象
+            // console.log(data.index); //得到当前Tab的所在下标
+            // console.log(data.elem); //得到当前的Tab大容器
+        });
+        element.render('tab');
+    });
+</script>
+<script>
+    document.getElementById('returnBtn').addEventListener('click', function() {
+        window.location.href = '/page/host/result_display'; // Navigate to the result display page
+    });
+</script>
+</body>
+</html>
