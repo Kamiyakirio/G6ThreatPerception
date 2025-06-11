@@ -35,6 +35,25 @@ public class RabbitMQController {
     @Autowired
     private ServiceMapper serviceMapper;
 
+
+    //查询并设置探测结构id
+    private int getNextDetectId(String macAddress, AccountMapper mapper) {
+        Integer lastId = mapper.selectLastDetectIdByMac(macAddress);
+        return (lastId == null) ? 0 : lastId + 1;
+    }
+    private int getNextDetectId(String macAddress, AppMapper mapper) {
+        Integer lastId = mapper.selectLastDetectIdByMac(macAddress);
+        return (lastId == null) ? 0 : lastId + 1;
+    }
+    private int getNextDetectId(String macAddress, ServiceMapper mapper) {
+        Integer lastId = mapper.selectLastDetectIdByMac(macAddress);
+        return (lastId == null) ? 0 : lastId + 1;
+    }
+    private int getNextDetectId(String macAddress, ProcessMapper mapper) {
+        Integer lastId = mapper.selectLastDetectIdByMac(macAddress);
+        return (lastId == null) ? 0 : lastId + 1;
+    }
+
     @RabbitListener(queues = "hello")
     public void receiveHostInfo(String messageBody, Message message, Channel channel) throws IOException {
         long tag = message.getMessageProperties().getDeliveryTag();
@@ -88,11 +107,13 @@ public class RabbitMQController {
                 if ("account".equalsIgnoreCase(dataType)) {
                     JSONArray accountsArray = dataItem.getJSONArray("data");
 
+                    int detectId = getNextDetectId(macAddress, accountMapper); // 获取 detect_id
                     for (int j = 0; j < accountsArray.size(); j++) {
                         JSONObject accountData = accountsArray.getJSONObject(j);
                         Account dbAccount = accountMapper.selectByPrimaryKey(accountData.getString("sid"));
 
                         Account account = new Account();
+                        account.setDetectId(detectId);
                         account.setHostName(hostName);
                         account.setMacAddress(macAddress);
                         account.setTime(time);
@@ -132,11 +153,14 @@ public class RabbitMQController {
                 // 处理 type=app 的逻辑
                 if ("app".equalsIgnoreCase(dataType)) {
                     JSONArray appsArray = dataItem.getJSONArray("data");
+                    int detectId = getNextDetectId(macAddress, appMapper);
 
                     for (int j = 0; j < appsArray.size(); j++) {
                         JSONObject appData = appsArray.getJSONObject(j);
 
                         App app = new App();
+
+                        app.setDetectId(detectId);
                         app.setHostName(hostName);
                         app.setMacAddress(macAddress);
                         app.setTime(time);
@@ -152,12 +176,15 @@ public class RabbitMQController {
                 }
                 if ("process".equalsIgnoreCase(dataType)) {
                     JSONArray processesArray = dataItem.getJSONArray("data");
+                    int detectId = getNextDetectId(macAddress, processMapper);
 
                     for (int j = 0; j < processesArray.size(); j++) {
                         JSONObject processData = processesArray.getJSONObject(j);
 
                         // 创建 Process 对象并填充基础信息
                         Process process = new Process();
+
+                        process.setDetectId(detectId);
                         process.setHostName(hostName);
                         process.setMacAddress(macAddress);
                         process.setTime(time);
@@ -184,12 +211,15 @@ public class RabbitMQController {
                 }
                 if ("service".equalsIgnoreCase(dataType)){
                     JSONArray servicesArray = dataItem.getJSONArray("data");
+                    int detectId = getNextDetectId(macAddress, serviceMapper);
 
                     for (int j = 0; j < servicesArray.size(); j++) {
                         JSONObject serviceData = servicesArray.getJSONObject(j);
 
                         // 创建 Service 对象并填充基础信息
                         Service service = new Service();
+
+                        service.setDetectId(detectId);
                         service.setHostName(hostName);
                         service.setMacAddress(macAddress);
                         service.setTime(time);

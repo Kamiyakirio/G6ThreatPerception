@@ -5,7 +5,7 @@ import com.tpp.threat_perception_platform.asset.Process;
 /**
 * @author 86157
 * @description 针对表【process】的数据库操作Mapper
-* @createDate 2025-06-10 20:46:56
+* @createDate 2025-06-11 11:26:23
 * @Entity com.tpp.threat_perception_platform.asset.Process
 */
 public interface ProcessMapper {
@@ -22,6 +22,8 @@ public interface ProcessMapper {
 
     int updateByPrimaryKey(Process record);
 
-    Process selectByPidAndHost(Integer pid, String hostName);
+    Integer selectLastDetectIdByMac(String macAddress);
 
+
+    Process selectByPidAndHost(Integer pid, String hostName);
 }
