@@ -26,6 +26,7 @@
             color: #333;
             overflow-y: auto;
         }
+
     </style>
 </head>
 <body>
@@ -36,14 +37,17 @@
         <div class="layui-card-body layui-form" lay-filter="result-display-form">
             <div class="layui-form-item">
                 <label class="layui-form-label">主机名:</label>
-                <div class="layui-input-block">
+                <div class="layui-input-block" style="width: calc(50% - 100px); display: inline-block; vertical-align: middle;">
                     <input type="text" name="hostName" class="layui-input" readonly>
                 </div>
             </div>
             <div class="layui-form-item">
                 <label class="layui-form-label">MAC地址:</label>
-                <div class="layui-input-block">
-                    <input type="text" name="macAddress" class="layui-input" readonly>
+                <div class="layui-input-block" style="width: calc(50% - 100px); display: inline-block; vertical-align: middle;">
+                    <input type="text" name="macAddress" id="macAddressInput" class="layui-input" readonly>
+                </div>
+                <div style="display: inline-block; vertical-align: middle; margin-left: 10px;">
+                    <button type="button" class="layui-btn layui-btn-primary" id="viewHistoryBtn">查看历史记录</button>
                 </div>
             </div>
         </div>
@@ -106,9 +110,9 @@
                     data: data,
                     page: true, // 开启分页
                     limit: 10,
-                    limits: [5, 10, 15, 20, 30],
-                    autoSort: false,
-                    height: 'full-150'
+                    limits: [5, 10, 15, 20, 30], // 可选每页显示条数
+                    autoSort: false, // 禁止自动排序
+                    height: 'full-150' // 高度自适应，减去头部和其他元素的高度
                 });
             } else {
                 document.getElementById(tableId).style.display = 'none';
@@ -135,12 +139,17 @@
         ];
 
         var serviceCols = [
-            {field: 'service_name', title: '服务名称', fixed: 'left', minWidth: 150}
-            , {field: 'display_name', title: '显示名称', minWidth: 180}
-            , {field: 'status', title: '状态', minWidth: 100}
-            , {field: 'start_type', title: '启动类型', minWidth: 120}
+            {field: 'service_id', title: '服务ID', fixed: 'left', minWidth: 100}
+            , {field: 'protocol', title: '协议', minWidth: 80}
+            , {field: 'port', title: '端口', minWidth: 80}
+            , {field: 'state', title: '状态', minWidth: 100}
+            , {field: 'name', title: '名称', minWidth: 120}
+            , {field: 'product', title: '产品', minWidth: 120}
+            , {field: 'version', title: '版本', minWidth: 100}
+            , {field: 'extrainfo', title: '额外信息', minWidth: 180}
             , {field: 'host_name', title: '主机名', minWidth: 120}
             , {field: 'mac_address', title: 'MAC地址', minWidth: 150}
+            , {field: 'id', title: 'ID', minWidth: 80}
             , {field: 'time', title: '时间', minWidth: 180}
         ];
 
@@ -179,9 +188,7 @@
         ];
 
         var mockServiceResults = [
-            {service_name: 'MockService1', display_name: 'Mock Service A', status: 'Running', start_type: 'Auto', host_name: mockHostName, mac_address: mockMacAddress, time: '2024-07-26 10:05:00'},
-            {service_name: 'MockService2', display_name: 'Mock Service B', status: 'Stopped', start_type: 'Manual', host_name: mockHostName, mac_address: mockMacAddress, time: '2024-07-26 10:06:00'}
-        ];
+            ];
 
         var mockProcessResults = []; // 模拟未选择进程探测或无数据
 
@@ -212,6 +219,22 @@
         });
         // Explicitly render tabs after dynamic content loading
         element.render('tab');
+    });
+</script>
+<script>
+    document.getElementById('viewHistoryBtn').addEventListener('click', function() {
+        var macAddress = document.getElementById('macAddressInput').value;
+        if (macAddress) {
+            // 调用父窗口的 LayUI.index.openTabsPage 方法来打开新标签页
+            if (parent.layui && parent.layui.index && parent.layui.index.openTabsPage) {
+                parent.layui.index.openTabsPage('/page/host/detectResult?mac=' + encodeURIComponent(macAddress), '探测结果');
+            } else {
+                // Fallback if openTabsPage is not available (though it should be in this setup)
+                window.location.href = '/page/host/detectResult?mac=' + encodeURIComponent(macAddress);
+            }
+        } else {
+            layer.msg('MAC地址为空，无法查看历史记录');
+        }
     });
 </script>
 </body>
