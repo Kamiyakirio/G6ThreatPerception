@@ -68,6 +68,11 @@ public class Service {
     private Date time;
 
     /**
+     * 区分每次扫描
+     */
+    private Integer detectId;
+
+    /**
      * 用于表示服务的唯一id
      */
     public Long getServiceId() {
@@ -235,6 +240,20 @@ public class Service {
         this.time = time;
     }
 
+    /**
+     * 区分每次扫描
+     */
+    public Integer getDetectId() {
+        return detectId;
+    }
+
+    /**
+     * 区分每次扫描
+     */
+    public void setDetectId(Integer detectId) {
+        this.detectId = detectId;
+    }
+
     @Override
     public boolean equals(Object that) {
         if (this == that) {
@@ -258,7 +277,8 @@ public class Service {
             && (this.getHostName() == null ? other.getHostName() == null : this.getHostName().equals(other.getHostName()))
             && (this.getId() == null ? other.getId() == null : this.getId().equals(other.getId()))
             && (this.getMacAddress() == null ? other.getMacAddress() == null : this.getMacAddress().equals(other.getMacAddress()))
-            && (this.getTime() == null ? other.getTime() == null : this.getTime().equals(other.getTime()));
+            && (this.getTime() == null ? other.getTime() == null : this.getTime().equals(other.getTime()))
+            && (this.getDetectId() == null ? other.getDetectId() == null : this.getDetectId().equals(other.getDetectId()));
     }
 
     @Override
@@ -277,6 +297,7 @@ public class Service {
         result = prime * result + ((getId() == null) ? 0 : getId().hashCode());
         result = prime * result + ((getMacAddress() == null) ? 0 : getMacAddress().hashCode());
         result = prime * result + ((getTime() == null) ? 0 : getTime().hashCode());
+        result = prime * result + ((getDetectId() == null) ? 0 : getDetectId().hashCode());
         return result;
     }
 
@@ -298,6 +319,7 @@ public class Service {
         sb.append(", id=").append(id);
         sb.append(", macAddress=").append(macAddress);
         sb.append(", time=").append(time);
+        sb.append(", detectId=").append(detectId);
         sb.append("]");
         return sb.toString();
     }
