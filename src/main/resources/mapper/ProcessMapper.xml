@@ -16,12 +16,23 @@
             <result property="id" column="id" />
             <result property="macAddress" column="mac_address" />
             <result property="time" column="time" />
+            <result property="detectId" column="detect_id" />
     </resultMap>
 
     <sql id="Base_Column_List">
         process_id,pid,ppid,name,cmd,priority,
-        description,host_name,id,mac_address,time
+        description,host_name,id,mac_address,time,
+        detect_id
     </sql>
+
+    <select id="selectLastDetectIdByMac" parameterType="string" resultType="int">
+    SELECT detect_id FROM account WHERE mac_address = #{macAddress}
+    ORDER BY detect_id DESC LIMIT 1
+    </select>
+
+    <select id="selectByPidAndHost" parameterType="map" resultType="com.tpp.threat_perception_platform.asset.Process">
+    SELECT * FROM process WHERE pid = #{pid} AND host_name = #{hostName}
+    </select>
 
     <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
         select
@@ -30,10 +41,6 @@
         where  process_id = #{processId} 
     </select>
 
-    <select id="selectByPidAndHost" parameterType="map" resultType="com.tpp.threat_perception_platform.asset.Process">
-    SELECT * FROM process WHERE pid = #{pid} AND host_name = #{hostName}
-</select>
-
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
         delete from process
         where  process_id = #{processId} 
@@ -41,9 +48,11 @@
     <insert id="insert" keyColumn="process_id" keyProperty="processId" parameterType="com.tpp.threat_perception_platform.asset.Process" useGeneratedKeys="true">
         insert into process
         ( process_id,pid,ppid,name,cmd,priority,
-        description,host_name,id,mac_address,time)
+        description,host_name,id,mac_address,time,
+        detect_id)
         values (#{processId},#{pid},#{ppid},#{name},#{cmd},#{priority},
-        #{description},#{hostName},#{id},#{macAddress},#{time})
+        #{description},#{hostName},#{id},#{macAddress},#{time},
+        #{detectId})
     </insert>
     <insert id="insertSelective" keyColumn="process_id" keyProperty="processId" parameterType="com.tpp.threat_perception_platform.asset.Process" useGeneratedKeys="true">
         insert into process
@@ -59,6 +68,7 @@
                 <if test="id != null">id,</if>
                 <if test="macAddress != null">mac_address,</if>
                 <if test="time != null">time,</if>
+                <if test="detectId != null">detect_id,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
                 <if test="processId != null">#{processId},</if>
@@ -72,6 +82,7 @@
                 <if test="id != null">#{id},</if>
                 <if test="macAddress != null">#{macAddress},</if>
                 <if test="time != null">#{time},</if>
+                <if test="detectId != null">#{detectId},</if>
         </trim>
     </insert>
     <update id="updateByPrimaryKeySelective" parameterType="com.tpp.threat_perception_platform.asset.Process">
@@ -107,6 +118,9 @@
                 <if test="time != null">
                     time = #{time},
                 </if>
+                <if test="detectId != null">
+                    detect_id = #{detectId},
+                </if>
         </set>
         where   process_id = #{processId} 
     </update>
@@ -122,7 +136,8 @@
             host_name =  #{hostName},
             id =  #{id},
             mac_address =  #{macAddress},
-            time =  #{time}
+            time =  #{time},
+            detect_id =  #{detectId}
         where   process_id = #{processId} 
     </update>
 </mapper>

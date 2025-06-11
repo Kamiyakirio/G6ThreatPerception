@@ -19,13 +19,19 @@
             <result property="time" column="time" />
             <result property="sidType" column="sid_type" />
             <result property="status" column="status" />
+            <result property="detectId" column="detect_id" />
     </resultMap>
 
     <sql id="Base_Column_List">
         sid,name,full_name,disabled,lockout,password_changeable,
         password_expires,password_required,host_name,id,mac_address,
-        time,sid_type,status
+        time,sid_type,status,detect_id
     </sql>
+
+    <select id="selectLastDetectIdByMac" parameterType="string" resultType="int">
+    SELECT detect_id FROM account WHERE mac_address = #{macAddress}
+    ORDER BY detect_id DESC LIMIT 1
+    </select>
 
     <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
         select
@@ -42,10 +48,10 @@
         insert into account
         ( sid,name,full_name,disabled,lockout,password_changeable,
         password_expires,password_required,host_name,id,mac_address,
-        time,sid_type,status)
+        time,sid_type,status,detect_id)
         values (#{sid},#{name},#{fullName},#{disabled},#{lockout},#{passwordChangeable},
         #{passwordExpires},#{passwordRequired},#{hostName},#{id},#{macAddress},
-        #{time},#{sidType},#{status})
+        #{time},#{sidType},#{status},#{detectId})
     </insert>
     <insert id="insertSelective" keyColumn="sid" keyProperty="sid" parameterType="com.tpp.threat_perception_platform.asset.Account" useGeneratedKeys="true">
         insert into account
@@ -64,6 +70,7 @@
                 <if test="time != null">time,</if>
                 <if test="sidType != null">sid_type,</if>
                 <if test="status != null">status,</if>
+                <if test="detectId != null">detect_id,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
                 <if test="sid != null">#{sid},</if>
@@ -80,6 +87,7 @@
                 <if test="time != null">#{time},</if>
                 <if test="sidType != null">#{sidType},</if>
                 <if test="status != null">#{status},</if>
+                <if test="detectId != null">#{detectId},</if>
         </trim>
     </insert>
     <update id="updateByPrimaryKeySelective" parameterType="com.tpp.threat_perception_platform.asset.Account">
@@ -124,6 +132,9 @@
                 <if test="status != null">
                     status = #{status},
                 </if>
+                <if test="detectId != null">
+                    detect_id = #{detectId},
+                </if>
         </set>
         where   sid = #{sid} 
     </update>
@@ -142,7 +153,8 @@
             mac_address =  #{macAddress},
             time =  #{time},
             sid_type =  #{sidType},
-            status =  #{status}
+            status =  #{status},
+            detect_id =  #{detectId}
         where   sid = #{sid} 
     </update>
 </mapper>
