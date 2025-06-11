@@ -122,6 +122,15 @@
                 , limits: [5, 10, 15, 20, 30]
                 , autoSort: false
                 , height: 'full-150'
+
+                , done: function(res) {
+                    if (res.data && res.data.length === 0) {
+                        document.getElementById(noDataId).style.display = 'block';
+                    } else {
+                        document.getElementById(noDataId).style.display = 'none';
+                    }
+                }
+
             });
         }
 
@@ -129,8 +138,23 @@
         var accountCols = [
             {field: 'sid', title: 'SID', fixed: 'left', minWidth: 100}
             , {field: 'name', title: '名称', minWidth: 100}
-            , {field: 'full_name', title: '全称', minWidth: 150}
-            , {field: 'sid_type', title: 'SID类型', minWidth: 100}
+            , {field: 'fullName', title: '全称', minWidth: 150}
+            ,{
+                field: 'risk',
+                title: '风险等级',
+                minWidth: 150,
+                templet: function(d) {
+                    if (d.risk == 0) {
+                        return '<span style="background-color: green; color: white; padding: 2px 5px; border-radius: 3px;">无风险</span>';
+                    } else if (d.risk == 1) {
+                        return '<span style="background-color: orange; color: white; padding: 2px 5px; border-radius: 3px;">警告</span>';
+                    } else if (d.risk == 2) {
+                        return '<span style="background-color: red; color: white; padding: 2px 5px; border-radius: 3px;">高风险</span>';
+                    } else {
+                        return '<span style="color: #999;">未知</span>';
+                    }
+                }}
+            , {field: 'sidType', title: 'SID类型', minWidth: 100}
             , {field: 'status', title: '状态', minWidth: 80}
             , {field: 'disabled', title: '禁用', templet: '<div>{{d.disabled == 1 ? "是" : "否"}}</div>', minWidth: 80}
             , {field: 'lockout', title: '锁定', templet: '<div>{{d.lockout == 1 ? "是" : "否"}}</div>', minWidth: 80}
@@ -152,43 +176,47 @@
                 templet: '<div>{{d.password_required == 1 ? "是" : "否"}}</div>',
                 minWidth: 120
             }
-            , {field: 'host_name', title: '主机名', minWidth: 120}
-            , {field: 'mac_address', title: 'MAC地址', minWidth: 150}
+            , {field: 'hostName', title: '主机名', minWidth: 120}
+            , {field: 'macAddress', title: 'MAC地址', minWidth: 150}
             , {field: 'id', title: 'ID', minWidth: 80}
             , {field: 'time', title: '时间', minWidth: 180}
         ];
 
         var serviceCols = [
-            {field: 'service_name', title: '服务名称', fixed: 'left', minWidth: 150}
-            , {field: 'display_name', title: '显示名称', minWidth: 180}
-            , {field: 'status', title: '状态', minWidth: 100}
-            , {field: 'start_type', title: '启动类型', minWidth: 120}
-            , {field: 'host_name', title: '主机名', minWidth: 120}
-            , {field: 'mac_address', title: 'MAC地址', minWidth: 150}
-            , {field: 'time', title: '时间', minWidth: 180}
+            {field: 'serviceId', title: '服务id', fixed: 'left', minWidth: 150},
+            {field: 'name', title: '显示名称', minWidth: 180},
+            {field: 'state', title: '状态', minWidth: 100},
+            {field: 'protocol', title: '协议', minWidth: 100},
+            {field: 'port', title: '端口', minWidth: 80},
+            {field: 'product', title: '产品', minWidth: 150},
+            {field: 'version', title: '版本', minWidth: 150},
+            {field: 'extrainfo', title: '额外信息', minWidth: 200},
+            {field: 'hostName', title: '主机名', minWidth: 120},
+            {field: 'macAddress', title: 'MAC地址', minWidth: 150},
+            {field: 'time', title: '时间', minWidth: 180}
         ];
 
         var processCols = [
-            {field: 'process_id', title: '进程ID', fixed: 'left', minWidth: 120}
+            {field: 'processId', title: '进程ID', fixed: 'left', minWidth: 120}
             , {field: 'name', title: '名称', minWidth: 120}
             , {field: 'pid', title: 'PID', minWidth: 80}
             , {field: 'ppid', title: 'PPID', minWidth: 80}
             , {field: 'cmd', title: '命令行', minWidth: 250}
             , {field: 'priority', title: '优先级', minWidth: 90}
             , {field: 'description', title: '描述', minWidth: 200}
-            , {field: 'host_name', title: '主机名', minWidth: 120}
-            , {field: 'mac_address', title: 'MAC地址', minWidth: 150}
+            , {field: 'hostName', title: '主机名', minWidth: 120}
+            , {field: 'macAddress', title: 'MAC地址', minWidth: 150}
             , {field: 'id', title: 'ID', minWidth: 80}
             , {field: 'time', title: '时间', minWidth: 180}
         ];
 
         var appCols = [
-            {field: 'app_id', title: '应用ID', fixed: 'left', minWidth: 100}
-            , {field: 'display_name', title: '显示名称', minWidth: 200}
-            , {field: 'install_location', title: '安装位置', minWidth: 250}
-            , {field: 'uninstall_string', title: '卸载字符串', minWidth: 250}
-            , {field: 'host_name', title: '主机名', minWidth: 120}
-            , {field: 'mac_address', title: 'MAC地址', minWidth: 150}
+            {field: 'appId', title: '应用ID', fixed: 'left', minWidth: 100}
+            , {field: 'displayName', title: '显示名称', minWidth: 200}
+            , {field: 'installLocation', title: '安装位置', minWidth: 250}
+            , {field: 'uninstallString', title: '卸载字符串', minWidth: 250}
+            , {field: 'hostName', title: '主机名', minWidth: 120}
+            , {field: 'macAddress', title: 'MAC地址', minWidth: 150}
             , {field: 'id', title: 'ID', minWidth: 80}
             , {field: 'time', title: '时间', minWidth: 180}
         ];
