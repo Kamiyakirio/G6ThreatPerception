@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tpp.threat_perception_platform.dao.ProcessMapper">
+
+    <resultMap id="BaseResultMap" type="com.tpp.threat_perception_platform.asset.Process">
+            <id property="processId" column="process_id" />
+            <result property="pid" column="pid" />
+            <result property="ppid" column="ppid" />
+            <result property="name" column="name" />
+            <result property="cmd" column="cmd" />
+            <result property="priority" column="priority" />
+            <result property="description" column="description" />
+            <result property="hostName" column="host_name" />
+            <result property="id" column="id" />
+            <result property="macAddress" column="mac_address" />
+            <result property="time" column="time" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        process_id,pid,ppid,name,cmd,priority,
+        description,host_name,id,mac_address,time
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from process
+        where  process_id = #{processId} 
+    </select>
+
+    <select id="selectByPidAndHost" parameterType="map" resultType="com.tpp.threat_perception_platform.asset.Process">
+    SELECT * FROM process WHERE pid = #{pid} AND host_name = #{hostName}
+</select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from process
+        where  process_id = #{processId} 
+    </delete>
+    <insert id="insert" keyColumn="process_id" keyProperty="processId" parameterType="com.tpp.threat_perception_platform.asset.Process" useGeneratedKeys="true">
+        insert into process
+        ( process_id,pid,ppid,name,cmd,priority,
+        description,host_name,id,mac_address,time)
+        values (#{processId},#{pid},#{ppid},#{name},#{cmd},#{priority},
+        #{description},#{hostName},#{id},#{macAddress},#{time})
+    </insert>
+    <insert id="insertSelective" keyColumn="process_id" keyProperty="processId" parameterType="com.tpp.threat_perception_platform.asset.Process" useGeneratedKeys="true">
+        insert into process
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="processId != null">process_id,</if>
+                <if test="pid != null">pid,</if>
+                <if test="ppid != null">ppid,</if>
+                <if test="name != null">name,</if>
+                <if test="cmd != null">cmd,</if>
+                <if test="priority != null">priority,</if>
+                <if test="description != null">description,</if>
+                <if test="hostName != null">host_name,</if>
+                <if test="id != null">id,</if>
+                <if test="macAddress != null">mac_address,</if>
+                <if test="time != null">time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="processId != null">#{processId},</if>
+                <if test="pid != null">#{pid},</if>
+                <if test="ppid != null">#{ppid},</if>
+                <if test="name != null">#{name},</if>
+                <if test="cmd != null">#{cmd},</if>
+                <if test="priority != null">#{priority},</if>
+                <if test="description != null">#{description},</if>
+                <if test="hostName != null">#{hostName},</if>
+                <if test="id != null">#{id},</if>
+                <if test="macAddress != null">#{macAddress},</if>
+                <if test="time != null">#{time},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.tpp.threat_perception_platform.asset.Process">
+        update process
+        <set>
+                <if test="pid != null">
+                    pid = #{pid},
+                </if>
+                <if test="ppid != null">
+                    ppid = #{ppid},
+                </if>
+                <if test="name != null">
+                    name = #{name},
+                </if>
+                <if test="cmd != null">
+                    cmd = #{cmd},
+                </if>
+                <if test="priority != null">
+                    priority = #{priority},
+                </if>
+                <if test="description != null">
+                    description = #{description},
+                </if>
+                <if test="hostName != null">
+                    host_name = #{hostName},
+                </if>
+                <if test="id != null">
+                    id = #{id},
+                </if>
+                <if test="macAddress != null">
+                    mac_address = #{macAddress},
+                </if>
+                <if test="time != null">
+                    time = #{time},
+                </if>
+        </set>
+        where   process_id = #{processId} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.tpp.threat_perception_platform.asset.Process">
+        update process
+        set 
+            pid =  #{pid},
+            ppid =  #{ppid},
+            name =  #{name},
+            cmd =  #{cmd},
+            priority =  #{priority},
+            description =  #{description},
+            host_name =  #{hostName},
+            id =  #{id},
+            mac_address =  #{macAddress},
+            time =  #{time}
+        where   process_id = #{processId} 
+    </update>
+</mapper>
