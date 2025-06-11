@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tpp.threat_perception_platform.dao.AccountMapper">
+
+    <resultMap id="BaseResultMap" type="com.tpp.threat_perception_platform.asset.Account">
+            <id property="sid" column="sid" />
+            <result property="name" column="name" />
+            <result property="fullName" column="full_name" />
+            <result property="disabled" column="disabled" />
+            <result property="lockout" column="lockout" />
+            <result property="passwordChangeable" column="password_changeable" />
+            <result property="passwordExpires" column="password_expires" />
+            <result property="passwordRequired" column="password_required" />
+            <result property="hostName" column="host_name" />
+            <result property="id" column="id" />
+            <result property="macAddress" column="mac_address" />
+            <result property="time" column="time" />
+            <result property="sidType" column="sid_type" />
+            <result property="status" column="status" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        sid,name,full_name,disabled,lockout,password_changeable,
+        password_expires,password_required,host_name,id,mac_address,
+        time,sid_type,status
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from account
+        where  sid = #{sid} 
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from account
+        where  sid = #{sid} 
+    </delete>
+    <insert id="insert" keyColumn="sid" keyProperty="sid" parameterType="com.tpp.threat_perception_platform.asset.Account" useGeneratedKeys="true">
+        insert into account
+        ( sid,name,full_name,disabled,lockout,password_changeable,
+        password_expires,password_required,host_name,id,mac_address,
+        time,sid_type,status)
+        values (#{sid},#{name},#{fullName},#{disabled},#{lockout},#{passwordChangeable},
+        #{passwordExpires},#{passwordRequired},#{hostName},#{id},#{macAddress},
+        #{time},#{sidType},#{status})
+    </insert>
+    <insert id="insertSelective" keyColumn="sid" keyProperty="sid" parameterType="com.tpp.threat_perception_platform.asset.Account" useGeneratedKeys="true">
+        insert into account
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="sid != null">sid,</if>
+                <if test="name != null">name,</if>
+                <if test="fullName != null">full_name,</if>
+                <if test="disabled != null">disabled,</if>
+                <if test="lockout != null">lockout,</if>
+                <if test="passwordChangeable != null">password_changeable,</if>
+                <if test="passwordExpires != null">password_expires,</if>
+                <if test="passwordRequired != null">password_required,</if>
+                <if test="hostName != null">host_name,</if>
+                <if test="id != null">id,</if>
+                <if test="macAddress != null">mac_address,</if>
+                <if test="time != null">time,</if>
+                <if test="sidType != null">sid_type,</if>
+                <if test="status != null">status,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="sid != null">#{sid},</if>
+                <if test="name != null">#{name},</if>
+                <if test="fullName != null">#{fullName},</if>
+                <if test="disabled != null">#{disabled},</if>
+                <if test="lockout != null">#{lockout},</if>
+                <if test="passwordChangeable != null">#{passwordChangeable},</if>
+                <if test="passwordExpires != null">#{passwordExpires},</if>
+                <if test="passwordRequired != null">#{passwordRequired},</if>
+                <if test="hostName != null">#{hostName},</if>
+                <if test="id != null">#{id},</if>
+                <if test="macAddress != null">#{macAddress},</if>
+                <if test="time != null">#{time},</if>
+                <if test="sidType != null">#{sidType},</if>
+                <if test="status != null">#{status},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.tpp.threat_perception_platform.asset.Account">
+        update account
+        <set>
+                <if test="name != null">
+                    name = #{name},
+                </if>
+                <if test="fullName != null">
+                    full_name = #{fullName},
+                </if>
+                <if test="disabled != null">
+                    disabled = #{disabled},
+                </if>
+                <if test="lockout != null">
+                    lockout = #{lockout},
+                </if>
+                <if test="passwordChangeable != null">
+                    password_changeable = #{passwordChangeable},
+                </if>
+                <if test="passwordExpires != null">
+                    password_expires = #{passwordExpires},
+                </if>
+                <if test="passwordRequired != null">
+                    password_required = #{passwordRequired},
+                </if>
+                <if test="hostName != null">
+                    host_name = #{hostName},
+                </if>
+                <if test="id != null">
+                    id = #{id},
+                </if>
+                <if test="macAddress != null">
+                    mac_address = #{macAddress},
+                </if>
+                <if test="time != null">
+                    time = #{time},
+                </if>
+                <if test="sidType != null">
+                    sid_type = #{sidType},
+                </if>
+                <if test="status != null">
+                    status = #{status},
+                </if>
+        </set>
+        where   sid = #{sid} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.tpp.threat_perception_platform.asset.Account">
+        update account
+        set 
+            name =  #{name},
+            full_name =  #{fullName},
+            disabled =  #{disabled},
+            lockout =  #{lockout},
+            password_changeable =  #{passwordChangeable},
+            password_expires =  #{passwordExpires},
+            password_required =  #{passwordRequired},
+            host_name =  #{hostName},
+            id =  #{id},
+            mac_address =  #{macAddress},
+            time =  #{time},
+            sid_type =  #{sidType},
+            status =  #{status}
+        where   sid = #{sid} 
+    </update>
+</mapper>
