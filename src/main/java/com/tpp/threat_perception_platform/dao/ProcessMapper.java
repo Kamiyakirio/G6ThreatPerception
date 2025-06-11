@@ -2,6 +2,8 @@ package com.tpp.threat_perception_platform.dao;
 
 import com.tpp.threat_perception_platform.asset.Process;
 
+import java.util.List;
+
 /**
 * @author 86157
 * @description 针对表【process】的数据库操作Mapper
@@ -23,6 +25,8 @@ public interface ProcessMapper {
     int updateByPrimaryKey(Process record);
 
     Integer selectLastDetectIdByMac(String macAddress);
+
+    List<Process> selectAllByMacAddress(String macAddress);
 
 
     Process selectByPidAndHost(Integer pid, String hostName);
