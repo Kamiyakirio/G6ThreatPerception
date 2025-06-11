@@ -40,6 +40,12 @@
     SELECT detect_id FROM account WHERE mac_address = #{macAddress}
     ORDER BY detect_id DESC LIMIT 1
     </select>
+    <select id="selectAllByMacAddress" resultType="com.tpp.threat_perception_platform.asset.Service">
+        select
+            <include refid="Base_Column_List"/>
+            from service
+        where mac_address = ${macAddress}
+    </select>
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
         delete from service

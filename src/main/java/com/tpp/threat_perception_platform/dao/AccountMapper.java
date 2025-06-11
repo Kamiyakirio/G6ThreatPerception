@@ -2,6 +2,8 @@ package com.tpp.threat_perception_platform.dao;
 
 import com.tpp.threat_perception_platform.asset.Account;
 
+import java.util.List;
+
 /**
 * @author 86157
 * @description 针对表【account】的数据库操作Mapper
@@ -23,5 +25,7 @@ public interface AccountMapper {
     Integer selectLastDetectIdByMac(String macAddress);
 
     int updateByPrimaryKey(Account record);
+
+    List<Account> selectAllByMacAddress(String macAddress);
 
 }
