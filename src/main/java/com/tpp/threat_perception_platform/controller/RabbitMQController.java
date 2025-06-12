@@ -110,7 +110,6 @@ public class RabbitMQController {
                     int detectId = getNextDetectId(macAddress, accountMapper); // 获取 detect_id
                     for (int j = 0; j < accountsArray.size(); j++) {
                         JSONObject accountData = accountsArray.getJSONObject(j);
-                        Account dbAccount = accountMapper.selectByPrimaryKey(accountData.getString("sid"));
 
                         Account account = new Account();
                         account.setDetectId(detectId);
@@ -142,11 +141,8 @@ public class RabbitMQController {
 
                         account.setTime(new Date());
 
-                        if (dbAccount == null) {
-                            accountMapper.insertSelective(account);
-                        } else if (!dbAccount.equals(account)) {
-                            accountMapper.updateByPrimaryKeySelective(account);
-                        }
+                        accountMapper.insertSelective(account);
+
                     }
                 }
 
@@ -198,15 +194,9 @@ public class RabbitMQController {
                         process.setPriority(processData.getInteger("priority"));
                         process.setDescription(processData.getString("description"));
 
-                        // 查询是否已存在该进程（根据 pid + hostName 判断）
-                        Process dbProcess = processMapper.selectByPidAndHost(process.getPid(), process.getHostName());
 
-                        if (dbProcess == null) {
-                            processMapper.insertSelective(process);
-                        } else if (!dbProcess.equals(process)) {
-                            process.setProcessId(dbProcess.getProcessId()); // 保留原有主键
-                            processMapper.updateByPrimaryKeySelective(process);
-                        }
+                        processMapper.insertSelective(process);
+
                     }
                 }
                 if ("service".equalsIgnoreCase(dataType)){
@@ -234,15 +224,9 @@ public class RabbitMQController {
                         service.setVersion(serviceData.getString("version"));
                         service.setExtrainfo(serviceData.getString("extrainfo"));
 
-                        // 查询是否已存在该服务（根据 name + hostName 判断）
-                        Service dbService = serviceMapper.selectByNameAndHost(service.getName(), service.getHostName());
 
-                        if (dbService == null) {
-                            serviceMapper.insertSelective(service);
-                        } else if (!dbService.equals(service)) {
-                            service.setServiceId(dbService.getServiceId()); // 保留原有主键
-                            serviceMapper.updateByPrimaryKeySelective(service);
-                        }
+                        serviceMapper.insertSelective(service);
+
                     }
                 }
             }
