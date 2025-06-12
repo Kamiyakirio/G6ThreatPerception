@@ -18,12 +18,12 @@ public class Risk {
     /**
      * 
      */
-    private String desc;
+    private String riskDesc;
 
     /**
      * 
      */
-    private String type;
+    private String riskType;
 
     /**
      * 
@@ -56,29 +56,29 @@ public class Risk {
     /**
      * 
      */
-    public String getDesc() {
-        return desc;
+    public String getRiskDesc() {
+        return riskDesc;
     }
 
     /**
      * 
      */
-    public void setDesc(String desc) {
-        this.desc = desc;
+    public void setRiskDesc(String riskDesc) {
+        this.riskDesc = riskDesc;
     }
 
     /**
      * 
      */
-    public String getType() {
-        return type;
+    public String getRiskType() {
+        return riskType;
     }
 
     /**
      * 
      */
-    public void setType(String type) {
-        this.type = type;
+    public void setRiskType(String riskType) {
+        this.riskType = riskType;
     }
 
     @Override
@@ -95,8 +95,8 @@ public class Risk {
         Risk other = (Risk) that;
         return (this.getId() == null ? other.getId() == null : this.getId().equals(other.getId()))
             && (this.getRe() == null ? other.getRe() == null : this.getRe().equals(other.getRe()))
-            && (this.getDesc() == null ? other.getDesc() == null : this.getDesc().equals(other.getDesc()))
-            && (this.getType() == null ? other.getType() == null : this.getType().equals(other.getType()));
+            && (this.getRiskDesc() == null ? other.getRiskDesc() == null : this.getRiskDesc().equals(other.getRiskDesc()))
+            && (this.getRiskType() == null ? other.getRiskType() == null : this.getRiskType().equals(other.getRiskType()));
     }
 
     @Override
@@ -105,8 +105,8 @@ public class Risk {
         int result = 1;
         result = prime * result + ((getId() == null) ? 0 : getId().hashCode());
         result = prime * result + ((getRe() == null) ? 0 : getRe().hashCode());
-        result = prime * result + ((getDesc() == null) ? 0 : getDesc().hashCode());
-        result = prime * result + ((getType() == null) ? 0 : getType().hashCode());
+        result = prime * result + ((getRiskDesc() == null) ? 0 : getRiskDesc().hashCode());
+        result = prime * result + ((getRiskType() == null) ? 0 : getRiskType().hashCode());
         return result;
     }
 
@@ -118,8 +118,8 @@ public class Risk {
         sb.append("Hash = ").append(hashCode());
         sb.append(", id=").append(id);
         sb.append(", re=").append(re);
-        sb.append(", desc=").append(desc);
-        sb.append(", type=").append(type);
+        sb.append(", riskDesc=").append(riskDesc);
+        sb.append(", riskType=").append(riskType);
         sb.append("]");
         return sb.toString();
     }

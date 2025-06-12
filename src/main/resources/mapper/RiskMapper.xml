@@ -1,78 +1,85 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.tpp.threat_perception_platform.dao.RiskMapper">
 
     <resultMap id="BaseResultMap" type="com.tpp.threat_perception_platform.pojo.Risk">
-            <id property="id" column="id" />
-            <result property="re" column="re" />
-            <result property="desc" column="desc" />
-            <result property="type" column="type" />
+        <id property="id" column="id"/>
+        <result property="re" column="re"/>
+        <result property="riskDesc" column="risk_desc"/>
+        <result property="riskType" column="risk_type"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,re,desc,type
+        id,re,risk_desc,risk_type
     </sql>
 
     <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
         select
-        <include refid="Base_Column_List" />
+        <include refid="Base_Column_List"/>
         from risk
-        where  id = #{id} 
+        where id = #{id}
     </select>
+
     <select id="selectAllByType" resultType="com.tpp.threat_perception_platform.pojo.Risk">
         select
-        id,re,`desc`,type
+        id,re,risk_desc,risk_type
         from risk
-        where type=#{Type}
+        where risk_type=#{riskType}
     </select>
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
         delete from risk
-        where  id = #{id} 
+        where id = #{id}
     </delete>
+
     <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.tpp.threat_perception_platform.pojo.Risk" useGeneratedKeys="true">
         insert into risk
-        ( id,re,desc,type)
-        values (#{id},#{re},#{desc},#{type})
+        (id, re, risk_desc, risk_type)
+        values
+        (#{id}, #{re}, #{riskDesc}, #{riskType})
     </insert>
+
     <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.tpp.threat_perception_platform.pojo.Risk" useGeneratedKeys="true">
         insert into risk
         <trim prefix="(" suffix=")" suffixOverrides=",">
-                <if test="id != null">id,</if>
-                <if test="re != null">re,</if>
-                <if test="desc != null">desc,</if>
-                <if test="type != null">type,</if>
+            <if test="id != null">id,</if>
+            <if test="re != null">re,</if>
+            <if test="riskDesc != null">risk_desc,</if>
+            <if test="riskType != null">risk_type,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
-                <if test="id != null">#{id},</if>
-                <if test="re != null">#{re},</if>
-                <if test="desc != null">#{desc},</if>
-                <if test="type != null">#{type},</if>
+            <if test="id != null">#{id},</if>
+            <if test="re != null">#{re},</if>
+            <if test="riskDesc != null">#{riskDesc},</if>
+            <if test="riskType != null">#{riskType},</if>
         </trim>
     </insert>
+
     <update id="updateByPrimaryKeySelective" parameterType="com.tpp.threat_perception_platform.pojo.Risk">
         update risk
         <set>
-                <if test="re != null">
-                    re = #{re},
-                </if>
-                <if test="desc != null">
-                    desc = #{desc},
-                </if>
-                <if test="type != null">
-                    type = #{type},
-                </if>
+            <if test="re != null">
+                re = #{re},
+            </if>
+            <if test="riskDesc != null">
+                risk_desc = #{riskDesc},
+            </if>
+            <if test="riskType != null">
+                risk_type = #{riskType},
+            </if>
         </set>
-        where   id = #{id} 
+        where id = #{id}
     </update>
+
     <update id="updateByPrimaryKey" parameterType="com.tpp.threat_perception_platform.pojo.Risk">
         update risk
-        set 
-            re =  #{re},
-            desc =  #{desc},
-            type =  #{type}
-        where   id = #{id} 
+        set
+            re = #{re},
+            risk_desc = #{riskDesc},
+            risk_type = #{riskType}
+        where id = #{id}
     </update>
+
 </mapper>

@@ -29,6 +29,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addViewController("/page/host/list").setViewName("host/list");
         registry.addViewController("/page/host/detect").setViewName("host/detect");
         registry.addViewController("/page/host/result_display").setViewName("host/result_display");
-
+        // risk related pages
+        registry.addViewController("/page/risk/list").setViewName("risk/list");
+        registry.addViewController("/page/risk/detect").setViewName("risk/detect");
+        registry.addViewController("/page/risk/result_display").setViewName("risk/result_display");
     }
 }

@@ -84,7 +84,7 @@ public class Account {
 
     private Integer risk;
     private String riskDesc;
-
+    private  Integer account_id;
     public Integer getAccount_id() {
         return account_id;
     }
@@ -93,7 +93,6 @@ public class Account {
         this.account_id = account_id;
     }
 
-    private Integer account_id;
 
     public void setRisk(Integer risk) {this.risk = risk;}
     public Integer getRisk() {return risk;}

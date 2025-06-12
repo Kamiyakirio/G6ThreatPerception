@@ -54,7 +54,7 @@ public class AssetsServiceImpl implements AssetsService {
                 Matcher matcher = pattern.matcher(account.getName());
                 if (matcher.find()) {
                     account.setRisk(1);
-                    account.setRiskDesc(risk.getDesc());
+                    account.setRiskDesc(risk.getRiskDesc());
                 }
             }
         }
@@ -76,7 +76,7 @@ public class AssetsServiceImpl implements AssetsService {
                 Matcher matcher = pattern.matcher(app.getDisplayName());
                 if (matcher.find()) {
                     app.setRisk(1);
-                    app.setRiskDesc(risk.getDesc());
+                    app.setRiskDesc(risk.getRiskDesc());
                 }
             }
         }
@@ -97,7 +97,7 @@ public class AssetsServiceImpl implements AssetsService {
                 Matcher matcher = pattern.matcher(process.getName());
                 if (matcher.find()) {
                     process.setRisk(1);
-                    process.setRiskDesc(risk.getDesc());
+                    process.setRiskDesc(risk.getRiskDesc());
                 }
             }
         }
@@ -119,7 +119,7 @@ public class AssetsServiceImpl implements AssetsService {
                 Matcher matcher = pattern.matcher(service.getName());
                 if (matcher.find()) {
                     service.setRisk(1);
-                    service.setRiskDesc(risk.getDesc());
+                    service.setRiskDesc(risk.getRiskDesc());
                 }
             }
         }

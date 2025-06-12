@@ -24,6 +24,6 @@ public interface RiskMapper {
 
     int updateByPrimaryKey(Risk record);
 
-    List<Risk> selectAllByType(String Type);
+    List<Risk> selectAllByType(String riskType);
 
 }
