@@ -7,6 +7,7 @@ import com.tpp.threat_perception_platform.asset.App;
 import com.tpp.threat_perception_platform.asset.Process;
 import com.tpp.threat_perception_platform.dao.*;
 import com.tpp.threat_perception_platform.param.MyParam;
+import com.tpp.threat_perception_platform.pojo.Risk;
 import com.tpp.threat_perception_platform.pojo.Role;
 import com.tpp.threat_perception_platform.response.ResponseResult;
 import com.tpp.threat_perception_platform.service.AssetsService;
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Service;
 
 import javax.security.auth.login.AccountException;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class AssetsServiceImpl implements AssetsService {
@@ -29,6 +32,9 @@ public class AssetsServiceImpl implements AssetsService {
     @Autowired
     private ServiceMapper serviceMapper;
 
+    @Autowired
+    private RiskMapper riskMapper;
+
     @Override
     public ResponseResult findAll(MyParam param) {
         return null;
@@ -40,6 +46,19 @@ public class AssetsServiceImpl implements AssetsService {
         PageHelper.startPage(param.getPage(), param.getLimit());
         // 查询所有
         List<Account> accountList = accountMapper.selectAllByMacAddress(macAddress);
+
+        List<Risk> riskList = riskMapper.selectAllByType("account");
+        for (Account account : accountList) {
+            for (Risk risk : riskList) {
+                Pattern pattern = Pattern.compile(risk.getRe());
+                Matcher matcher = pattern.matcher(account.getName());
+                if (matcher.matches()) {
+                    account.setRisk(1);
+                    account.setRiskDesc(risk.getDesc());
+                }
+            }
+        }
+
         // 构架pageInfo
         PageInfo<Account> pageInfo = new PageInfo(accountList);
         return new ResponseResult<>(pageInfo.getTotal(), pageInfo.getList());
@@ -60,6 +79,7 @@ public class AssetsServiceImpl implements AssetsService {
         PageInfo<Process> pageInfo = new PageInfo<>(processList);
         return new ResponseResult<>(pageInfo.getTotal(), pageInfo.getList());
     }
+
     @Override
     public ResponseResult serviceList(MyParam param, String macAddress) {
         PageHelper.startPage(param.getPage(), param.getLimit());

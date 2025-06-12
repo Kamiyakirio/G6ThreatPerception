@@ -82,6 +82,15 @@ public class Account {
      */
     private Integer detectId;
 
+    private Integer risk;
+    private String riskDesc;
+
+    public void setRisk(Integer risk) {this.risk = risk;}
+    public Integer getRisk() {return risk;}
+    public void setRiskDesc(String riskDesc) {this.riskDesc = riskDesc;}
+    public String getRiskDesc() {return riskDesc;}
+
+
     /**
      * 用户sid，主键
      */
