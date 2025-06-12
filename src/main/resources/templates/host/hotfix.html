@@ -11,7 +11,21 @@
   <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
   <style>
     .layui-form-item-short {
-      width: 400px !important; /* 设置为你想要的宽度 */
+      width: 650px !important; /* 增加宽度以容纳更大的间距 */
+    }
+    /* 新增样式使选择框和按钮在同一行 */
+    .host-select-container {
+      display: flex;
+      align-items: center;
+    }
+    .host-select-container select {
+      flex: 1;
+      margin-right: 20px; /* 增加右边距到20px */
+    }
+    /* 调整按钮样式 */
+    #riskDetectionBtn {
+      margin-left: 30px; /* 增加按钮左边距 */
+      white-space: nowrap; /* 防止按钮文字换行 */
     }
   </style>
 </head>
@@ -27,9 +41,13 @@
       <div class="layui-form-item layui-form-item-short">
         <label class="layui-form-label">选择主机：</label>
         <div class="layui-input-block">
-          <select name="hostId" lay-verify="required" id="hostSelect">
-            <option value="">请选择主机</option>
-          </select>
+          <div class="host-select-container">
+            <select name="hostId" lay-verify="required" id="hostSelect">
+              <option value="">请选择主机</option>
+            </select>
+            <!-- 进行风险检测按钮 -->
+            <button type="button" class="layui-btn" id="riskDetectionBtn">进行风险检测</button>
+          </div>
         </div>
       </div>
 
@@ -40,13 +58,6 @@
           <input type="checkbox" name="scan-web" title="Web" lay-skin="primary">
           <input type="checkbox" name="scan-sql" title="SQL" checked lay-skin="primary">
           <input type="checkbox" name="scan-others" title="其他" lay-skin="primary">
-        </div>
-      </div>
-
-      <!-- 提交按钮 -->
-      <div class="layui-form-item">
-        <div class="layui-input-block">
-          <button type="submit" class="layui-btn" lay-submit lay-filter="LAY-user-front-submit">确认</button>
         </div>
       </div>
 
@@ -96,21 +107,19 @@
     // 页面加载时初始化主机列表
     loadHosts();
 
-    // 监听表单提交
-    form.on('submit(LAY-user-front-submit)', function(data) {
-      var field = data.field;
-
-      var hostId = field.hostId;
+    // 绑定"进行风险检测"按钮的点击事件
+    $('#riskDetectionBtn').on('click', function() {
+      var hostId = $('[name="hostId"]').val();
       if (!hostId) {
         layer.msg('请选择主机', {icon: 5});
-        return false;
+        return;
       }
 
       var detectData = {
         hostId: hostId,
-        scanWeb: field['scan-web'] ? 1 : 0,
-        scanSql: field['scan-sql'] ? 1 : 0,
-        scanOthers: field['scan-others'] ? 1 : 0
+        scanWeb: $('[name="scan-web"]').is(':checked') ? 1 : 0,
+        scanSql: $('[name="scan-sql"]').is(':checked') ? 1 : 0,
+        scanOthers: $('[name="scan-others"]').is(':checked') ? 1 : 0
       };
 
       // 发送请求
@@ -129,8 +138,6 @@
           layer.msg('网络异常，请稍后再试', {icon: 2});
         }
       });
-
-      return false; // 阻止默认提交行为
     });
   });
 </script>
