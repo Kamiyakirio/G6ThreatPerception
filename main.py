@@ -3,6 +3,7 @@ from mq.rabbit_consumer import RabbitConsumer
 from system.pc_information import PcInfo
 from utils.naming_convert import underscore_to_camelcase, camelcase_to_underscore
 from detect.asset_detect import asset_detect
+from config.rabbit_config import *
 
 import json
 import time
@@ -28,7 +29,9 @@ def create_asset_detect_message_callback(mac_address):
         data = json.loads(body.decode())
         data = {camelcase_to_underscore(k): v for k, v in data.items()}
         detect_result = asset_detect(data)
-        producer = RabbitProducer()
+        producer = RabbitProducer(
+            host=HOST, port=PORT, username=USERNAME, password=PASSWORD
+        )
         producer.publish_message("", "detect_result", detect_result)
 
     return callback
@@ -36,7 +39,9 @@ def create_asset_detect_message_callback(mac_address):
 
 if __name__ == "__main__":
     info = PcInfo()
-    producer = RabbitProducer()
+    producer = RabbitProducer(
+        host=HOST, port=PORT, username=USERNAME, password=PASSWORD
+    )
     info_data = {underscore_to_camelcase(k): v for k, v in info.get_info_dict().items()}
 
     # 发送一次消息
@@ -49,7 +54,11 @@ if __name__ == "__main__":
     heartbeat_thread.start()
 
     asset_detect_message_consumer = RabbitConsumer(
-        queue_name=f"agentQueue" + info_data["macAddress"].replace(":", "")
+        host=HOST,
+        port=PORT,
+        username=USERNAME,
+        password=PASSWORD,
+        queue_name=f"agentQueue" + info_data["macAddress"].replace(":", ""),
     )
     asset_detect_message_callback = create_asset_detect_message_callback(
         info_data["macAddress"]
