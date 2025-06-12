@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>安全补丁检测</title>
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+  <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
+  <style>
+    .layui-form-item-short {
+      width: 400px !important; /* 设置为你想要的宽度 */
+    }
+  </style>
+</head>
+<body>
+
+<!--表单-->
+<div class="layui-fluid" style="padding: 20px;">
+  <div class="layui-card">
+    <div class="layui-form" lay-filter="layuiadmin-form-useradmin" id="layuiadmin-form-useradmin"
+         style="padding: 20px 0 0 0;">
+
+      <!-- 选择主机 -->
+      <div class="layui-form-item layui-form-item-short">
+        <label class="layui-form-label">选择主机：</label>
+        <div class="layui-input-block">
+          <select name="hostId" lay-verify="required" id="hostSelect">
+            <option value="">请选择主机</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 漏洞选项 -->
+      <div class="layui-form-item">
+        <label class="layui-form-label">漏洞选项：</label>
+        <div class="layui-input-block">
+          <input type="checkbox" name="scan-web" title="Web" lay-skin="primary">
+          <input type="checkbox" name="scan-sql" title="SQL" checked lay-skin="primary">
+          <input type="checkbox" name="scan-others" title="其他" lay-skin="primary">
+        </div>
+      </div>
+
+      <!-- 提交按钮 -->
+      <div class="layui-form-item">
+        <div class="layui-input-block">
+          <button type="submit" class="layui-btn" lay-submit lay-filter="LAY-user-front-submit">确认</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="/layui/layui.js"></script>
+<script>
+  layui.config({
+    base: '/layui/layuiAdmin/'
+  }).extend({
+    index: 'lib/index'
+  }).use(['index', 'layer', 'form'], function () {
+    var $ = layui.$
+            , form = layui.form
+            , layer = layui.layer;
+
+    // 加载主机列表
+    function loadHosts() {
+      $.ajax({
+        url: '/host/list',
+        type: 'POST', // 如果接口支持 GET 则改为 GET
+        data: { page: 1, limit: 10 }, // 如果需要分页参数
+        headers: {
+          'Authorization': localStorage.getItem('token')
+        },
+        success: function(res) {
+          if (res.code === 0) {
+            var hosts = res.data;
+            var select = $('#hostSelect');
+            select.empty().append('<option value="">请选择主机</option>');
+            hosts.forEach(function(host) {
+              select.append(new Option(host.hostName, host.id));
+            });
+            form.render('select'); // 渲染下拉框
+          } else {
+            layer.msg(res.msg || '获取主机失败', {icon: 5});
+          }
+        },
+        error: function(xhr, status, error) {
+          layer.msg("获取主机列表失败", {icon: 2});
+        }
+      });
+    }
+
+    // 页面加载时初始化主机列表
+    loadHosts();
+
+    // 监听表单提交
+    form.on('submit(LAY-user-front-submit)', function(data) {
+      var field = data.field;
+
+      var hostId = field.hostId;
+      if (!hostId) {
+        layer.msg('请选择主机', {icon: 5});
+        return false;
+      }
+
+      var detectData = {
+        hostId: hostId,
+        scanWeb: field['scan-web'] ? 1 : 0,
+        scanSql: field['scan-sql'] ? 1 : 0,
+        scanOthers: field['scan-others'] ? 1 : 0
+      };
+
+      // 发送请求
+      $.ajax({
+        url: '/host/detect',
+        type: 'POST',
+        data: detectData,
+        success: function(res) {
+          if (res.code === 0) {
+            layer.msg(res.msg || '检测任务已提交', {icon: 1});
+          } else {
+            layer.msg(res.msg || '检测失败', {icon: 5});
+          }
+        },
+        error: function(xhr, status, err) {
+          layer.msg('网络异常，请稍后再试', {icon: 2});
+        }
+      });
+
+      return false; // 阻止默认提交行为
+    });
+  });
+</script>
+</body>
+</html>
