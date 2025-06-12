@@ -67,6 +67,16 @@ public class Process {
      */
     private Integer detectId;
 
+    private Integer risk;
+    private String riskDesc;
+
+    public void setRisk(Integer risk) {this.risk = risk;}
+    public Integer getRisk() {return risk;}
+    public void setRiskDesc(String riskDesc) {this.riskDesc = riskDesc;}
+    public String getRiskDesc() {return riskDesc;}
+
+
+
     /**
      * 用于唯一标识进程，和进程本身信息无关
      */

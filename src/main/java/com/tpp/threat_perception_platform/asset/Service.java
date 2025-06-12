@@ -72,6 +72,16 @@ public class Service {
      */
     private Integer detectId;
 
+    private Integer risk;
+    private String riskDesc;
+
+    public void setRisk(Integer risk) {this.risk = risk;}
+    public Integer getRisk() {return risk;}
+    public void setRiskDesc(String riskDesc) {this.riskDesc = riskDesc;}
+    public String getRiskDesc() {return riskDesc;}
+
+
+
     /**
      * 用于表示服务的唯一id
      */

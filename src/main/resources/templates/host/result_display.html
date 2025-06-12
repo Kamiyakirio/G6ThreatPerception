@@ -187,7 +187,24 @@
         var serviceCols = [
             {field: 'serviceId', title: '服务id', fixed: 'left', minWidth: 150},
             {field: 'name', title: '显示名称', minWidth: 180},
-            {field: 'state', title: '状态', minWidth: 100},
+            {field: 'state', title: '状态', minWidth: 100}
+            , {
+                field: 'risk',
+                title: '风险等级',
+                minWidth: 150,
+                templet: function (d) {
+                    if (d.risk == 0) {
+                        return '<span style="background-color: green; color: white; padding: 2px 5px; border-radius: 3px;">无风险</span>';
+                    } else if (d.risk == 1) {
+                        return '<span style="background-color: orange; color: white; padding: 2px 5px; border-radius: 3px;">警告</span>';
+                    } else if (d.risk == 2) {
+                        return '<span style="background-color: red; color: white; padding: 2px 5px; border-radius: 3px;">高风险</span>';
+                    } else {
+                        return '<span style="color: #999;">未知</span>';
+                    }
+                }
+            }
+            , {field: "riskDesc", title: "风险描述", minWidth: 200},
             {field: 'protocol', title: '协议', minWidth: 100},
             {field: 'port', title: '端口', minWidth: 80},
             {field: 'product', title: '产品', minWidth: 150},
@@ -201,6 +218,23 @@
         var processCols = [
             {field: 'processId', title: '进程ID', fixed: 'left', minWidth: 120}
             , {field: 'name', title: '名称', minWidth: 120}
+            , {
+                field: 'risk',
+                title: '风险等级',
+                minWidth: 150,
+                templet: function (d) {
+                    if (d.risk == 0) {
+                        return '<span style="background-color: green; color: white; padding: 2px 5px; border-radius: 3px;">无风险</span>';
+                    } else if (d.risk == 1) {
+                        return '<span style="background-color: orange; color: white; padding: 2px 5px; border-radius: 3px;">警告</span>';
+                    } else if (d.risk == 2) {
+                        return '<span style="background-color: red; color: white; padding: 2px 5px; border-radius: 3px;">高风险</span>';
+                    } else {
+                        return '<span style="color: #999;">未知</span>';
+                    }
+                }
+            }
+            , {field: "riskDesc", title: "风险描述", minWidth: 200}
             , {field: 'pid', title: 'PID', minWidth: 80}
             , {field: 'ppid', title: 'PPID', minWidth: 80}
             , {field: 'cmd', title: '命令行', minWidth: 250}
@@ -215,6 +249,23 @@
         var appCols = [
             {field: 'appId', title: '应用ID', fixed: 'left', minWidth: 100}
             , {field: 'displayName', title: '显示名称', minWidth: 200}
+            , {
+                field: 'risk',
+                title: '风险等级',
+                minWidth: 150,
+                templet: function (d) {
+                    if (d.risk == 0) {
+                        return '<span style="background-color: green; color: white; padding: 2px 5px; border-radius: 3px;">无风险</span>';
+                    } else if (d.risk == 1) {
+                        return '<span style="background-color: orange; color: white; padding: 2px 5px; border-radius: 3px;">警告</span>';
+                    } else if (d.risk == 2) {
+                        return '<span style="background-color: red; color: white; padding: 2px 5px; border-radius: 3px;">高风险</span>';
+                    } else {
+                        return '<span style="color: #999;">未知</span>';
+                    }
+                }
+            }
+            , {field: "riskDesc", title: "风险描述", minWidth: 200}
             , {field: 'installLocation', title: '安装位置', minWidth: 250}
             , {field: 'uninstallString', title: '卸载字符串', minWidth: 250}
             , {field: 'hostName', title: '主机名', minWidth: 120}

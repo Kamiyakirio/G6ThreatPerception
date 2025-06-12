@@ -57,3 +57,5 @@ pnpm-lock.yaml
 # Optional: Ignore test coverage reports
 coverage/
 *.lcov
+
+application.properties
