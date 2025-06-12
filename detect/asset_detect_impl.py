@@ -1,8 +1,12 @@
+import os
+
+print("cwd:", os.getcwd())
 import wmi
 import pythoncom
 import json
 import nmap
 import winreg
+
 
 from utils.naming_convert import underscore_to_camelcase
 
@@ -112,7 +116,7 @@ def detect_service():
     # 创建一个扫描仪对象
     nm = nmap.PortScanner()
     # 扫描目标主机
-    nm.scan(hosts="127.0.0.1", arguments="-sSV -Pn")  # 指定扫描端口范围
+    nm.scan(hosts="127.0.0.1", arguments="-sSV -Pn -p 1-32767 -T4")  # 指定扫描端口范围
     # 获取扫描结果
     state = nm.all_hosts()
     # 装最终结果的
@@ -143,4 +147,5 @@ def detect_service():
 
 
 if __name__ == "__main__":
-    detect_app()
+
+    detect_service()
