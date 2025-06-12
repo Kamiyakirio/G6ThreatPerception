@@ -123,7 +123,7 @@
                 , autoSort: false
                 , height: 'full-150'
 
-                , done: function(res) {
+                , done: function (res) {
                     if (res.data && res.data.length === 0) {
                         document.getElementById(noDataId).style.display = 'block';
                     } else {
@@ -139,11 +139,11 @@
             {field: 'sid', title: 'SID', fixed: 'left', minWidth: 100}
             , {field: 'name', title: '名称', minWidth: 100}
             , {field: 'fullName', title: '全称', minWidth: 150}
-            ,{
+            , {
                 field: 'risk',
                 title: '风险等级',
                 minWidth: 150,
-                templet: function(d) {
+                templet: function (d) {
                     if (d.risk == 0) {
                         return '<span style="background-color: green; color: white; padding: 2px 5px; border-radius: 3px;">无风险</span>';
                     } else if (d.risk == 1) {
@@ -153,7 +153,9 @@
                     } else {
                         return '<span style="color: #999;">未知</span>';
                     }
-                }}
+                }
+            }
+            , {field: "riskDesc", title: "风险描述", minWidth: 200}
             , {field: 'sidType', title: 'SID类型', minWidth: 100}
             , {field: 'status', title: '状态', minWidth: 80}
             , {field: 'disabled', title: '禁用', templet: '<div>{{d.disabled == 1 ? "是" : "否"}}</div>', minWidth: 80}
