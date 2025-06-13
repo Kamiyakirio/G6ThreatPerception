@@ -51,16 +51,6 @@
         </div>
       </div>
 
-      <!-- 漏洞选项 -->
-      <div class="layui-form-item">
-        <label class="layui-form-label">漏洞选项：</label>
-        <div class="layui-input-block">
-          <input type="checkbox" name="scan-web" title="Web" lay-skin="primary">
-          <input type="checkbox" name="scan-sql" title="SQL" checked lay-skin="primary">
-          <input type="checkbox" name="scan-others" title="其他" lay-skin="primary">
-        </div>
-      </div>
-
     </div>
   </div>
 </div>
@@ -115,27 +105,62 @@
         return;
       }
 
-      var detectData = {
-        hostId: hostId,
-        scanWeb: $('[name="scan-web"]').is(':checked') ? 1 : 0,
-        scanSql: $('[name="scan-sql"]').is(':checked') ? 1 : 0,
-        scanOthers: $('[name="scan-others"]').is(':checked') ? 1 : 0
-      };
-
-      // 发送请求
+      // 获取主机信息
       $.ajax({
-        url: '/host/detect',
+        url: '/host/list',
         type: 'POST',
-        data: detectData,
+        headers: {
+          'Authorization': localStorage.getItem('token')
+        },
+        data: {
+          page: 1,
+          limit: 10,
+          id: hostId
+        },
         success: function(res) {
-          if (res.code === 0) {
-            layer.msg(res.msg || '检测任务已提交', {icon: 1});
+          if (res.code === 0 && res.data && res.data.length > 0) {
+            var host = res.data[0];
+            var detectData = {
+              id: hostId,
+              type: 'hotfix',
+              hostName: host.hostName,
+              macAddress: host.macAddress,
+              scanWeb: $('[name="scan-web"]').is(':checked') ? 1 : 0,
+              scanSql: $('[name="scan-sql"]').is(':checked') ? 1 : 0,
+              scanOthers: $('[name="scan-others"]').is(':checked') ? 1 : 0
+            };
+            
+            // 发送检测请求
+            $.ajax({
+              url: '/host/detect',
+              type: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': localStorage.getItem('token')
+              },
+              data: JSON.stringify({
+                id: detectData.id,
+                hostName: detectData.hostName,
+                macAddress: detectData.macAddress,
+                type: 'hotfix'
+              }),
+              success: function(res) {
+                if (res.code === 0) {
+                  layer.msg(res.msg || '检测任务已提交', {icon: 1});
+                } else {
+                  layer.msg(res.msg || '检测失败', {icon: 5});
+                }
+              },
+              error: function(xhr, status, err) {
+                layer.msg('网络异常，请稍后再试', {icon: 2});
+              }
+            });
           } else {
-            layer.msg(res.msg || '检测失败', {icon: 5});
+            layer.msg('获取主机信息失败', {icon: 5});
           }
         },
         error: function(xhr, status, err) {
-          layer.msg('网络异常，请稍后再试', {icon: 2});
+          layer.msg('获取主机信息失败', {icon: 2});
         }
       });
     });
