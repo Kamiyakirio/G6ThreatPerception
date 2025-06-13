@@ -33,4 +33,21 @@ public interface HotfixResultMapper {
      */
     int batchInsertHotfixResults(@Param("macAddress") String macAddress, @Param("kbIds") List<String> kbIds);
 
+    /**
+     * 分页查询补丁检测结果
+     * @param hostId 主机ID
+     * @param offset 偏移量
+     * @param limit 每页数量
+     * @return 补丁检测结果列表
+     */
+    List<HotfixResult> selectPageList(@Param("hostId") String hostId, 
+                                    @Param("offset") Integer offset, 
+                                    @Param("limit") Integer limit);
+
+    /**
+     * 获取总记录数
+     * @param hostId 主机ID
+     * @return 总记录数
+     */
+    int selectTotalCount(@Param("hostId") String hostId);
 }

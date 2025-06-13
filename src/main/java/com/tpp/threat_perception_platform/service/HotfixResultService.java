@@ -1,6 +1,7 @@
 package com.tpp.threat_perception_platform.service;
 
 import com.tpp.threat_perception_platform.dao.HotfixResultMapper;
+import com.tpp.threat_perception_platform.pojo.HotfixResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,5 +49,25 @@ public class HotfixResultService {
         logger.info("补丁检测结果处理完成，插入记录数: {}", count);
         
         return count;
+    }
+
+    /**
+     * 分页查询补丁检测结果
+     * @param hostId 主机ID
+     * @param offset 偏移量
+     * @param limit 每页数量
+     * @return 补丁检测结果列表
+     */
+    public List<HotfixResult> getPageList(String hostId, Integer offset, Integer limit) {
+        return hotfixResultMapper.selectPageList(hostId, offset, limit);
+    }
+
+    /**
+     * 获取总记录数
+     * @param hostId 主机ID
+     * @return 总记录数
+     */
+    public int getTotalCount(String hostId) {
+        return hotfixResultMapper.selectTotalCount(hostId);
     }
 } 

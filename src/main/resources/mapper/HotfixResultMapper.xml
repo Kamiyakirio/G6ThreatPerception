@@ -13,7 +13,7 @@
             <result property="cvrfId" column="cvrf_id" />
             <result property="productId" column="product_id" />
             <result property="productName" column="product_name" />
-            <result property="dt" column="dt" />
+            <result property="dt" column="dt" jdbcType="TIMESTAMP" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -99,7 +99,7 @@
             wcvd.cvrf_id,
             wpn.product_id,
             wpn.product_name,
-            CURRENT_DATE as dt
+            CURRENT_TIMESTAMP(0) as dt
         FROM 
             win_cve_db wcvd
         CROSS JOIN (
@@ -116,7 +116,7 @@
             cvrf_id = VALUES(cvrf_id),
             product_id = VALUES(product_id),
             product_name = VALUES(product_name),
-            dt = VALUES(dt)
+            dt = CURRENT_TIMESTAMP(0)
     </insert>
     <update id="updateByPrimaryKeySelective" parameterType="com.tpp.threat_perception_platform.pojo.HotfixResult">
         update hotfix_result
@@ -161,4 +161,33 @@
             dt =  #{dt}
         where   id = #{id} 
     </update>
+
+    <!-- 分页查询 -->
+    <select id="selectPageList" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from hotfix_result
+        <where>
+            <if test="hostId != null and hostId != ''">
+                AND mac_address = (
+                    select mac_address from host where id = #{hostId}
+                )
+            </if>
+        </where>
+        order by dt desc, id desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <!-- 获取总记录数 -->
+    <select id="selectTotalCount" resultType="java.lang.Integer">
+        select count(*)
+        from hotfix_result
+        <where>
+            <if test="hostId != null and hostId != ''">
+                AND mac_address = (
+                    select mac_address from host where id = #{hostId}
+                )
+            </if>
+        </where>
+    </select>
 </mapper>
