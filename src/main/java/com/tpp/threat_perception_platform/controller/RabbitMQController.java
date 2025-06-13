@@ -15,6 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.amqp.RabbitProperties;
 import org.springframework.stereotype.Component;
 import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,18 +27,20 @@ import com.tpp.threat_perception_platform.asset.Process;
 
 @Component
 public class RabbitMQController {
+    private static final Logger logger = LoggerFactory.getLogger(RabbitMQController.class);
 
     @Autowired
     private HostMapper hostMapper;
     @Autowired
-    private AccountMapper  accountMapper;
+    private AccountMapper accountMapper;
     @Autowired
     private AppMapper appMapper;
     @Autowired
-    private ProcessMapper  processMapper;
+    private ProcessMapper processMapper;
     @Autowired
     private ServiceMapper serviceMapper;
-
+    @Autowired
+    private ObjectMapper objectMapper;
 
     //查询并设置探测结构id
     private int getNextDetectId(String macAddress, AccountMapper mapper) {
@@ -55,33 +61,42 @@ public class RabbitMQController {
     }
 
     @RabbitListener(queues = "hello")
-    public void receiveHostInfo(String messageBody, Message message, Channel channel) throws IOException {
+    public void receiveHostInfo(Message message, Channel channel) throws IOException {
         long tag = message.getMessageProperties().getDeliveryTag();
-//        System.out.println(messageBody);
+        try {
+            String messageBody = new String(message.getBody());
+            logger.info("收到主机信息消息: {}", messageBody);
+            
+            // 使用 ObjectMapper 解析 JSON
+            HashMap<String, Object> dataDict = objectMapper.readValue(messageBody, HashMap.class);
+            
+            Host host = new Host();
+            host.setMacAddress(dataDict.get("macAddress").toString());
+            host.setHostName(dataDict.get("pcName").toString());
+            host.setIpAddress(dataDict.get("ipAddress").toString());
+            host.setOsType(dataDict.get("osName").toString());
+            host.setOsName(dataDict.get("osName").toString() + " " + dataDict.get("osNameDetailed").toString());
+            host.setCpuName(dataDict.get("cpuInfo").toString());
+            host.setOsBit(dataDict.get("osBit").toString());
+            host.setRam(dataDict.get("memorySize").toString());
 
-        Host host = new Host();
-        HashMap<String, Object> dataDict = JSON.parseObject(messageBody, HashMap.class);
+            Host savedResult = hostMapper.selectByMacAddress(host.getMacAddress());
+            if (savedResult != null) {
+                host.setUpdateTime(new Date(System.currentTimeMillis()));
+                host.setId(savedResult.getId());
+                hostMapper.updateByPrimaryKeySelective(host);
+            } else {
+                host.setCreateTime(new Date(System.currentTimeMillis()));
+                hostMapper.insert(host);
+            }
 
-        host.setMacAddress(dataDict.get("macAddress").toString());
-        host.setHostName(dataDict.get("pcName").toString());
-        host.setIpAddress(dataDict.get("ipAddress").toString());
-        host.setOsType(dataDict.get("osName").toString());
-        host.setOsName(dataDict.get("osName").toString() + " "+dataDict.get("osNameDetailed").toString());
-        host.setCpuName(dataDict.get("cpuInfo").toString());
-        host.setOsBit(dataDict.get("osBit").toString());
-        host.setRam(dataDict.get("memorySize").toString());
-
-        Host savedResult = hostMapper.selectByMacAddress(host.getMacAddress());
-        if (savedResult != null) {
-            host.setUpdateTime(new Date(System.currentTimeMillis()));
-            host.setId(savedResult.getId());
-            hostMapper.updateByPrimaryKeySelective(host);
-        } else {
-            host.setCreateTime(new Date(System.currentTimeMillis()));
-            hostMapper.insert(host);
+            channel.basicAck(tag, false);
+            logger.info("主机信息处理成功");
+        } catch (Exception e) {
+            logger.error("处理主机信息失败: {}", e.getMessage(), e);
+            // 消息处理失败，拒绝消息并重新入队
+            channel.basicNack(tag, false, true);
         }
-
-        channel.basicAck(tag, false);
     }
 
     @RabbitListener(queues = "detect_result")

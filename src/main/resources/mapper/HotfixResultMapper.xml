@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tpp.threat_perception_platform.dao.HotfixResultMapper">
+
+    <resultMap id="BaseResultMap" type="com.tpp.threat_perception_platform.pojo.HotfixResult">
+            <id property="id" column="id" />
+            <result property="macAddress" column="mac_address" />
+            <result property="kbId" column="kb_id" />
+            <result property="cveId" column="cve_id" />
+            <result property="score" column="score" />
+            <result property="cvrfId" column="cvrf_id" />
+            <result property="productId" column="product_id" />
+            <result property="productName" column="product_name" />
+            <result property="dt" column="dt" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,mac_address,kb_id,cve_id,score,cvrf_id,
+        product_id,product_name,dt
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from hotfix_result
+        where  id = #{id} 
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from hotfix_result
+        where  id = #{id} 
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.tpp.threat_perception_platform.pojo.HotfixResult" useGeneratedKeys="true">
+        insert into hotfix_result
+        ( id,mac_address,kb_id,cve_id,score,cvrf_id,
+        product_id,product_name,dt)
+        values (#{id},#{macAddress},#{kbId},#{cveId},#{score},#{cvrfId},
+        #{productId},#{productName},#{dt})
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.tpp.threat_perception_platform.pojo.HotfixResult" useGeneratedKeys="true">
+        insert into hotfix_result
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="macAddress != null">mac_address,</if>
+                <if test="kbId != null">kb_id,</if>
+                <if test="cveId != null">cve_id,</if>
+                <if test="score != null">score,</if>
+                <if test="cvrfId != null">cvrf_id,</if>
+                <if test="productId != null">product_id,</if>
+                <if test="productName != null">product_name,</if>
+                <if test="dt != null">dt,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id},</if>
+                <if test="macAddress != null">#{macAddress},</if>
+                <if test="kbId != null">#{kbId},</if>
+                <if test="cveId != null">#{cveId},</if>
+                <if test="score != null">#{score},</if>
+                <if test="cvrfId != null">#{cvrfId},</if>
+                <if test="productId != null">#{productId},</if>
+                <if test="productName != null">#{productName},</if>
+                <if test="dt != null">#{dt},</if>
+        </trim>
+    </insert>
+    <insert id="batchInsertHotfixResults">
+        INSERT INTO hotfix_result (
+            mac_address,
+            kb_id,
+            cve_id,
+            score,
+            cvrf_id,
+            product_id,
+            product_name,
+            dt
+        )
+        WITH debug_cte AS (
+            SELECT 
+                wcvd.id,
+                wcvd.cve,
+                wcvd.kb_list,
+                kb.kb_id
+            FROM 
+                win_cve_db wcvd
+            CROSS JOIN (
+                <foreach item="kbId" collection="kbIds" open="" separator="UNION ALL" close="">
+                    SELECT #{kbId} as kb_id
+                </foreach>
+            ) kb
+            WHERE 
+                wcvd.kb_list LIKE CONCAT('%', kb.kb_id, '%')
+        )
+        SELECT DISTINCT
+            #{macAddress} as mac_address,
+            kb.kb_id,
+            wcvd.cve as cve_id,
+            CAST(wcvd.score AS DECIMAL(3,1)) as score,
+            wcvd.cvrf_id,
+            wpn.product_id,
+            wpn.product_name,
+            CURRENT_DATE as dt
+        FROM 
+            win_cve_db wcvd
+        CROSS JOIN (
+            <foreach item="kbId" collection="kbIds" open="" separator="UNION ALL" close="">
+                SELECT #{kbId} as kb_id
+            </foreach>
+        ) kb
+        LEFT JOIN win_product_name wpn ON 
+            FIND_IN_SET(wpn.product_id, REPLACE(wcvd.product_id_list, ' ', '')) > 0
+        WHERE 
+            wcvd.kb_list LIKE CONCAT('%', kb.kb_id, '%')
+        ON DUPLICATE KEY UPDATE
+            score = VALUES(score),
+            cvrf_id = VALUES(cvrf_id),
+            product_id = VALUES(product_id),
+            product_name = VALUES(product_name),
+            dt = VALUES(dt)
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.tpp.threat_perception_platform.pojo.HotfixResult">
+        update hotfix_result
+        <set>
+                <if test="macAddress != null">
+                    mac_address = #{macAddress},
+                </if>
+                <if test="kbId != null">
+                    kb_id = #{kbId},
+                </if>
+                <if test="cveId != null">
+                    cve_id = #{cveId},
+                </if>
+                <if test="score != null">
+                    score = #{score},
+                </if>
+                <if test="cvrfId != null">
+                    cvrf_id = #{cvrfId},
+                </if>
+                <if test="productId != null">
+                    product_id = #{productId},
+                </if>
+                <if test="productName != null">
+                    product_name = #{productName},
+                </if>
+                <if test="dt != null">
+                    dt = #{dt},
+                </if>
+        </set>
+        where   id = #{id} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.tpp.threat_perception_platform.pojo.HotfixResult">
+        update hotfix_result
+        set 
+            mac_address =  #{macAddress},
+            kb_id =  #{kbId},
+            cve_id =  #{cveId},
+            score =  #{score},
+            cvrf_id =  #{cvrfId},
+            product_id =  #{productId},
+            product_name =  #{productName},
+            dt =  #{dt}
+        where   id = #{id} 
+    </update>
+</mapper>
