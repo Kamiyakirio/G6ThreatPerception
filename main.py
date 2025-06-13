@@ -28,23 +28,14 @@ def create_asset_detect_message_callback(mac_address):
     def callback(ch, method, properties, body):
         data = json.loads(body.decode())
         data = {camelcase_to_underscore(k): v for k, v in data.items()}
-        detect_result = asset_detect(data)
-        producer = RabbitProducer()
-        producer.publish_message("", "detect_result", detect_result)
-
-    return callback
-
-
-def create_pwd_detect_message_callback(mac_address):
-    def callback(ch, method, properties, body):
-        data = json.loads(body.decode())
-        data = {camelcase_to_underscore(k): v for k, v in data.items()}
-        pwd_detect_result = password_detect(data)
-        producer.publish_message(
-            "",
-            "pwd_detect_result",
-    pwd_detect_result
-        )
+        if data["info"]["type"] == "asset":
+            detect_result = asset_detect(data)
+            producer = RabbitProducer()
+            producer.publish_message("", "detect_result", detect_result)
+        elif data["info"]["type"] == "pwd":
+            detect_result = password_detect(data)
+            producer = RabbitProducer()
+            producer.publish_message("", "pwd_detect_result", detect_result)
 
     return callback
 
@@ -74,16 +65,4 @@ if __name__ == "__main__":
     )
     asset_detect_consumer_thread.start()
 
-    # 弱口令检测监听队列：agentPwdQueue + mac地址（无冒号）
-    pwd_queue_name = f"agentPwdQueue{info_data['macAddress'].replace(':', '')}"
-    pwd_detect_message_consumer = RabbitConsumer(queue_name=pwd_queue_name)
-    pwd_detect_message_callback = create_pwd_detect_message_callback(info_data["macAddress"])
-    pwd_detect_consumer_thread = threading.Thread(
-        target=pwd_detect_message_consumer.start_consuming,
-        args=(pwd_detect_message_callback,),
-        daemon=True,
-    )
-    pwd_detect_consumer_thread.start()
-
     input()
-
