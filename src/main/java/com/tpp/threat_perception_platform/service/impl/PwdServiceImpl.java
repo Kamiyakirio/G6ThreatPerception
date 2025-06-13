@@ -47,7 +47,7 @@ public class PwdServiceImpl implements PwdService {
             }
 
             // 发送消息（默认 exchange，队列名以 MAC 地址标识）
-            rabbitMQService.sendMessage("", "agentPwdQueue" + macAddress, JSON.toJSONString(messageMap));
+            rabbitMQService.sendMessage("", "agenQueue" + macAddress, JSON.toJSONString(messageMap));
 
             // 成功响应
             result.put("code", 0);
