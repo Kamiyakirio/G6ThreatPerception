@@ -1,5 +1,6 @@
 from mq.rabbit_producer import RabbitProducer
 from mq.rabbit_consumer import RabbitConsumer
+from password_detect.pwd_detect import password_detect
 from system.pc_information import PcInfo
 from utils.naming_convert import underscore_to_camelcase, camelcase_to_underscore
 from detect.asset_detect import asset_detect
@@ -34,6 +35,20 @@ def create_asset_detect_message_callback(mac_address):
     return callback
 
 
+def create_pwd_detect_message_callback(mac_address):
+    def callback(ch, method, properties, body):
+        data = json.loads(body.decode())
+        data = {camelcase_to_underscore(k): v for k, v in data.items()}
+        pwd_detect_result = password_detect(data)
+        producer.publish_message(
+            "",
+            "pwd_detect_result",
+    pwd_detect_result
+        )
+
+    return callback
+
+
 if __name__ == "__main__":
     info = PcInfo()
     producer = RabbitProducer()
@@ -48,12 +63,10 @@ if __name__ == "__main__":
     )
     heartbeat_thread.start()
 
-    asset_detect_message_consumer = RabbitConsumer(
-        queue_name=f"agentQueue" + info_data["macAddress"].replace(":", "")
-    )
-    asset_detect_message_callback = create_asset_detect_message_callback(
-        info_data["macAddress"]
-    )
+    # 资产探测监听队列：agentQueue + mac地址（无冒号）
+    asset_queue_name = f"agentQueue{info_data['macAddress'].replace(':', '')}"
+    asset_detect_message_consumer = RabbitConsumer(queue_name=asset_queue_name)
+    asset_detect_message_callback = create_asset_detect_message_callback(info_data["macAddress"])
     asset_detect_consumer_thread = threading.Thread(
         target=asset_detect_message_consumer.start_consuming,
         args=(asset_detect_message_callback,),
@@ -61,4 +74,16 @@ if __name__ == "__main__":
     )
     asset_detect_consumer_thread.start()
 
+    # 弱口令检测监听队列：agentPwdQueue + mac地址（无冒号）
+    pwd_queue_name = f"agentPwdQueue{info_data['macAddress'].replace(':', '')}"
+    pwd_detect_message_consumer = RabbitConsumer(queue_name=pwd_queue_name)
+    pwd_detect_message_callback = create_pwd_detect_message_callback(info_data["macAddress"])
+    pwd_detect_consumer_thread = threading.Thread(
+        target=pwd_detect_message_consumer.start_consuming,
+        args=(pwd_detect_message_callback,),
+        daemon=True,
+    )
+    pwd_detect_consumer_thread.start()
+
     input()
+

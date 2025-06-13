@@ -39,4 +39,5 @@ def asset_detect(data):
     return_data["info"]["time"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     print("Detect all ended!")
+    print(return_data)
     return json.dumps(return_data)
