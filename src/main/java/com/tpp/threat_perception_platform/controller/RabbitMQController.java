@@ -8,6 +8,7 @@ import com.tpp.threat_perception_platform.asset.Account;
 import com.tpp.threat_perception_platform.asset.App;
 import com.tpp.threat_perception_platform.asset.Service;
 import com.tpp.threat_perception_platform.dao.*;
+import com.tpp.threat_perception_platform.pojo.AppRiskResult;
 import com.tpp.threat_perception_platform.pojo.Host;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -34,6 +35,8 @@ public class RabbitMQController {
     private ProcessMapper  processMapper;
     @Autowired
     private ServiceMapper serviceMapper;
+    @Autowired
+    private AppRiskResultMapper appRiskResultMapper;
 
 
     //查询并设置探测结构id
@@ -51,6 +54,11 @@ public class RabbitMQController {
     }
     private int getNextDetectId(String macAddress, ProcessMapper mapper) {
         Integer lastId = mapper.selectLastDetectIdByMac(macAddress);
+        return (lastId == null) ? 0 : lastId + 1;
+    }
+
+    private int getNextDetectIdForAppRisk(String hostIdentifier) {
+        Integer lastId = appRiskResultMapper.selectLastDetectIdByHostIdentifier(hostIdentifier);
         return (lastId == null) ? 0 : lastId + 1;
     }
 
@@ -252,6 +260,51 @@ public class RabbitMQController {
         } catch (Exception e) {
             //失败后仍然确认消息
             channel.basicAck(deliveryTag, false);
+        }
+    }
+
+    @RabbitListener(queues = "apprisk_detect_result")
+    public void receiveAppRiskDetectResult(String messageBody, Message message, Channel channel) throws IOException {
+        long deliveryTag = message.getMessageProperties().getDeliveryTag();
+        System.out.println("收到应用风险探测结果: " + messageBody);
+        
+        try {
+            JSONObject jsonObject = JSON.parseObject(messageBody);
+            JSONObject info = jsonObject.getJSONObject("info");
+            JSONArray data = jsonObject.getJSONArray("data");
+            
+            // 获取MAC地址和主机标识符
+            String macAddress = info.getString("macAddress");
+            String hostIdentifier = info.getString("hostIdentifier");
+            
+            if (data != null && !data.isEmpty()) {
+                for (int i = 0; i < data.size(); i++) {
+                    JSONObject riskData = data.getJSONObject(i);
+                    AppRiskResult result = new AppRiskResult();
+                    
+                    // 设置基本字段
+                    result.setHostIdentifier(hostIdentifier);
+                    result.setMacAddress(macAddress);
+                    result.setAppriskId(riskData.getInteger("appriskId"));
+                    result.setIsVulnerable(riskData.getByte("isVulnerable"));
+                    result.setResultEvidence(riskData.getString("resultEvidence"));
+                    result.setDetectedAt(new Date());
+                    
+                    // 插入数据库
+                    appRiskResultMapper.insertSelective(result);
+                }
+                System.out.println("应用风险探测结果已保存到数据库");
+            }
+            
+            // 确认消息已被处理
+            channel.basicAck(deliveryTag, false);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("处理应用风险探测结果失败: " + e.getMessage());
+            
+            // 如果处理失败，拒绝消息并重新入队
+            channel.basicNack(deliveryTag, false, true);
         }
     }
 }
