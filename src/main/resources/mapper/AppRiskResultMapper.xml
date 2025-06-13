@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tpp.threat_perception_platform.dao.AppRiskResultMapper">
+
+    <resultMap id="BaseResultMap" type="com.tpp.threat_perception_platform.pojo.AppRiskResult">
+        <id property="id" column="id" />
+        <result property="hostIdentifier" column="host_identifier" />
+        <result property="macAddress" column="mac_address" />
+        <result property="appriskId" column="apprisk_id" />
+        <result property="appriskName" column="apprisk_name" />
+        <result property="isVulnerable" column="is_vulnerable" />
+        <result property="resultEvidence" column="result_evidence" />
+        <result property="detectedAt" column="detected_at" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        ar.id, ar.host_identifier, ar.mac_address, ar.apprisk_id, 
+        a.apprisk_name, ar.is_vulnerable, ar.result_evidence, ar.detected_at
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from apprisk_results ar
+        left join apprisk a on ar.apprisk_id = a.id
+        where ar.id = #{id}
+    </select>
+
+    <select id="selectByHostIdentifier" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from apprisk_results ar
+        left join apprisk a on ar.apprisk_id = a.id
+        where ar.host_identifier = #{hostIdentifier}
+        order by ar.detected_at desc
+    </select>
+
+    <select id="selectByMacAddress" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from apprisk_results ar
+        left join apprisk a on ar.apprisk_id = a.id
+        where ar.mac_address = #{macAddress}
+        order by ar.detected_at desc
+    </select>
+
+    <select id="selectLastDetectIdByHostIdentifier" parameterType="java.lang.String" resultType="java.lang.Integer">
+        select
+        max(id)
+        from apprisk_results
+        where host_identifier = #{hostIdentifier}
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+        delete from apprisk_results
+        where id = #{id}
+    </delete>
+
+    <insert id="insert" parameterType="com.tpp.threat_perception_platform.pojo.AppRiskResult" useGeneratedKeys="true" keyProperty="id">
+        insert into apprisk_results (host_identifier, mac_address, apprisk_id, is_vulnerable, result_evidence, detected_at)
+        values (#{hostIdentifier}, #{macAddress}, #{appriskId}, #{isVulnerable}, #{resultEvidence}, #{detectedAt})
+    </insert>
+
+    <insert id="insertSelective" parameterType="com.tpp.threat_perception_platform.pojo.AppRiskResult" useGeneratedKeys="true" keyProperty="id">
+        insert into apprisk_results
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="hostIdentifier != null">host_identifier,</if>
+            <if test="macAddress != null">mac_address,</if>
+            <if test="appriskId != null">apprisk_id,</if>
+            <if test="isVulnerable != null">is_vulnerable,</if>
+            <if test="resultEvidence != null">result_evidence,</if>
+            <if test="detectedAt != null">detected_at,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="hostIdentifier != null">#{hostIdentifier},</if>
+            <if test="macAddress != null">#{macAddress},</if>
+            <if test="appriskId != null">#{appriskId},</if>
+            <if test="isVulnerable != null">#{isVulnerable},</if>
+            <if test="resultEvidence != null">#{resultEvidence},</if>
+            <if test="detectedAt != null">#{detectedAt},</if>
+        </trim>
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.tpp.threat_perception_platform.pojo.AppRiskResult">
+        update apprisk_results
+        <set>
+            <if test="hostIdentifier != null">host_identifier = #{hostIdentifier},</if>
+            <if test="macAddress != null">mac_address = #{macAddress},</if>
+            <if test="appriskId != null">apprisk_id = #{appriskId},</if>
+            <if test="isVulnerable != null">is_vulnerable = #{isVulnerable},</if>
+            <if test="resultEvidence != null">result_evidence = #{resultEvidence},</if>
+            <if test="detectedAt != null">detected_at = #{detectedAt},</if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <update id="updateByPrimaryKey" parameterType="com.tpp.threat_perception_platform.pojo.AppRiskResult">
+        update apprisk_results
+        set host_identifier = #{hostIdentifier},
+            mac_address = #{macAddress},
+            apprisk_id = #{appriskId},
+            is_vulnerable = #{isVulnerable},
+            result_evidence = #{resultEvidence},
+            detected_at = #{detectedAt}
+        where id = #{id}
+    </update>
+
+    <select id="selectLatestByMacAddress" parameterType="java.lang.String" resultMap="BaseResultMap">
+        WITH LatestDetection AS (
+            SELECT MAX(detected_at) as latest_time
+            FROM apprisk_results
+            WHERE mac_address = #{macAddress}
+        )
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM apprisk_results ar
+        LEFT JOIN apprisk a ON ar.apprisk_id = a.id
+        WHERE ar.mac_address = #{macAddress}
+        AND ar.detected_at = (SELECT latest_time FROM LatestDetection)
+        ORDER BY ar.id ASC
+    </select>
+</mapper> 
