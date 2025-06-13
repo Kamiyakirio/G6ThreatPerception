@@ -1,6 +1,4 @@
 import os
-
-print("cwd:", os.getcwd())
 import wmi
 import pythoncom
 import json
