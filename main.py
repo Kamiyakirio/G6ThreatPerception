@@ -27,28 +27,29 @@ def send_heart_beat(mac_address):
 
 def create_asset_detect_message_callback(mac_address):
     def callback(ch, method, properties, body):
-        try:
-            print(f"[*] 从队列 agentQueue{mac_address} 收到消息")
-            data = json.loads(body.decode())
-            data = {camelcase_to_underscore(k): v for k, v in data.items()}
+        print(f"[*] 从队列 agentQueue{mac_address} 收到消息")
+        data = json.loads(body.decode())
+        data = {camelcase_to_underscore(k): v for k, v in data.items()}
+        detect_result = None # Initialize to None
+        queue_name = None
 
-            # 根据消息类型执行不同的检测
-            if data["info"]["type"] == "asset":
-                detect_result = asset_detect(data)
-            elif data["info"]["type"] == "hotfix":
-                detect_result = hotfix_detect(data)
+        if data['info']['type'] == 'assets':
+            detect_result = asset_detect(data)
+            queue_name = "detect_result"
+        elif data['info']['type'] == 'hotfix':
+            detect_result = hotfix_detect(data)
+            queue_name = "hotfix_detect_result"
+        else:
+            print(f"未知检测类型: {data['info']['type']}")
+            return
             
-            # 将结果发送到detect_result队列
-            print("[*] 发送检测结果到detect_result队列")
+        if detect_result and queue_name:
+            print(f"[*] 发送检测结果到{queue_name}队列")
+            print(f"[*] 发送的JSON数据: {detect_result}")
             producer = RabbitProducer(
                 host=HOST, port=PORT, username=USERNAME, password=PASSWORD
             )
-            producer.publish_message("", "detect_result", detect_result)
-            print("[*] 检测结果发送完成")
-
-        except Exception as e:
-            print(f"[!] 处理消息时出错: {e}")
-            raise e  # 重新抛出异常，让上层处理
+            producer.publish_message("", queue_name, detect_result)
 
     return callback
 

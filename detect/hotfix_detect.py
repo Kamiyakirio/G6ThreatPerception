@@ -11,11 +11,8 @@ def hotfix_detect(data):
     :return: JSON格式的检测结果
     """
     print("开始补丁安全发现......")
-    result = {
-        "type": "hotfix",
-        "status": "success",
-        "data": []
-    }
+    result = []
+    mac_address = data['info']['macAddress']
 
     try:
         if platform.system() == "Windows":
@@ -32,13 +29,10 @@ def hotfix_detect(data):
                 # 组装补丁信息
                 for hotfix in hotfixes:
                     patch_info = {
-                        'id': hotfix.HotFixID,
-                        'description': hotfix.Description or '',
-                        'installedDate': str(hotfix.InstalledOn or ''),
-                        'caption': hotfix.Caption or '',
-                        'status': 'Installed'
+                        'macAddress': mac_address,
+                        'hotfixId': hotfix.HotFixID
                     }
-                    result["data"].append(patch_info)
+                    result.append(patch_info)
                     
             finally:
                 # 确保COM被正确释放
@@ -57,13 +51,10 @@ def hotfix_detect(data):
                         parts = update.split()
                         if len(parts) >= 2:
                             patch_info = {
-                                'id': parts[0],
-                                'description': f'Version: {parts[1]}',
-                                'installedDate': '',
-                                'caption': 'APT Package',
-                                'status': 'Installed'
+                                'macAddress': mac_address,
+                                'hotfixId': parts[0]
                             }
-                            result["data"].append(patch_info)
+                            result.append(patch_info)
                             
             elif subprocess.run(["which", "yum"], stdout=subprocess.PIPE).returncode == 0:
                 # CentOS/RHEL
@@ -74,28 +65,18 @@ def hotfix_detect(data):
                         parts = update.split()
                         if len(parts) >= 2:
                             patch_info = {
-                                'id': parts[0],
-                                'description': f'Version: {parts[1]}',
-                                'installedDate': '',
-                                'caption': 'YUM Package',
-                                'status': 'Installed'
+                                'macAddress': mac_address,
+                                'hotfixId': parts[0]
                             }
-                            result["data"].append(patch_info)
+                            result.append(patch_info)
         else:
-            result["status"] = "error"
-            result["message"] = f"不支持的操作系统: {platform.system()}"
+            print(f"不支持的操作系统: {platform.system()}")
             
     except Exception as e:
-        result["status"] = "error"
-        result["message"] = str(e)
         print(f"补丁检测出错: {e}")
+        # 发生错误时返回空列表
+        result = []
     
     print("补丁检测完成!")
-    print("检测到的补丁信息：")
-    for patch in result["data"]:
-        print(f"补丁ID: {patch['id']}")
-        print(f"描述: {patch['description']}")
-        print(f"安装日期: {patch['installedDate']}")
-        print("------------------------")
-    
+    print(f"检测到 {len(result)} 个补丁")
     return json.dumps(result)
