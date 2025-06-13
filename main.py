@@ -4,6 +4,7 @@ from system.pc_information import PcInfo
 from utils.naming_convert import underscore_to_camelcase, camelcase_to_underscore
 from detect.asset_detect import asset_detect
 from config.rabbit_config import *
+from detect.hotfix_detect import hotfix_detect
 
 import json
 import time
@@ -26,13 +27,28 @@ def send_heart_beat(mac_address):
 
 def create_asset_detect_message_callback(mac_address):
     def callback(ch, method, properties, body):
-        data = json.loads(body.decode())
-        data = {camelcase_to_underscore(k): v for k, v in data.items()}
-        detect_result = asset_detect(data)
-        producer = RabbitProducer(
-            host=HOST, port=PORT, username=USERNAME, password=PASSWORD
-        )
-        producer.publish_message("", "detect_result", detect_result)
+        try:
+            print(f"[*] 从队列 agentQueue{mac_address} 收到消息")
+            data = json.loads(body.decode())
+            data = {camelcase_to_underscore(k): v for k, v in data.items()}
+
+            # 根据消息类型执行不同的检测
+            if data["info"]["type"] == "asset":
+                detect_result = asset_detect(data)
+            elif data["info"]["type"] == "hotfix":
+                detect_result = hotfix_detect(data)
+            
+            # 将结果发送到detect_result队列
+            print("[*] 发送检测结果到detect_result队列")
+            producer = RabbitProducer(
+                host=HOST, port=PORT, username=USERNAME, password=PASSWORD
+            )
+            producer.publish_message("", "detect_result", detect_result)
+            print("[*] 检测结果发送完成")
+
+        except Exception as e:
+            print(f"[!] 处理消息时出错: {e}")
+            raise e  # 重新抛出异常，让上层处理
 
     return callback
 
@@ -53,21 +69,26 @@ if __name__ == "__main__":
     )
     heartbeat_thread.start()
 
-    asset_detect_message_consumer = RabbitConsumer(
+    # 创建消费者实例
+    consumer = RabbitConsumer(
         host=HOST,
         port=PORT,
         username=USERNAME,
         password=PASSWORD,
         queue_name=f"agentQueue" + info_data["macAddress"].replace(":", ""),
     )
-    asset_detect_message_callback = create_asset_detect_message_callback(
+    
+    # 创建消息回调函数
+    message_callback = create_asset_detect_message_callback(
         info_data["macAddress"]
     )
-    asset_detect_consumer_thread = threading.Thread(
-        target=asset_detect_message_consumer.start_consuming,
-        args=(asset_detect_message_callback,),
+    
+    # 启动消费者线程
+    consumer_thread = threading.Thread(
+        target=consumer.start_consuming,
+        args=(message_callback,),
         daemon=True,
     )
-    asset_detect_consumer_thread.start()
+    consumer_thread.start()
 
     input()

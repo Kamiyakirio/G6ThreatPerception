@@ -5,10 +5,10 @@ class RabbitProducer:
 
     def __init__(
         self,
-        host="192.168.253.134",
-        port=5672,
+        host="192.168.147.143",
+        port=4568,
         username="admin",
-        password="admin",
+        password="20250606",
         virtual_host="",
     ):
         creds = pika.PlainCredentials(username, password)
