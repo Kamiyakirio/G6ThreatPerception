@@ -11,10 +11,16 @@ def hotfix_detect(data):
     :return: JSON格式的检测结果
     """
     print("开始补丁安全发现......")
+    print(f"接收到的数据: {data}")
     result = []
-    mac_address = data['info']['macAddress']
-
+    
     try:
+        # 确保data是字典类型
+        if isinstance(data, str):
+            data = json.loads(data)
+            
+        mac_address = data['info']['macAddress']
+        
         if platform.system() == "Windows":
             # 初始化COM
             pythoncom.CoInitialize()
@@ -74,6 +80,8 @@ def hotfix_detect(data):
             
     except Exception as e:
         print(f"补丁检测出错: {e}")
+        import traceback
+        traceback.print_exc()
         # 发生错误时返回空列表
         result = []
     
