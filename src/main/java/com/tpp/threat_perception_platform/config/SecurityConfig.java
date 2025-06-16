@@ -62,8 +62,10 @@ public class SecurityConfig {
                     auth.requestMatchers("/lib/**").anonymous();
                     auth.requestMatchers("/fonts/**").anonymous();
                     auth.requestMatchers("/layui/**").anonymous();
-
                     auth.requestMatchers("/heartbeat").anonymous();
+                    
+                    // 允许访问补丁检测相关接口
+                    auth.requestMatchers("/hotfix/**").permitAll();
 
                     // 除上面外的所有请求全部需要鉴权认证
                     auth.anyRequest().authenticated();

@@ -16,6 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.amqp.RabbitProperties;
 import org.springframework.stereotype.Component;
 import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -26,6 +29,7 @@ import com.tpp.threat_perception_platform.asset.Process;
 
 @Component
 public class RabbitMQController {
+    private static final Logger logger = LoggerFactory.getLogger(RabbitMQController.class);
 
     @Autowired
     private HostMapper hostMapper;
@@ -38,8 +42,9 @@ public class RabbitMQController {
     @Autowired
     private ServiceMapper serviceMapper;
     @Autowired
+    private ObjectMapper objectMapper;
+    @Autowired 
     private VulScanMapper vulScanMapper;
-
 
     //查询并设置探测结构id
     private int getNextDetectId(String macAddress, AccountMapper mapper) {
@@ -62,10 +67,15 @@ public class RabbitMQController {
         return (lastId == null) ? 0 : lastId + 1;
     }
 
-    @RabbitListener(queues = "hello")
-    public void receiveHostInfo(String messageBody, Message message, Channel channel) throws IOException {
-        long tag = message.getMessageProperties().getDeliveryTag();
-//        System.out.println(messageBody);
+@RabbitListener(queues = "hello")
+public void receiveHostInfo(Message message, Channel channel) throws IOException {
+    long tag = message.getMessageProperties().getDeliveryTag();
+    try {
+        String messageBody = new String(message.getBody());
+
+        // 可选：保留调试日志或替换为结构化日志
+        // System.out.println(messageBody);
+        logger.info("收到主机信息消息: {}", messageBody);
 
         Host host = new Host();
         HashMap<String, Object> dataDict = JSON.parseObject(messageBody, HashMap.class);
@@ -90,7 +100,12 @@ public class RabbitMQController {
         }
 
         channel.basicAck(tag, false);
+        logger.info("主机信息处理成功");
+    } catch (Exception e) {
+        logger.error("处理主机信息失败: {}", e.getMessage(), e);
+        channel.basicNack(tag, false, true);
     }
+}
 
     @RabbitListener(queues = "detect_result")
     public void receiveDetectResult(String messageBody, Message message, Channel channel) throws IOException {
