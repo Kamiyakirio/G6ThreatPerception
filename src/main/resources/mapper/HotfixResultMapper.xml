@@ -190,4 +190,41 @@
             </if>
         </where>
     </select>
+
+    <!-- 按补丁号分组查询结果 -->
+    <select id="selectGroupByKbId" resultType="java.util.Map">
+        SELECT 
+            kb_id,
+            mac_address,
+            GROUP_CONCAT(DISTINCT cve_id) as cve_ids,
+            MAX(score) as max_score,
+            GROUP_CONCAT(DISTINCT cvrf_id) as cvrf_ids,
+            GROUP_CONCAT(DISTINCT product_id) as product_ids,
+            GROUP_CONCAT(DISTINCT product_name) as product_names,
+            MAX(dt) as latest_dt
+        FROM hotfix_result
+        <where>
+            <if test="hostId != null and hostId != ''">
+                AND mac_address = (
+                    select mac_address from host where id = #{hostId}
+                )
+            </if>
+        </where>
+        GROUP BY kb_id, mac_address
+        ORDER BY latest_dt DESC, kb_id
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 获取分组后的总记录数 -->
+    <select id="selectGroupTotalCount" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT kb_id)
+        FROM hotfix_result
+        <where>
+            <if test="hostId != null and hostId != ''">
+                AND mac_address = (
+                    select mac_address from host where id = #{hostId}
+                )
+            </if>
+        </where>
+    </select>
 </mapper>

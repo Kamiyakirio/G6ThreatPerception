@@ -4,6 +4,7 @@ import com.tpp.threat_perception_platform.pojo.HotfixResult;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 /**
 * @author 13626
@@ -50,4 +51,16 @@ public interface HotfixResultMapper {
      * @return 总记录数
      */
     int selectTotalCount(@Param("hostId") String hostId);
+
+    /**
+     * 按补丁号分组查询结果
+     */
+    List<Map<String, Object>> selectGroupByKbId(@Param("hostId") String hostId, 
+                                               @Param("offset") Integer offset, 
+                                               @Param("limit") Integer limit);
+
+    /**
+     * 获取分组后的总记录数
+     */
+    int selectGroupTotalCount(@Param("hostId") String hostId);
 }

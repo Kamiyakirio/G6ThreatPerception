@@ -25,9 +25,9 @@ public class HotfixResultController {
         // 计算偏移量
         int offset = (page - 1) * limit;
         
-        // 获取数据
-        List<HotfixResult> list = hotfixResultService.getPageList(hostId, offset, limit);
-        int count = hotfixResultService.getTotalCount(hostId);
+        // 获取分组后的数据
+        List<Map<String, Object>> list = hotfixResultService.getGroupedPageList(hostId, offset, limit);
+        int count = hotfixResultService.getGroupedTotalCount(hostId);
         
         Map<String, Object> result = new HashMap<>();
         result.put("code", 0);
