@@ -3,6 +3,7 @@
 import pika
 from config.rabbit_config import *
 
+
 class RabbitConsumer:
 
     def __init__(
@@ -22,8 +23,22 @@ class RabbitConsumer:
         self.channel.queue_declare(queue=queue_name, durable=True)
 
     def start_consuming(self, callback):
+        def wrapped_callback(ch, method, properties, body):
+            try:
+                print(f"[*] 收到消息: {body.decode()}")
+                callback(ch, method, properties, body)
+                print("[*] 消息处理完成")
+                ch.basic_ack(delivery_tag=method.delivery_tag)
+            except Exception as e:
+                print(f"[!] 处理消息时出错: {e}")
+                # 如果处理失败，拒绝消息并重新入队
+                ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
+
+        self.channel.basic_qos(prefetch_count=1)  # 每次只处理一条消息
         self.channel.basic_consume(
-            queue=self.queue_name, on_message_callback=callback, auto_ack=True
+            queue=self.queue_name,
+            on_message_callback=wrapped_callback,
+            auto_ack=False,  # 关闭自动确认
         )
         print(
             f"[*] Waiting for messages in '{self.queue_name}' queue. To exit press CTRL+C"
