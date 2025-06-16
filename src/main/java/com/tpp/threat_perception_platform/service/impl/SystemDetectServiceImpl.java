@@ -73,7 +73,7 @@ public class SystemDetectServiceImpl implements SystemDetectService {
         String data = JSON.toJSONString(requestData);
 
         String rootingKey = "agentQueue" + dbhost.getMacAddress().replace(":", "");
-        rabbitMQService.sendMessage("", rootingKey, data);
+        rabbitMQService.sendMessage("", rootingKey, JSON.toJSONString(param));
 
         return new ResponseResult(0, "探测任务发送成功！");
     }

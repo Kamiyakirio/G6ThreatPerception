@@ -5,10 +5,12 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.tpp.threat_perception_platform.dao.SystemDetectMapper;
 import com.tpp.threat_perception_platform.pojo.SystemDetect;
+import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
@@ -18,10 +20,11 @@ public class systemDetectConsume {
     private SystemDetectMapper systemDetectMapper;
 
     @RabbitListener(queues = "system_detect_queue")
-    public void processMessage(String message) {
-        System.out.println("【收到消息】" + message);
+    public void processMessage(Message message) {
+//        System.out.println("【收到消息】" + message);
             try {
-                JSONObject json = JSON.parseObject(message);
+                String messageBody = new String(message.getBody(), StandardCharsets.UTF_8);
+                JSONObject json = JSON.parseObject(messageBody);
                 JSONObject hostInfo = json.getJSONObject("host_info");
                 JSONArray detectionResults = json.getJSONArray("detection_results");
 

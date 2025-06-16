@@ -108,14 +108,13 @@ public void handleHotfixDetectResult(String message) {
     try {
         System.out.println("开始处理补丁检测结果消息");
         System.out.println("收到补丁检测结果消息: " + message);
-        
-        List<Map<String, String>> results = objectMapper.readValue(
-            message, new TypeReference<List<Map<String, String>>>() {}
-        );
-        
-        System.out.println("消息解析成功，包含 " + results.size() + " 条记录");
 
-        int count = hotfixResultService.processHotfixResults(results);
+        String innerJson = objectMapper.readValue(message, String.class);
+        List<Map<String, String>> result = objectMapper.readValue(innerJson, new TypeReference<List<Map<String, String>>>() {});
+        
+        System.out.println("消息解析成功，包含 " + result.size() + " 条记录");
+
+        int count = hotfixResultService.processHotfixResults(result);
         System.out.println("成功处理 " + count + " 条补丁检测结果");
     } catch (Exception e) {
         System.out.println("处理补丁检测结果失败: " + e.getMessage());
@@ -136,7 +135,7 @@ public void handleHotfixDetectResultMessage(Message message, Channel channel) th
     } catch (Exception e) {
         System.out.println("处理补丁检测结果失败: " + e.getMessage());
         e.printStackTrace();
-        channel.basicNack(tag, false, true);
+        channel.basicNack(tag, false, false);
         System.out.println("消息处理失败，已重新入队，deliveryTag: " + tag);
     }
 }
