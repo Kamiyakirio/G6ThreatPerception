@@ -1,7 +1,12 @@
 from mq.rabbit_producer import RabbitProducer
 from mq.rabbit_consumer import RabbitConsumer
+from password_detect.pwd_detect import password_detect
 from system.pc_information import PcInfo
-from utils.naming_convert import underscore_to_camelcase, camelcase_to_underscore
+from utils.naming_convert import (
+    underscore_to_camelcase,
+    camelcase_to_underscore,
+    rename_dict_key,
+)
 from detect.asset_detect import asset_detect
 from config.rabbit_config import *
 
@@ -11,7 +16,7 @@ import requests
 import threading
 import os
 
-
+# HOST,  PORT, USERNAME, PASSWORD = ["192.168.152.128",  4568,  "admin",  "030924"]
 def send_heart_beat(mac_address):
     while True:
         try:
@@ -21,18 +26,27 @@ def send_heart_beat(mac_address):
             )
             time.sleep(1)
         except:
+            print("Lost connection from server, agent will exit.")
             os._exit(0)
 
 
 def create_asset_detect_message_callback(mac_address):
     def callback(ch, method, properties, body):
         data = json.loads(body.decode())
-        data = {camelcase_to_underscore(k): v for k, v in data.items()}
-        detect_result = asset_detect(data)
-        producer = RabbitProducer(
-            host=HOST, port=PORT, username=USERNAME, password=PASSWORD
-        )
-        producer.publish_message("", "detect_result", detect_result)
+        data = rename_dict_key(data, camelcase_to_underscore)
+
+        if data["type"] == "assets":
+            detect_result = asset_detect(data)
+            producer = RabbitProducer(
+                host=HOST, port=PORT, username=USERNAME, password=PASSWORD
+            )
+            producer.publish_message("", "detect_result", detect_result)
+        elif data["type"] == "password":
+            detect_result = password_detect(data)
+            producer = RabbitProducer(
+                host=HOST, port=PORT, username=USERNAME, password=PASSWORD
+            )
+            producer.publish_message("", "pwd_detect_result", detect_result)
 
     return callback
 
