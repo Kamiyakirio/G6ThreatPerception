@@ -1,9 +1,12 @@
+import logging
+
 from mq.rabbit_producer import RabbitProducer
 from mq.rabbit_consumer import RabbitConsumer
 from system.pc_information import PcInfo
 from utils.naming_convert import underscore_to_camelcase, camelcase_to_underscore
 from detect.asset_detect import asset_detect
 from config.rabbit_config import *
+from detect.system_risk_detect import HostRiskDetector
 
 import json
 import time
@@ -24,15 +27,33 @@ def send_heart_beat(mac_address):
             os._exit(0)
 
 
+
+
+
 def create_asset_detect_message_callback(mac_address):
     def callback(ch, method, properties, body):
+        logging.info("Received message: %s", body)
         data = json.loads(body.decode())
         data = {camelcase_to_underscore(k): v for k, v in data.items()}
-        detect_result = asset_detect(data)
+
+        if data["info"]["type"] == "assets":
+            detect_result = asset_detect(data)
+        elif data["info"]["type"] == "system":
+            detector = HostRiskDetector()
+            detector.detect_all_risks()
+            detect_result = detector.generate_report()
+
         producer = RabbitProducer(
             host=HOST, port=PORT, username=USERNAME, password=PASSWORD
         )
-        producer.publish_message("", "detect_result", detect_result)
+
+        # 根据消息类型选择不同的队列
+        if data["info"]["type"] == "system":
+            queue_name = "system_detect_queue"
+        else:
+            queue_name = "detect_result"
+
+        producer.publish_message("", queue_name, json.dumps(detect_result, ensure_ascii=False))
 
     return callback
 

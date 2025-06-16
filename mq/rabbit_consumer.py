@@ -1,16 +1,16 @@
 # rabbit_consumer.py
 
 import pika
-
+from config.rabbit_config import *
 
 class RabbitConsumer:
 
     def __init__(
         self,
-        host="192.168.253.134",
-        port=5672,
-        username="admin",
-        password="admin",
+        host=HOST,
+        port=PORT,
+        username=USERNAME,
+        password=PASSWORD,
         virtual_host="",
         queue_name="hello",
     ):
