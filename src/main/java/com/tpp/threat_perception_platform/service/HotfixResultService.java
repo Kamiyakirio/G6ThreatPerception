@@ -70,4 +70,18 @@ public class HotfixResultService {
     public int getTotalCount(String hostId) {
         return hotfixResultMapper.selectTotalCount(hostId);
     }
+
+    /**
+     * 分页查询补丁检测结果（按补丁号分组）
+     */
+    public List<Map<String, Object>> getGroupedPageList(String hostId, Integer offset, Integer limit) {
+        return hotfixResultMapper.selectGroupByKbId(hostId, offset, limit);
+    }
+
+    /**
+     * 获取分组后的总记录数
+     */
+    public int getGroupedTotalCount(String hostId) {
+        return hotfixResultMapper.selectGroupTotalCount(hostId);
+    }
 } 

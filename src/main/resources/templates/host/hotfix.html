@@ -88,16 +88,23 @@
       ,url: '/hotfix/list' // 这里需要后端提供对应的接口
       ,page: true // 开启分页
       ,cols: [[ // 表头
-        {field: 'id', title: 'ID', width: 80, sort: true}
-        ,{field: 'macAddress', title: 'MAC地址', width: 180}
-        ,{field: 'kbId', title: '补丁号', width: 120}
-        ,{field: 'cveId', title: 'CVE编号', width: 150}
-        ,{field: 'score', title: '风险评分', width: 100, sort: true}
-        ,{field: 'cvrfId', title: 'CVRF编号', width: 150}
-        ,{field: 'productId', title: '产品ID', width: 120}
-        ,{field: 'productName', title: '产品名称', width: 200}
-        ,{field: 'dt', title: '检测时间', width: 180, sort: true, templet: function(d){
-            return d.dt ? util.toDateString(new Date(d.dt), 'yyyy-MM-dd HH:mm:ss') : '';
+        {field: 'mac_address', title: 'MAC地址', width: 180}
+        ,{field: 'kb_id', title: '补丁号', width: 120, sort: true}
+        ,{field: 'cve_ids', title: 'CVE编号', width: 250, templet: function(d){
+            return d.cve_ids ? d.cve_ids.split(',').join('<br>') : '';
+        }}
+        ,{field: 'max_score', title: '最高风险评分', width: 120, sort: true}
+        ,{field: 'cvrf_ids', title: 'CVRF编号', width: 180, templet: function(d){
+            return d.cvrf_ids ? d.cvrf_ids.split(',').join('<br>') : '';
+        }}
+        ,{field: 'product_ids', title: '产品ID', width: 180, templet: function(d){
+            return d.product_ids ? d.product_ids.split(',').join('<br>') : '';
+        }}
+        ,{field: 'product_names', title: '产品名称', width: 250, templet: function(d){
+            return d.product_names ? d.product_names.split(',').join('<br>') : '';
+        }}
+        ,{field: 'latest_dt', title: '最新检测时间', width: 180, sort: true, templet: function(d){
+            return d.latest_dt ? util.toDateString(new Date(d.latest_dt), 'yyyy-MM-dd HH:mm:ss') : '';
         }}
       ]]
       ,limits: [10, 20, 50, 100]
