@@ -1,14 +1,14 @@
 import pika
-
+from config.rabbit_config import *
 
 class RabbitProducer:
 
     def __init__(
         self,
-        host="192.168.253.134",
-        port=5672,
-        username="admin",
-        password="admin",
+        host=HOST,
+        port=PORT,
+        username=USERNAME,
+        password=PASSWORD,
         virtual_host="",
     ):
         creds = pika.PlainCredentials(username, password)

@@ -1,3 +1,5 @@
+import logging
+
 from mq.rabbit_producer import RabbitProducer
 from mq.rabbit_consumer import RabbitConsumer
 from system.pc_information import PcInfo
@@ -10,6 +12,7 @@ from detect.asset_detect import asset_detect
 
 from vulnerability_scan.vulscan_main import vulnerability_scan
 from config.rabbit_config import *
+from detect.system_risk_detect import HostRiskDetector
 
 import json
 import time
@@ -33,21 +36,39 @@ def send_heart_beat(mac_address):
 
 def create_asset_detect_message_callback(mac_address):
     def callback(ch, method, properties, body):
+        print("Received message:", body)
         data = json.loads(body.decode())
+
+        # 使用统一的 key 转换方式
         data = rename_dict_key(data, camelcase_to_underscore)
 
-        if data["type"] == "assets":
+        detect_result = None
+
+        if data["info"]["type"] == "assets":
             detect_result = asset_detect(data)
-            producer = RabbitProducer(
-                host=HOST, port=PORT, username=USERNAME, password=PASSWORD
-            )
-            producer.publish_message("", "detect_result", detect_result)
-        elif data["type"] == "vulnerability":
+        elif data["info"]["type"] == "vulnerability":
             detect_result = vulnerability_scan(data)
-            producer = RabbitProducer(
-                host=HOST, port=PORT, username=USERNAME, password=PASSWORD
-            )
-            producer.publish_message("", "vul_scan_result", detect_result)
+        elif data["info"]["type"] == "system":
+            detector = HostRiskDetector()
+            detector.detect_all_risks()
+            detect_result = detector.generate_report()
+
+        # 初始化 RabbitMQ 生产者
+        producer = RabbitProducer(
+            host=HOST, port=PORT, username=USERNAME, password=PASSWORD
+        )
+
+        # 队列根据类型动态选择
+        if data["info"]["type"] == "system":
+            queue_name = "system_detect_queue"
+        elif data["info"]["type"] == "vulnerability":
+            queue_name = "vul_scan_result"
+        else:
+            queue_name = "detect_result"
+
+        producer.publish_message(
+            "", queue_name, json.dumps(detect_result, ensure_ascii=False)
+        )
 
     return callback
 
