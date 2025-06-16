@@ -50,9 +50,19 @@ def create_asset_detect_message_callback(mac_address):
             if not isinstance(data, dict):
                 print(f"[!] 数据格式错误，期望字典类型，实际是: {type(data)}")
                 return
-                
-            detect_result = None
-            queue_name = None
+
+            # 获取消息中的MAC地址
+            message_mac = data.get('info', {}).get('macAddress')
+            if not message_mac:
+                print(f"[!] 消息中未包含MAC地址")
+                return
+
+            # 验证MAC地址是否匹配
+            if message_mac.upper() != mac_address.upper():
+                print(f"[!] MAC地址不匹配: 期望 {mac_address}, 实际 {message_mac}")
+                return
+            
+            print(f"[*] MAC地址验证通过")
 
             if data.get('info', {}).get('type') == 'assets':
                 # 对于资产检测，需要转换命名风格
