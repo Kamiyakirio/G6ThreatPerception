@@ -78,6 +78,15 @@ public class SystemDetectServiceImpl implements SystemDetectService {
         return new ResponseResult(0, "探测任务发送成功！");
     }
 
+    @Override
+    public List<Map<String, Object>> getSystemDetectByMacAndSDetectId(String macAddress, Integer sDetectId) {
+        return systemDetectMapper.findSystemDetectByMacAndSDetectId(macAddress, sDetectId);
+    }
+
+    @Override
+    public List<Integer> getDetectionIdsByMac(String macAddress) {
+        return systemDetectMapper.getDetectionIdsByMac(macAddress);
+    }
 
 
 }

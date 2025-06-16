@@ -120,6 +120,18 @@
         FROM system_detect
         GROUP BY mac_address
     </select>
+    <select id="findSystemDetectByMacAndSDetectId" resultType="java.util.Map">
+        SELECT
+            detect_program AS detectProgram,
+            risk_level AS riskLevel,
+            details,
+            suggest
+        FROM
+            system_detect
+        WHERE
+            mac_address = #{macAddress}
+            AND s_detect_id = #{sDetectId}
+    </select>
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
         delete from system_detect
