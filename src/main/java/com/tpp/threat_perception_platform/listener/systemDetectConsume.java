@@ -31,7 +31,7 @@ public class systemDetectConsume {
         long tag=message.getMessageProperties().getDeliveryTag();
 //        System.out.println("【收到消息】" + message);
             try {
-                JSONObject json = JSON.parseObject(messageBody);
+                JSONObject json = JSON.parseObject(new String(message.getBody(),StandardCharsets.UTF_8));
                 JSONObject hostInfo = json.getJSONObject("host_info");
                 JSONArray detectionResults = json.getJSONArray("detection_results");
 
