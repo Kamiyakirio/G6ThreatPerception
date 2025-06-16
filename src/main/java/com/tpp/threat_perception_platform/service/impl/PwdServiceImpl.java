@@ -38,7 +38,7 @@ public class PwdServiceImpl implements PwdService {
             HashMap<String, Object> messageMap = new HashMap<>();
             messageMap.put("hostName", hostName);
             messageMap.put("macAddress", originMacAddress);
-            messageMap.put("type", type);
+            messageMap.put("type", "password");
             messageMap.put("id", id);
             messageMap.put("detectPwd", "on".equals(data.get("detect-pwd")));
             System.out.println(messageMap);
@@ -47,7 +47,7 @@ public class PwdServiceImpl implements PwdService {
             }
 
             // 发送消息（默认 exchange，队列名以 MAC 地址标识）
-            rabbitMQService.sendMessage("", "agenQueue" + macAddress, JSON.toJSONString(messageMap));
+            rabbitMQService.sendMessage("", "agentQueue" + macAddress, JSON.toJSONString(messageMap));
 
             // 成功响应
             result.put("code", 0);

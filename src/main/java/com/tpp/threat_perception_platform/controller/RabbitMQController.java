@@ -243,41 +243,41 @@ public class RabbitMQController {
             channel.basicAck(deliveryTag, false);
         }
     }
-    @RabbitListener(queues = "pwd_detect_result")
-    public void receivePwdDetectResult(String messageBody, Message message, Channel channel) throws IOException {
-        System.out.println("接收到密码检测结果：" + messageBody);
-        long deliveryTag = message.getMessageProperties().getDeliveryTag();
-
-        try {
-            JSONObject fullData = JSON.parseObject(messageBody);
-            JSONObject info = fullData.getJSONObject("info");
-            JSONArray dataList = fullData.getJSONArray("data");
-            System.out.println("info:" + info);
-            System.out.println("dataList:" + dataList);
-            //取出dataList中的账户名，分别新建一个risk，存入risk表，表中re字段为账户名，desc字段为'有弱口令风险'，type字段为'account'
-            for (int i = 0; i < dataList.size(); i++) {
-                JSONObject dataItem = dataList.getJSONObject(i);
-                String dataType = dataItem.getString("type");
-                if (Objects.equals(dataType, "pwd")) {
-                    JSONArray pwdAccountsArray = dataItem.getJSONArray("data");
-
-                    for (int j = 0; j < pwdAccountsArray.size(); j++) {
-                        JSONObject accountData = pwdAccountsArray.getJSONObject(j);
-                        System.out.println("accountData:" + accountData);
-                        Risk risk = new Risk();
-                        risk.setRiskType("account");
-                        risk.setRiskDesc("有弱口令风险");
-                        risk.setRe(accountData.getString("name"));
-                        System.out.println("risk:" + risk);
-                        riskMapper.insertSelective(risk);
-                    }
-                }
-            }
-            channel.basicAck(deliveryTag, false);
-        }
-        catch (Exception e) {
-            //失败后仍然确认消息
-            channel.basicAck(deliveryTag, false);
-        }
-    }
+//    @RabbitListener(queues = "pwd_detect_result")
+//    public void receivePwdDetectResult(String messageBody, Message message, Channel channel) throws IOException {
+//        System.out.println("接收到密码检测结果：" + messageBody);
+//        long deliveryTag = message.getMessageProperties().getDeliveryTag();
+//
+//        try {
+//            JSONObject fullData = JSON.parseObject(messageBody);
+//            JSONObject info = fullData.getJSONObject("info");
+//            JSONArray dataList = fullData.getJSONArray("data");
+//            System.out.println("info:" + info);
+//            System.out.println("dataList:" + dataList);
+//            //取出dataList中的账户名，分别新建一个risk，存入risk表，表中re字段为账户名，desc字段为'有弱口令风险'，type字段为'account'
+//            for (int i = 0; i < dataList.size(); i++) {
+//                JSONObject dataItem = dataList.getJSONObject(i);
+//                String dataType = dataItem.getString("type");
+//                if (Objects.equals(dataType, "password")) {
+//                    JSONArray pwdAccountsArray = dataItem.getJSONArray("data");
+//
+//                    for (int j = 0; j < pwdAccountsArray.size(); j++) {
+//                        JSONObject accountData = pwdAccountsArray.getJSONObject(j);
+//                        System.out.println("accountData:" + accountData);
+//                        Risk risk = new Risk();
+//                        risk.setRiskType("account");
+//                        risk.setRiskDesc("有弱口令风险");
+//                        risk.setRe(accountData.getString("name"));
+//                        System.out.println("risk:" + risk);
+//                        riskMapper.insertSelective(risk);
+//                    }
+//                }
+//            }
+//            channel.basicAck(deliveryTag, false);
+//        }
+//        catch (Exception e) {
+//            //失败后仍然确认消息
+//            channel.basicAck(deliveryTag, false);
+//        }
+//    }
 }
