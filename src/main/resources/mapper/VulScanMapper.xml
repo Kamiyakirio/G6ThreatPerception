@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tpp.threat_perception_platform.dao.VulScanMapper">
+
+    <resultMap id="BaseResultMap" type="com.tpp.threat_perception_platform.pojo.VulScan">
+        <id property="id" column="id"/>
+        <result property="macAddress" column="mac_address"/>
+        <result property="vulId" column="vul_id"/>
+        <result property="resultCode" column="result_code"/>
+        <result property="resultDesc" column="result_desc"/>
+        <result property="time" column="time"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id
+        ,mac_address,vul_id,result_code,result_desc,time
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from vul_scan
+        where id = #{id}
+    </select>
+    <select id="selectAllByMacAddress" resultType="com.tpp.threat_perception_platform.pojo.VulScan">
+        select
+        <include refid="Base_Column_List"/>
+        from vul_scan
+        where mac_address=#{macAddress}
+    </select>
+    <select id="selectByMacAddressAndVulId" resultType="com.tpp.threat_perception_platform.pojo.VulScan">
+        select
+        <include refid="Base_Column_List"/>
+        from vul_scan
+        where mac_address=#{macAddress} and vul_id=#{vulId}
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete
+        from vul_scan
+        where id = #{id}
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.tpp.threat_perception_platform.pojo.VulScan"
+            useGeneratedKeys="true">
+        insert into vul_scan
+            (id, mac_address, vul_id, result_code, result_desc, time)
+        values (#{id}, #{macAddress}, #{vulId}, #{resultCode}, #{resultDesc}, #{time})
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id"
+            parameterType="com.tpp.threat_perception_platform.pojo.VulScan" useGeneratedKeys="true">
+        insert into vul_scan
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="macAddress != null">mac_address,</if>
+            <if test="vulId != null">vul_id,</if>
+            <if test="resultCode != null">result_code,</if>
+            <if test="resultDesc != null">result_desc,</if>
+            <if test="time != null">time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">#{id},</if>
+            <if test="macAddress != null">#{macAddress},</if>
+            <if test="vulId != null">#{vulId},</if>
+            <if test="resultCode != null">#{resultCode},</if>
+            <if test="resultDesc != null">#{resultDesc},</if>
+            <if test="time != null">#{time},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.tpp.threat_perception_platform.pojo.VulScan">
+        update vul_scan
+        <set>
+            <if test="macAddress != null">
+                mac_address = #{macAddress},
+            </if>
+            <if test="vulId != null">
+                vul_id = #{vulId},
+            </if>
+            <if test="resultCode != null">
+                result_code = #{resultCode},
+            </if>
+            <if test="resultDesc != null">
+                result_desc = #{resultDesc},
+            </if>
+            <if test="resultDesc != null">
+                time = #{time},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.tpp.threat_perception_platform.pojo.VulScan">
+        update vul_scan
+        set mac_address = #{macAddress},
+            vul_id      = #{vulId},
+            result_code = #{resultCode},
+            result_desc = #{resultDesc}
+            time = #{time}
+        where id = #{id}
+    </update>
+</mapper>

@@ -85,62 +85,59 @@ public class RabbitMQServiceImpl implements RabbitMQService {
         logger.info("已发送消息到 [{}]：{}", queueName, message);
     }
 
-    @Override
-    public void sendMessage(String exchangeName, String routingKey, String message) {
-        // 使用 routingKey 作为队列名
-        String queueName = routingKey;
+@Override
+public void sendMessage(String exchangeName, String routingKey, String message) {
+    String queueName = routingKey;
 
-        // 声明 exchange（direct 类型）
-        DirectExchange exchange = new DirectExchange(exchangeName, true, false);
-        rabbitAdmin.declareExchange(exchange);
+    DirectExchange exchange = new DirectExchange(exchangeName, true, false);
+    rabbitAdmin.declareExchange(exchange);
 
-        // 声明 queue
-        Queue queue = new Queue(queueName, true);
-        rabbitAdmin.declareQueue(queue);
+    Queue queue = new Queue(queueName, true);
+    rabbitAdmin.declareQueue(queue);
 
-        // 绑定 queue 到 exchange
-        Binding binding = BindingBuilder.bind(queue).to(exchange).with(routingKey);
-        rabbitAdmin.declareBinding(binding);
+    Binding binding = BindingBuilder.bind(queue).to(exchange).with(routingKey);
+    rabbitAdmin.declareBinding(binding);
 
-        // 发送消息
-        rabbitTemplate.convertAndSend(exchangeName, routingKey, message);
-        logger.info("【使用 routingKey={} 作为队列】消息发送成功: {}", routingKey, message);
+    rabbitTemplate.convertAndSend(exchangeName, routingKey, message);
+
+    System.out.println("【使用 routingKey=" + routingKey + " 作为队列】消息发送成功: " + message);
+}
+
+@Override
+public void handleHotfixDetectResult(String message) {
+    try {
+        System.out.println("开始处理补丁检测结果消息");
+        System.out.println("收到补丁检测结果消息: " + message);
+        
+        List<Map<String, String>> results = objectMapper.readValue(
+            message, new TypeReference<List<Map<String, String>>>() {}
+        );
+        
+        System.out.println("消息解析成功，包含 " + results.size() + " 条记录");
+
+        int count = hotfixResultService.processHotfixResults(results);
+        System.out.println("成功处理 " + count + " 条补丁检测结果");
+    } catch (Exception e) {
+        System.out.println("处理补丁检测结果失败: " + e.getMessage());
+        e.printStackTrace();
+        throw new RuntimeException("处理补丁检测结果失败", e);
     }
+}
 
-    @Override
-    public void handleHotfixDetectResult(String message) {
-        try {
-            logger.info("开始处理补丁检测结果消息");
-            logger.info("收到补丁检测结果消息: {}", message);
-            
-            List<Map<String, String>> results = objectMapper.readValue(message,
-                new TypeReference<List<Map<String, String>>>() {});
-            
-            logger.info("消息解析成功，包含 {} 条记录", results.size());
-            
-            int count = hotfixResultService.processHotfixResults(results);
-            logger.info("成功处理 {} 条补丁检测结果", count);
-        } catch (Exception e) {
-            logger.error("处理补丁检测结果失败: {}", e.getMessage(), e);
-            throw new RuntimeException("处理补丁检测结果失败", e);
-        }
-    }
+@RabbitListener(queues = "hotfix_detect_result")
+public void handleHotfixDetectResultMessage(Message message, Channel channel) throws IOException {
+    long tag = message.getMessageProperties().getDeliveryTag();
+    try {
+        String messageBody = new String(message.getBody());
+        handleHotfixDetectResult(messageBody);
 
-    @RabbitListener(queues = "hotfix_detect_result")
-    public void handleHotfixDetectResultMessage(Message message, Channel channel) throws IOException {
-        long tag = message.getMessageProperties().getDeliveryTag();
-        try {
-            String messageBody = new String(message.getBody());
-            handleHotfixDetectResult(messageBody);
-            
-            // 手动确认消息
-            channel.basicAck(tag, false);
-            logger.info("消息已确认，deliveryTag: {}", tag);
-        } catch (Exception e) {
-            logger.error("处理补丁检测结果失败: {}", e.getMessage(), e);
-            // 消息处理失败，拒绝消息并重新入队
-            channel.basicNack(tag, false, true);
-            logger.info("消息处理失败，已重新入队，deliveryTag: {}", tag);
-        }
+        channel.basicAck(tag, false);
+        System.out.println("消息已确认，deliveryTag: " + tag);
+    } catch (Exception e) {
+        System.out.println("处理补丁检测结果失败: " + e.getMessage());
+        e.printStackTrace();
+        channel.basicNack(tag, false, true);
+        System.out.println("消息处理失败，已重新入队，deliveryTag: " + tag);
     }
+}
 }

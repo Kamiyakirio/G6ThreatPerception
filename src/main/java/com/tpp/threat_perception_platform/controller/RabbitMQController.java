@@ -9,6 +9,7 @@ import com.tpp.threat_perception_platform.asset.App;
 import com.tpp.threat_perception_platform.asset.Service;
 import com.tpp.threat_perception_platform.dao.*;
 import com.tpp.threat_perception_platform.pojo.Host;
+import com.tpp.threat_perception_platform.pojo.VulScan;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+
 import com.tpp.threat_perception_platform.asset.Process;
 
 @Component
@@ -41,63 +43,69 @@ public class RabbitMQController {
     private ServiceMapper serviceMapper;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired 
+    private VulScanMapper vulScanMapper;
 
     //查询并设置探测结构id
     private int getNextDetectId(String macAddress, AccountMapper mapper) {
         Integer lastId = mapper.selectLastDetectIdByMac(macAddress);
         return (lastId == null) ? 0 : lastId + 1;
     }
+
     private int getNextDetectId(String macAddress, AppMapper mapper) {
         Integer lastId = mapper.selectLastDetectIdByMac(macAddress);
         return (lastId == null) ? 0 : lastId + 1;
     }
+
     private int getNextDetectId(String macAddress, ServiceMapper mapper) {
         Integer lastId = mapper.selectLastDetectIdByMac(macAddress);
         return (lastId == null) ? 0 : lastId + 1;
     }
+
     private int getNextDetectId(String macAddress, ProcessMapper mapper) {
         Integer lastId = mapper.selectLastDetectIdByMac(macAddress);
         return (lastId == null) ? 0 : lastId + 1;
     }
 
-    @RabbitListener(queues = "hello")
-    public void receiveHostInfo(Message message, Channel channel) throws IOException {
-        long tag = message.getMessageProperties().getDeliveryTag();
-        try {
-            String messageBody = new String(message.getBody());
-            logger.info("收到主机信息消息: {}", messageBody);
-            
-            // 使用 ObjectMapper 解析 JSON
-            HashMap<String, Object> dataDict = objectMapper.readValue(messageBody, HashMap.class);
-            
-            Host host = new Host();
-            host.setMacAddress(dataDict.get("macAddress").toString());
-            host.setHostName(dataDict.get("pcName").toString());
-            host.setIpAddress(dataDict.get("ipAddress").toString());
-            host.setOsType(dataDict.get("osName").toString());
-            host.setOsName(dataDict.get("osName").toString() + " " + dataDict.get("osNameDetailed").toString());
-            host.setCpuName(dataDict.get("cpuInfo").toString());
-            host.setOsBit(dataDict.get("osBit").toString());
-            host.setRam(dataDict.get("memorySize").toString());
+@RabbitListener(queues = "hello")
+public void receiveHostInfo(Message message, Channel channel) throws IOException {
+    long tag = message.getMessageProperties().getDeliveryTag();
+    try {
+        String messageBody = new String(message.getBody());
 
-            Host savedResult = hostMapper.selectByMacAddress(host.getMacAddress());
-            if (savedResult != null) {
-                host.setUpdateTime(new Date(System.currentTimeMillis()));
-                host.setId(savedResult.getId());
-                hostMapper.updateByPrimaryKeySelective(host);
-            } else {
-                host.setCreateTime(new Date(System.currentTimeMillis()));
-                hostMapper.insert(host);
-            }
+        // 可选：保留调试日志或替换为结构化日志
+        // System.out.println(messageBody);
+        logger.info("收到主机信息消息: {}", messageBody);
 
-            channel.basicAck(tag, false);
-            logger.info("主机信息处理成功");
-        } catch (Exception e) {
-            logger.error("处理主机信息失败: {}", e.getMessage(), e);
-            // 消息处理失败，拒绝消息并重新入队
-            channel.basicNack(tag, false, true);
+        Host host = new Host();
+        HashMap<String, Object> dataDict = JSON.parseObject(messageBody, HashMap.class);
+
+        host.setMacAddress(dataDict.get("macAddress").toString());
+        host.setHostName(dataDict.get("pcName").toString());
+        host.setIpAddress(dataDict.get("ipAddress").toString());
+        host.setOsType(dataDict.get("osName").toString());
+        host.setOsName(dataDict.get("osName").toString() + " " + dataDict.get("osNameDetailed").toString());
+        host.setCpuName(dataDict.get("cpuInfo").toString());
+        host.setOsBit(dataDict.get("osBit").toString());
+        host.setRam(dataDict.get("memorySize").toString());
+
+        Host savedResult = hostMapper.selectByMacAddress(host.getMacAddress());
+        if (savedResult != null) {
+            host.setUpdateTime(new Date(System.currentTimeMillis()));
+            host.setId(savedResult.getId());
+            hostMapper.updateByPrimaryKeySelective(host);
+        } else {
+            host.setCreateTime(new Date(System.currentTimeMillis()));
+            hostMapper.insert(host);
         }
+
+        channel.basicAck(tag, false);
+        logger.info("主机信息处理成功");
+    } catch (Exception e) {
+        logger.error("处理主机信息失败: {}", e.getMessage(), e);
+        channel.basicNack(tag, false, true);
     }
+}
 
     @RabbitListener(queues = "detect_result")
     public void receiveDetectResult(String messageBody, Message message, Channel channel) throws IOException {
@@ -224,7 +232,7 @@ public class RabbitMQController {
                         }
                     }
                 }
-                if ("service".equalsIgnoreCase(dataType)){
+                if ("service".equalsIgnoreCase(dataType)) {
                     JSONArray servicesArray = dataItem.getJSONArray("data");
                     int detectId = getNextDetectId(macAddress, serviceMapper);
 
@@ -266,6 +274,48 @@ public class RabbitMQController {
 
         } catch (Exception e) {
             //失败后仍然确认消息
+            channel.basicAck(deliveryTag, false);
+        }
+    }
+
+    @RabbitListener(queues = "vul_scan_result")
+    public void vul_scan_result(String messageBody, Message message, Channel channel) throws IOException {
+        long deliveryTag = message.getMessageProperties().getDeliveryTag();
+        try {
+            JSONObject fullData = JSON.parseObject(messageBody);
+            JSONObject info = fullData.getJSONObject("info");
+            JSONArray dataList = fullData.getJSONArray("data");
+
+            String hostName = info.getString("hostName");
+            String macAddress = info.getString("macAddress");
+            String timeStr = info.getString("time");
+            Integer id = info.getInteger("id");
+
+            Date time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(timeStr);
+
+            for (int i = 0; i < dataList.size(); i++) {
+                JSONObject data = dataList.getJSONObject(i);
+
+                VulScan vulScan = new VulScan();
+                vulScan.setVulId(data.getInteger("id"));
+                vulScan.setResultCode(data.getInteger("code"));
+                vulScan.setMacAddress(macAddress);
+                vulScan.setResultDesc(data.getString("message"));
+                vulScan.setTime(time);
+
+                VulScan dbVulscan = vulScanMapper.selectByMacAddressAndVulId(macAddress, (long) data.getInteger("id"));
+                if (dbVulscan == null) {
+                    vulScanMapper.insertSelective(vulScan);
+                } else if (!dbVulscan.equals(vulScan)) {
+                    vulScan.setId(dbVulscan.getId());
+                    vulScanMapper.updateByPrimaryKeySelective(vulScan);
+                }
+            }
+
+
+            channel.basicAck(deliveryTag, false);
+
+        } catch (Exception e) {
             channel.basicAck(deliveryTag, false);
         }
     }
