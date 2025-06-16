@@ -9,6 +9,7 @@ import com.tpp.threat_perception_platform.asset.App;
 import com.tpp.threat_perception_platform.asset.Service;
 import com.tpp.threat_perception_platform.dao.*;
 import com.tpp.threat_perception_platform.pojo.Host;
+import com.tpp.threat_perception_platform.pojo.Risk;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,9 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+
 import com.tpp.threat_perception_platform.asset.Process;
 
 @Component
@@ -34,7 +38,8 @@ public class RabbitMQController {
     private ProcessMapper  processMapper;
     @Autowired
     private ServiceMapper serviceMapper;
-
+    @Autowired
+    private RiskMapper  riskMapper;
 
     //查询并设置探测结构id
     private int getNextDetectId(String macAddress, AccountMapper mapper) {
@@ -110,7 +115,6 @@ public class RabbitMQController {
                     int detectId = getNextDetectId(macAddress, accountMapper); // 获取 detect_id
                     for (int j = 0; j < accountsArray.size(); j++) {
                         JSONObject accountData = accountsArray.getJSONObject(j);
-                        Account dbAccount = accountMapper.selectByPrimaryKey(accountData.getString("sid"));
 
                         Account account = new Account();
                         account.setDetectId(detectId);
@@ -142,11 +146,8 @@ public class RabbitMQController {
 
                         account.setTime(new Date());
 
-                        if (dbAccount == null) {
-                            accountMapper.insertSelective(account);
-                        } else if (!dbAccount.equals(account)) {
-                            accountMapper.updateByPrimaryKeySelective(account);
-                        }
+                        accountMapper.insertSelective(account);
+
                     }
                 }
 
@@ -198,15 +199,9 @@ public class RabbitMQController {
                         process.setPriority(processData.getInteger("priority"));
                         process.setDescription(processData.getString("description"));
 
-                        // 查询是否已存在该进程（根据 pid + hostName 判断）
-                        Process dbProcess = processMapper.selectByPidAndHost(process.getPid(), process.getHostName());
 
-                        if (dbProcess == null) {
-                            processMapper.insertSelective(process);
-                        } else if (!dbProcess.equals(process)) {
-                            process.setProcessId(dbProcess.getProcessId()); // 保留原有主键
-                            processMapper.updateByPrimaryKeySelective(process);
-                        }
+                        processMapper.insertSelective(process);
+
                     }
                 }
                 if ("service".equalsIgnoreCase(dataType)){
@@ -234,15 +229,9 @@ public class RabbitMQController {
                         service.setVersion(serviceData.getString("version"));
                         service.setExtrainfo(serviceData.getString("extrainfo"));
 
-                        // 查询是否已存在该服务（根据 name + hostName 判断）
-                        Service dbService = serviceMapper.selectByNameAndHost(service.getName(), service.getHostName());
 
-                        if (dbService == null) {
-                            serviceMapper.insertSelective(service);
-                        } else if (!dbService.equals(service)) {
-                            service.setServiceId(dbService.getServiceId()); // 保留原有主键
-                            serviceMapper.updateByPrimaryKeySelective(service);
-                        }
+                        serviceMapper.insertSelective(service);
+
                     }
                 }
             }
@@ -254,4 +243,41 @@ public class RabbitMQController {
             channel.basicAck(deliveryTag, false);
         }
     }
+//    @RabbitListener(queues = "pwd_detect_result")
+//    public void receivePwdDetectResult(String messageBody, Message message, Channel channel) throws IOException {
+//        System.out.println("接收到密码检测结果：" + messageBody);
+//        long deliveryTag = message.getMessageProperties().getDeliveryTag();
+//
+//        try {
+//            JSONObject fullData = JSON.parseObject(messageBody);
+//            JSONObject info = fullData.getJSONObject("info");
+//            JSONArray dataList = fullData.getJSONArray("data");
+//            System.out.println("info:" + info);
+//            System.out.println("dataList:" + dataList);
+//            //取出dataList中的账户名，分别新建一个risk，存入risk表，表中re字段为账户名，desc字段为'有弱口令风险'，type字段为'account'
+//            for (int i = 0; i < dataList.size(); i++) {
+//                JSONObject dataItem = dataList.getJSONObject(i);
+//                String dataType = dataItem.getString("type");
+//                if (Objects.equals(dataType, "password")) {
+//                    JSONArray pwdAccountsArray = dataItem.getJSONArray("data");
+//
+//                    for (int j = 0; j < pwdAccountsArray.size(); j++) {
+//                        JSONObject accountData = pwdAccountsArray.getJSONObject(j);
+//                        System.out.println("accountData:" + accountData);
+//                        Risk risk = new Risk();
+//                        risk.setRiskType("account");
+//                        risk.setRiskDesc("有弱口令风险");
+//                        risk.setRe(accountData.getString("name"));
+//                        System.out.println("risk:" + risk);
+//                        riskMapper.insertSelective(risk);
+//                    }
+//                }
+//            }
+//            channel.basicAck(deliveryTag, false);
+//        }
+//        catch (Exception e) {
+//            //失败后仍然确认消息
+//            channel.basicAck(deliveryTag, false);
+//        }
+//    }
 }
