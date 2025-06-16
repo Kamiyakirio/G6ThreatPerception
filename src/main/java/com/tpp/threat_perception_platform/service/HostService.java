@@ -1,6 +1,7 @@
 package com.tpp.threat_perception_platform.service;
 
 import com.tpp.threat_perception_platform.param.MyParam;
+import com.tpp.threat_perception_platform.param.SystemDetectParam;
 import com.tpp.threat_perception_platform.pojo.Host;
 import com.tpp.threat_perception_platform.response.ResponseResult;
 
@@ -14,4 +15,7 @@ public interface HostService {
     public ResponseResult delete(Integer[] ids);
 
     public HashMap<String,Object> hostDetect(HashMap<String,Object> data);
+
+
+
 }

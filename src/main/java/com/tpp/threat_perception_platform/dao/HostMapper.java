@@ -22,6 +22,7 @@ public interface HostMapper {
     int insertSelective(Host record);
 
     Host selectByPrimaryKey(Long id);
+
     Host selectByMacAddress(String macAddress);
     List<Host> findAll(@Param("param") MyParam param);
 

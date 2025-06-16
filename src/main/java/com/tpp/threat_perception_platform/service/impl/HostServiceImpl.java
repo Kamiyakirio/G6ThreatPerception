@@ -5,6 +5,7 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.tpp.threat_perception_platform.dao.HostMapper;
 import com.tpp.threat_perception_platform.param.MyParam;
+import com.tpp.threat_perception_platform.param.SystemDetectParam;
 import com.tpp.threat_perception_platform.pojo.Host;
 import com.tpp.threat_perception_platform.response.ResponseResult;
 import com.tpp.threat_perception_platform.service.HostService;
@@ -13,6 +14,7 @@ import com.tpp.threat_perception_platform.utils.RedisCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -112,4 +114,8 @@ public class HostServiceImpl implements HostService {
 
         return result;
     }
+
+
+
+
 }
