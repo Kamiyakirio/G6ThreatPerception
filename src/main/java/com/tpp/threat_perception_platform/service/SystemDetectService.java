@@ -14,6 +14,10 @@ public interface SystemDetectService {
 
     public ResponseResult systemDetect(SystemDetectParam param);
 
+    List<Map<String, Object>> getSystemDetectByMacAndSDetectId(String macAddress, Integer sDetectId);
+
+    List<Integer> getDetectionIdsByMac(String macAddress);
+
 
 
 }
