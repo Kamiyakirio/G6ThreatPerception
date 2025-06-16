@@ -71,6 +71,6 @@ public class RabbitMQServiceImpl implements RabbitMQService {
 
         // 发送消息
         rabbitTemplate.convertAndSend(exchangeName, routingKey, message);
-        System.out.printf("【使用 routingKey=%s 作为队列】消息发送成功: %s\n", routingKey, message);
+//        System.out.printf("【使用 routingKey=%s 作为队列】消息发送成功: %s\n", routingKey, message);
     }
 }

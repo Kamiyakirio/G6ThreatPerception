@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>安全补丁检测</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
+    <style>
+        .layui-form-item-short {
+            width: 650px !important; /* 增加宽度以容纳更大的间距 */
+        }
+
+        /* 新增样式使选择框和按钮在同一行 */
+        .host-select-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .host-select-container select {
+            flex: 1;
+            margin-right: 20px; /* 增加右边距到20px */
+        }
+
+        /* 调整按钮样式 */
+        #riskDetectionBtn {
+            margin-left: 30px; /* 增加按钮左边距 */
+            white-space: nowrap; /* 防止按钮文字换行 */
+        }
+    </style>
+</head>
+<body>
+
+<!--表单-->
+<div class="layui-fluid" style="padding: 20px;">
+    <div class="layui-card">
+        <div class="layui-form" lay-filter="layuiadmin-form-useradmin" id="layuiadmin-form-useradmin"
+             style="padding: 20px 0 0 0;">
+
+            <!-- 选择主机 -->
+            <div class="layui-form-item layui-form-item-short">
+                <label class="layui-form-label">选择主机：</label>
+                <div class="layui-input-block">
+                    <div class="host-select-container">
+                        <select name="hostId" lay-verify="required" id="hostSelect">
+                            <option value="">请选择主机</option>
+                        </select>
+                        <!-- 进行风险检测按钮 -->
+                        <button type="button" class="layui-btn" id="riskDetectionBtn">进行风险检测</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 漏洞选项 -->
+            <div class="layui-form-item">
+                <label class="layui-form-label">漏洞选项：</label>
+                <div class="layui-input-block">
+                    <input type="checkbox" name="scan-web" title="Web" lay-skin="primary">
+                    <input type="checkbox" name="scan-sql" title="SQL" checked lay-skin="primary">
+                    <input type="checkbox" name="scan-others" title="其他" lay-skin="primary">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label"></label>
+                <a class="layui-btn layui-btn-normal layuiadmin-btn-useradmin" lay-event="refresh_result"><i
+                        class="layui-icon layui-icon-refresh"></i>检查探测结果</a>
+            </div>
+
+        </div>
+
+        <table id="LAY-user-manage" lay-filter="LAY-user-manage"></table>
+    </div>
+</div>
+
+<script src="/layui/layui.js"></script>
+<script type="text/javascript">
+    layui.config({
+        base: '/layui/layuiAdmin/'
+    }).extend({
+        index: 'lib/index'
+    }).use(['index', 'layer', 'form'], function () {
+        var $ = layui.$
+            , form = layui.form
+            , layer = layui.layer
+            , table = layui.table;
+
+        var savedHosts;
+
+        function formatDate(str) {
+            if (str != null) {
+                var now = new Date(str);
+
+                var year = now.getFullYear();
+                var month = String(now.getMonth() + 1).padStart(2, '0'); // 补零
+                var date = String(now.getDate()).padStart(2, '0');
+
+                var hours = String(now.getHours()).padStart(2, '0');
+                var minutes = String(now.getMinutes()).padStart(2, '0');
+                var seconds = String(now.getSeconds()).padStart(2, '0');
+
+                return `${year}-${month}-${date} ${hours}:${minutes}:${seconds}`;
+            }
+            return "";
+        }
+
+        // 加载主机列表
+        function loadHosts() {
+            $.ajax({
+                url: '/host/list',
+                type: 'POST', // 如果接口支持 GET 则改为 GET
+                data: {page: 1, limit: 10}, // 如果需要分页参数
+                headers: {
+                    'Authorization': localStorage.getItem('token')
+                },
+                success: function (res) {
+                    if (res.code === 0) {
+                        var hosts = res.data;
+                        savedHosts = hosts;
+                        var select = $('#hostSelect');
+                        select.empty().append('<option value="">请选择主机</option>');
+                        hosts.forEach(function (host) {
+                            select.append(new Option(`${host.hostName} (${host.macAddress})`, host.id));
+                        });
+                        form.render('select'); // 渲染下拉框
+                    } else {
+                        layer.msg(res.msg || '获取主机失败', {icon: 5});
+                    }
+                },
+                error: function (xhr, status, error) {
+                    layer.msg("获取主机列表失败", {icon: 2});
+                }
+            });
+        }
+
+        // 页面加载时初始化主机列表
+        loadHosts();
+
+        // 绑定"进行风险检测"按钮的点击事件
+        $('#riskDetectionBtn').on('click', function () {
+            var hostId = $('[name="hostId"]').val();
+            if (!hostId) {
+                layer.msg('请选择主机', {icon: 5});
+                return;
+            }
+            const result = savedHosts.find(item => item.id === parseInt(hostId));
+
+            var detectData = {
+                data: result,
+                scanWeb: $('[name="scan-web"]').is(':checked') ? 1 : 0,
+                scanSql: $('[name="scan-sql"]').is(':checked') ? 1 : 0,
+                scanOthers: $('[name="scan-others"]').is(':checked') ? 1 : 0
+            };
+
+            // 发送请求
+            $.ajax({
+                url: '/detect/vul_scan',
+                type: 'POST',
+                data: JSON.stringify(detectData),
+                contentType: 'application/json',
+                headers: {
+                    'Authorization': localStorage.getItem('token')
+                },
+                success: function (res) {
+                    if (res.code === 0) {
+                        layer.msg(res.msg || '检测任务已提交', {icon: 1});
+                    } else {
+                        layer.msg(res.msg || '检测失败', {icon: 5});
+                    }
+                },
+                error: function (xhr, status, err) {
+                    layer.msg('网络异常，请稍后再试', {icon: 2});
+                }
+            });
+        });
+
+        $('[lay-event="refresh_result"]').click(function () {
+            var hostId = $('[name="hostId"]').val();
+            if (!hostId) {
+                layer.msg('请选择主机', {icon: 5});
+                return;
+            }
+            const result = savedHosts.find(item => item.id === parseInt(hostId));
+
+            var detectData = {
+                data: result,
+                scanWeb: $('[name="scan-web"]').is(':checked') ? 1 : 0,
+                scanSql: $('[name="scan-sql"]').is(':checked') ? 1 : 0,
+                scanOthers: $('[name="scan-others"]').is(':checked') ? 1 : 0
+            };
+            $.ajax({
+                url: '/detect/scan_result',
+                method: 'POST',
+                headers: {
+                    'Authorization': localStorage.getItem("token")
+                },
+                data: JSON.stringify({"macAddress": result.macAddress}),
+                contentType: 'application/json',
+                success: function (response) {
+                    table.render({
+                        elem: "#LAY-user-manage"
+                        , width: "auto"
+                        , cellMinWidth: 80
+                        , title: "漏洞扫描结果"
+                        , data: response.data
+                        , cols: [
+                            [
+                                {field: "id", title: "ID", width: 80}
+                                , {field: "vulName", title: "漏洞名称", width: 160}
+                                , {field: "vulDesc", title: "漏洞描述", width: 240}
+                                , {
+                                field: "resultDesc", title: "扫描结果", width: 300, templet: function (d) {
+                                    if ("漏洞存在" === d["resultDesc"]) {
+                                        return '<button type="button" class="layui-btn layui-bg-red layui-btn-xs">漏洞存在</button>'
+                                    } else if ("漏洞不存在" === d["resultDesc"]) {
+                                        return '<button type="button" class="layui-btn layui-bg-blue layui-btn-xs">漏洞不存在</button>'
+                                    } else {
+                                        return '<button type="button" class="layui-btn layui-bg-orange layui-btn-xs">' + d["resultDesc"] + '</button>'
+                                    }
+                                }
+                            }
+                                , {
+                                field: "time", title: "扫描时间", width: 300, templet: function (d) {
+                                    return formatDate(d["time"])
+                                }
+                            }
+                            ]]
+                        , page: {
+                            curr: 1, limit: 15
+                        }
+                    });
+                },
+                error: function (error) {
+                    layer.msg('网络异常，请稍后再试', {icon: 2});
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>
