@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>安全补丁检测</title>
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+  <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
+  <style>
+    .layui-form-item-short {
+      width: 650px !important;
+    }
+    /* 新增样式使选择框和按钮在同一行 */
+    .host-select-container {
+      display: flex;
+      align-items: center;
+    }
+    .host-select-container select {
+      flex: 1;
+      margin-right: 20px;
+    }
+    /* 调整按钮样式 */
+    #riskDetectionBtn {
+      margin-left: 30px;
+      white-space: nowrap;
+    }
+    /* 修改结果表格容器样式，减少上边距 */
+    .result-table-container {
+      padding: 20px 20px 20px; /* 上边距从20px减少到10px */
+      margin-top: 10px; /* 上边距从20px减少到10px */
+    }
+    /* 调整表单容器的下边距 */
+    .layui-fluid.form-container {
+      padding-bottom: 0px; /* 减少表单区域的下边距 */
+    }
+  </style>
+</head>
+<body>
+
+<!--表单-->
+<div class="layui-card" style="margin: 15px;">
+  <div class="layui-form" lay-filter="layuiadmin-form-useradmin" id="layuiadmin-form-useradmin"
+       style="padding: 15px 20px 10px;">
+    <!-- 选择主机 -->
+    <div class="layui-form-item layui-form-item-short">
+      <label class="layui-form-label">选择主机：</label>
+      <div class="layui-input-block">
+        <div class="host-select-container">
+          <select name="hostId" lay-verify="required" id="hostSelect">
+            <option value="">请选择主机</option>
+          </select>
+          <button type="button" class="layui-btn layui-btn" id="riskDetectionBtn">进行风险检测</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 补丁检测结果表格 -->
+<div class="layui-fluid result-table-container">
+  <div class="layui-card">
+    <div class="layui-card-header">补丁检测结果</div>
+    <div class="layui-card-body">
+      <table id="hotfixResultTable" lay-filter="hotfixResultTable"></table>
+    </div>
+  </div>
+</div>
+
+<script src="/layui/layui.js"></script>
+<script th:inline="javascript">
+  layui.config({
+    base: '/layui/layuiAdmin/'
+  }).extend({
+    index: 'lib/index'
+  }).use(['index', 'layer', 'form', 'table', 'util'], function () {
+    var $ = layui.$
+            , form = layui.form
+            , layer = layui.layer
+            , table = layui.table
+            , util = layui.util;
+
+    // 初始化表格
+    var hotfixTable = table.render({
+      elem: '#hotfixResultTable'
+      ,url: '/hotfix/list' // 这里需要后端提供对应的接口
+      ,page: true // 开启分页
+      ,cols: [[ // 表头
+        {field: 'id', title: 'ID', width: 80, sort: true}
+        ,{field: 'macAddress', title: 'MAC地址', width: 180}
+        ,{field: 'kbId', title: '补丁号', width: 120}
+        ,{field: 'cveId', title: 'CVE编号', width: 150}
+        ,{field: 'score', title: '风险评分', width: 100, sort: true}
+        ,{field: 'cvrfId', title: 'CVRF编号', width: 150}
+        ,{field: 'productId', title: '产品ID', width: 120}
+        ,{field: 'productName', title: '产品名称', width: 200}
+        ,{field: 'dt', title: '检测时间', width: 180, sort: true, templet: function(d){
+            return d.dt ? util.toDateString(new Date(d.dt), 'yyyy-MM-dd HH:mm:ss') : '';
+        }}
+      ]]
+      ,limits: [10, 20, 50, 100]
+      ,limit: 10
+      ,text: {
+        none: '暂无数据'
+      }
+    });
+
+    // 加载主机列表
+    function loadHosts() {
+      $.ajax({
+        url: '/host/list',
+        type: 'POST',
+        data: { page: 1, limit: 10 },
+        headers: {
+          'Authorization': localStorage.getItem('token')
+        },
+        success: function(res) {
+          if (res.code === 0) {
+            var hosts = res.data;
+            var select = $('#hostSelect');
+            select.empty().append('<option value="">请选择主机</option>');
+            hosts.forEach(function(host) {
+              select.append(new Option(host.hostName, host.id));
+            });
+            form.render('select');
+          } else {
+            layer.msg(res.msg || '获取主机失败', {icon: 5});
+          }
+        },
+        error: function(xhr, status, error) {
+          layer.msg("获取主机列表失败", {icon: 2});
+        }
+      });
+    }
+
+    // 页面加载时初始化主机列表
+    loadHosts();
+
+    // 监听主机选择变化
+    form.on('select(hostSelect)', function(data){
+      if(data.value) {
+        // 重载表格，根据选中的主机筛选数据
+        hotfixTable.reload({
+          where: {
+            hostId: data.value
+          }
+        });
+      }
+    });
+
+    // 绑定"进行风险检测"按钮的点击事件
+    $('#riskDetectionBtn').on('click', function() {
+      var hostId = $('[name="hostId"]').val();
+      if (!hostId) {
+        layer.msg('请选择主机', {icon: 5});
+        return;
+      }
+
+      // 获取主机信息
+      $.ajax({
+        url: '/host/list',
+        type: 'POST',
+        headers: {
+          'Authorization': localStorage.getItem('token')
+        },
+        data: {
+          page: 1,
+          limit: 10,
+          id: hostId
+        },
+        success: function(res) {
+          if (res.code === 0 && res.data && res.data.length > 0) {
+            var host = res.data[0];
+            var detectData = {
+              id: hostId,
+              type: 'hotfix',
+              hostName: host.hostName,
+              macAddress: host.macAddress
+            };
+
+            // 发送检测请求
+            $.ajax({
+              url: '/host/detect',
+              type: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': localStorage.getItem('token')
+              },
+              data: JSON.stringify(detectData),
+              success: function(res) {
+                if (res.code === 0) {
+                  layer.msg(res.msg || '检测任务已提交', {icon: 1});
+                  // 延迟3秒后刷新表格数据
+                  setTimeout(function() {
+                    hotfixTable.reload();
+                  }, 3000);
+                } else {
+                  layer.msg(res.msg || '检测失败', {icon: 5});
+                }
+              },
+              error: function(xhr, status, err) {
+                layer.msg('网络异常，请稍后再试', {icon: 2});
+              }
+            });
+          } else {
+            layer.msg('获取主机信息失败', {icon: 5});
+          }
+        },
+        error: function(xhr, status, err) {
+          layer.msg('获取主机信息失败', {icon: 2});
+        }
+      });
+    });
+  });
+</script>
+</body>
+</html>

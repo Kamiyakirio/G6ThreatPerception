@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>系统探测详情</title>
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <style>
+        .layui-form-item-short {
+            width: 100% !important;
+        }
+        .layui-table td, .layui-table th {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="layui-fluid" style="padding: 20px;">
+    <div class="layui-card">
+        <div class="layui-card-header">主机详细信息</div>
+        <div class="layui-card-body">
+            <div class="layui-row layui-col-space15">
+                <div class="layui-col-md6">
+                    <table class="layui-table">
+                        <tr><th>字段</th><th>值</th></tr>
+                        <tr><td>MAC地址</td><td th:text="${macAddress}"></td></tr>
+                    </table>
+                </div>
+                <div class="layui-col-md6">
+                    <table id="riskDetailsTable" lay-filter="riskDetailsTable"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/layui/layui.js"></script>
+<script>
+    layui.use(['table', 'layer'], function () {
+        var table = layui.table;
+        var layer = layui.layer;
+
+        // 获取 URL 中的 mac 参数
+        var urlParams = new URLSearchParams(window.location.search);
+        var macAddress = urlParams.get('mac');
+
+        if (!macAddress) {
+            layer.msg("缺少 MAC 地址参数", { icon: 5 });
+            return;
+        }
+
+        // 加载风险详情数据
+        table.render({
+            elem: '#riskDetailsTable',
+            url: '/host/riskDetails/' + encodeURIComponent(macAddress),
+            method: 'get',
+            headers: {
+                'Authorization': localStorage.getItem('token')
+            },
+            cellMinWidth: 80,
+            title: '风险检测详情',
+            cols: [[
+                { field: 'detectProgram', title: '探测项目' },
+                { field: 'riskLevel', title: '风险等级', templet: function (d) {
+                        switch (d.riskLevel) {
+                            case '1': return '<span class="layui-badge layui-bg-green">低风险</span>';
+                            case '2': return '<span class="layui-badge layui-bg-orange">中风险</span>';
+                            case '3': return '<span class="layui-badge layui-bg-red">高风险</span>';
+                            default: return '未知';
+                        }
+                    }},
+                { field: 'details', title: '详情' },
+                { field: 'suggest', title: '保护建议' }
+            ]]
+        });
+    });
+</script>
+
+</body>
+</html>

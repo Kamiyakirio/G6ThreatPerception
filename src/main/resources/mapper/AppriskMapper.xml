@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tpp.threat_perception_platform.dao.AppriskMapper">
+
+    <resultMap id="BaseResultMap" type="com.tpp.threat_perception_platform.pojo.Apprisk">
+            <id property="id" column="id" />
+            <result property="appriskName" column="apprisk_name" />
+            <result property="appriskDesc" column="apprisk_desc" />
+            <result property="appriskLevel" column="apprisk_level" />
+            <result property="appriskRequestType" column="apprisk_request_type" />
+            <result property="appriskType" column="apprisk_type" />
+            <result property="appriskPath" column="apprisk_path" />
+            <result property="appriskPayload" column="apprisk_payload" />
+            <result property="appriskFlag" column="apprisk_flag" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,apprisk_name,apprisk_desc,apprisk_level,apprisk_request_type,apprisk_type,
+        apprisk_path,apprisk_payload,apprisk_flag
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from apprisk
+        where  id = #{id} 
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from apprisk
+        where  id = #{id} 
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.tpp.threat_perception_platform.pojo.Apprisk" useGeneratedKeys="true">
+        insert into apprisk
+        ( id,apprisk_name,apprisk_desc,apprisk_level,apprisk_request_type,apprisk_type,
+        apprisk_path,apprisk_payload,apprisk_flag)
+        values (#{id},#{appriskName},#{appriskDesc},#{appriskLevel},#{appriskRequestType},#{appriskType},
+        #{appriskPath},#{appriskPayload},#{appriskFlag})
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.tpp.threat_perception_platform.pojo.Apprisk" useGeneratedKeys="true">
+        insert into apprisk
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="appriskName != null">apprisk_name,</if>
+                <if test="appriskDesc != null">apprisk_desc,</if>
+                <if test="appriskLevel != null">apprisk_level,</if>
+                <if test="appriskRequestType != null">apprisk_request_type,</if>
+                <if test="appriskType != null">apprisk_type,</if>
+                <if test="appriskPath != null">apprisk_path,</if>
+                <if test="appriskPayload != null">apprisk_payload,</if>
+                <if test="appriskFlag != null">apprisk_flag,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id},</if>
+                <if test="appriskName != null">#{appriskName},</if>
+                <if test="appriskDesc != null">#{appriskDesc},</if>
+                <if test="appriskLevel != null">#{appriskLevel},</if>
+                <if test="appriskRequestType != null">#{appriskRequestType},</if>
+                <if test="appriskType != null">#{appriskType},</if>
+                <if test="appriskPath != null">#{appriskPath},</if>
+                <if test="appriskPayload != null">#{appriskPayload},</if>
+                <if test="appriskFlag != null">#{appriskFlag},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.tpp.threat_perception_platform.pojo.Apprisk">
+        update apprisk
+        <set>
+                <if test="appriskName != null">
+                    apprisk_name = #{appriskName},
+                </if>
+                <if test="appriskDesc != null">
+                    apprisk_desc = #{appriskDesc},
+                </if>
+                <if test="appriskLevel != null">
+                    apprisk_level = #{appriskLevel},
+                </if>
+                <if test="appriskRequestType != null">
+                    apprisk_request_type = #{appriskRequestType},
+                </if>
+                <if test="appriskType != null">
+                    apprisk_type = #{appriskType},
+                </if>
+                <if test="appriskPath != null">
+                    apprisk_path = #{appriskPath},
+                </if>
+                <if test="appriskPayload != null">
+                    apprisk_payload = #{appriskPayload},
+                </if>
+                <if test="appriskFlag != null">
+                    apprisk_flag = #{appriskFlag},
+                </if>
+        </set>
+        where   id = #{id} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.tpp.threat_perception_platform.pojo.Apprisk">
+        update apprisk
+        set 
+            apprisk_name =  #{appriskName},
+            apprisk_desc =  #{appriskDesc},
+            apprisk_level =  #{appriskLevel},
+            apprisk_request_type =  #{appriskRequestType},
+            apprisk_type =  #{appriskType},
+            apprisk_path =  #{appriskPath},
+            apprisk_payload =  #{appriskPayload},
+            apprisk_flag =  #{appriskFlag}
+        where   id = #{id} 
+    </update>
+</mapper>

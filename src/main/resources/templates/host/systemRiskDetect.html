@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>系统风险检测</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
+    <style>
+        .layui-form-item-short {
+            width: 100% !important; /* 自适应宽度 */
+        }
+        .header-bg {
+            background-color: #f0f2f5;
+            padding: 15px 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .header-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .host-select-container {
+            display: flex;
+            align-items: center;
+        }
+        .host-select-container select {
+            flex: 1;
+            margin-right: 20px;
+        }
+        #riskDetectionBtn {
+            margin-left: 30px;
+        }
+        .table-container {
+            margin-top: 30px;
+        }
+        /* 状态标签样式 */
+        .status-online { background-color: #5FB878; } /* 在线 */
+        .status-offline { background-color: #FF5722; } /* 离线 */
+        /* 风险等级标签样式 */
+        .risk-level-low { background-color: #5FB878; } /* 低风险 */
+        .risk-level-medium { background-color: #FAAD14; } /* 中风险 */
+        .risk-level-high { background-color: #FF5722; } /* 高风险 */
+    </style>
+</head>
+<body>
+
+<div class="layui-fluid" style="padding: 20px;">
+    <!-- 顶部背景区域 -->
+    <div class="header-bg">
+        <div class="header-title">系统风险检测平台</div>
+    </div>
+
+    <div class="layui-card">
+        <div class="layui-form" lay-filter="layuiadmin-form-useradmin" id="layuiadmin-form-useradmin" style="padding: 20px 0 0 0;">
+
+            <!-- 选择主机 -->
+            <div class="layui-form-item layui-form-item-short">
+                <label class="layui-form-label">选择主机：</label>
+                <div class="layui-input-block">
+                    <div class="host-select-container">
+                        <select name="hostId" lay-verify="required" id="hostSelect">
+                            <option value="">请选择主机</option>
+                        </select>
+                        <button type="button" class="layui-btn" id="riskDetectionBtn">进行系统风险检测</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- 已探测主机表格区域 -->
+    <div class="table-container">
+        <div class="layui-card">
+            <div class="layui-card-header" style="border-left: 10px solid #FF5722; font-size: 18px;">
+                已探测主机记录
+            </div>            <div class="layui-card-body">
+                <table id="detectedHostTable" lay-filter="detectedHostTable"></table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/layui/layui.js"></script>
+<script>
+    layui.config({
+        base: '/layui/layuiAdmin/'
+    }).extend({
+        index: 'lib/index'
+    }).use(['index', 'layer', 'form', 'table'], function () {
+        var $ = layui.$
+            , form = layui.form
+            , layer = layui.layer
+            , table = layui.table;
+
+        // 加载主机列表
+        function loadHosts() {
+            $.ajax({
+                url: '/host/list',
+                type: 'POST',
+                data: { page: 1, limit: 10 },
+                headers: {
+                    'Authorization': localStorage.getItem('token')
+                },
+                success: function(res) {
+                    if (res.code === 0) {
+                        var hosts = res.data;
+                        var select = $('#hostSelect');
+                        select.empty().append('<option value="">请选择主机</option>');
+                        hosts.forEach(function(host) {
+                            select.append(new Option(host.hostName, host.id));
+                        });
+                        form.render('select');
+                    } else {
+                        layer.msg(res.msg || '获取主机失败', {icon: 5});
+                    }
+                },
+                error: function(xhr, status, error) {
+                    layer.msg("获取主机列表失败", {icon: 2});
+                }
+            });
+        }
+
+        // 加载已探测主机表格（包含所有指定字段）
+        function loadDetectedHosts() {
+            table.render({
+                elem: '#detectedHostTable',
+                method: 'post',
+                url: '/host/detectedList', // 接口需返回所有相关字段
+                headers: {
+                    'Authorization': localStorage.getItem('token')
+                },
+                cellMinWidth: 80,
+                title: '已探测主机数据表',
+                cols: [
+                    [
+                        {field: 'hostName', title: '主机名称', width: 120},
+                        {field: 'macAddress', title: 'MAC地址', width: 180},
+                        {field: 'osType', title: '系统类型', width: 100},
+                        {field: 'osName', title: '系统名称', width: 120},
+                        {field: 'osBit', title: '系统位数', width: 100},
+                        {
+                            field: 'maxRiskLevel',
+                            title: '风险等级',
+                            width: 150,
+                            templet: function(d) {
+                                var levelText = d.maxRiskLevel || '未知';
+                                var levelClass = '';
+                                switch(levelText) {
+                                    case '低风险':
+                                    case '正常':
+                                        levelClass = 'risk-level-low';
+                                        break;
+                                    case '中风险':
+                                        levelClass = 'risk-level-medium';
+                                        break;
+                                    case '高风险':
+                                        levelClass = 'risk-level-high';
+                                        break;
+                                    default:
+                                        levelClass = '';
+                                }
+                                return '<span class="layui-badge ' + levelClass + '">' + levelText + '</span>';
+                            }
+                        },
+                        {field: 'detectTime', title: '探测时间', width: 160},
+                        {fixed: 'right', title: '操作', toolbar: '#detectedHostToolbar', width: 200}
+                    ]
+                ]
+                ,
+                page: true,
+                limits: [5, 10, 15, 20],
+                limit: 5
+            });
+        }
+
+        // 页面加载时初始化
+        $(function() {
+            loadHosts();
+            loadDetectedHosts();
+        });
+
+        // 绑定检测按钮事件
+        $('#riskDetectionBtn').on('click', function() {
+            var hostId = $('[name="hostId"]').val();
+            if (!hostId) {
+                layer.msg('请选择主机', {icon: 5});
+                return;
+            }
+            var macAddress = getMacAddressByHostId(hostId);
+
+            var detectData = {
+                hostId: hostId,
+                macAddress: macAddress,
+                scanWeb: $('[name="scan-web"]').is(':checked') ? 1 : 0,
+                scanSql: $('[name="scan-sql"]').is(':checked') ? 1 : 0,
+                scanOthers: $('[name="scan-others"]').is(':checked') ? 1 : 0
+            };
+
+            $.ajax({
+                url: '/host/systemDetect',
+                type: 'POST',
+                contentType: 'application/json',  // 设置 Content-Type 为 application/json
+                data: JSON.stringify(detectData),  // 将数据转换为 JSON 字符串
+                headers: {
+                    'Authorization': localStorage.getItem('token')
+                },
+                success: function(res) {
+                    if (res.code === 0) {
+                        layer.msg(res.msg || '检测任务已提交', {icon: 1});
+                        table.reload('detectedHostTable'); // 刷新表格
+                    } else {
+                        layer.msg(res.msg || '检测失败', {icon: 5});
+                    }
+                },
+                error: function(xhr, status, err) {
+                    layer.msg('网络异常，请稍后再试', {icon: 2});
+                }
+            });
+        });
+        function getMacAddressByHostId(hostId) {
+            // 这里可以根据 hostId 查询对应的 macAddress
+            // 示例代码：
+            var hosts = $('#hostSelect option');
+            for (var i = 0; i < hosts.length; i++) {
+                if (hosts[i].value === hostId) {
+                    return hosts[i].getAttribute('data-mac-address'); // 假设每个 option 元素有一个 data-mac-address 属性
+                }
+            }
+            return null;
+        }
+
+        // 表格工具栏事件
+        table.on('tool(detectedHostTable)', function(obj) {
+            var data = obj.data;
+            if (obj.event === 'viewDetail') {
+                $.ajax({
+                    url: '/host/riskDetails/' + data.macAddress,
+                    type: 'GET',
+                    headers: {
+                        'Authorization': localStorage.getItem('token')
+                    },
+                    success: function(res) {
+                        if (res.code === 0) {
+                            var riskData = res.data;
+                            var contentHtml = '<div style="padding: 15px;">' +
+                                '<table class="layui-table">' +
+                                '<thead><tr><th>探测项目</th><th>风险等级</th><th>详情</th><th>保护建议</th></tr></thead>' +
+                                '<tbody>';
+
+                            for(var i = 0; i < riskData.length; i++) {
+                                var item = riskData[i];
+                                contentHtml += '<tr>' +
+                                    '<td>' + (item.detectProgram || '') + '</td>' +
+                                    '<td>' + formatRiskLevel(item.riskLevel) + '</td>' +
+                                    '<td>' + (item.details || '') + '</td>' +
+                                    '<td>' + (item.suggest || '') + '</td>' +
+                                    '</tr>';
+                            }
+
+                            contentHtml += '</tbody></table></div>';
+
+                            layer.open({
+                                type: 1,
+                                title: '主机风险详情',
+                                skin: 'layui-layer-molv',
+                                content: contentHtml,
+                                area: ['1350px', '700px'],
+                                btn: ['关闭'],
+                                btnAlign: 'c'
+                            });
+                        } else {
+                            layer.msg(res.msg || '获取风险详情失败', {icon: 5});
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        layer.msg("网络异常，请稍后再试", {icon: 2});
+                    }
+                });
+            } else if (obj.event === 'viewRiskDetails') {
+                $.ajax({
+                    url: '/host/riskDetails/' + data.macAddress,
+                    type: 'GET',
+                    headers: {
+                        'Authorization': localStorage.getItem('token')
+                    },
+                    success: function(res) {
+                        if (res.code === 0) {
+                            var riskData = res.data;
+                            var contentHtml = '<div style="padding: 15px;">' +
+                                '<table class="layui-table">' +
+                                '<thead><tr><th>探测项目</th><th>风险等级</th><th>详情</th><th>保护建议</th></tr></thead>' +
+                                '<tbody>';
+
+                            for(var i = 0; i < riskData.length; i++) {
+                                var item = riskData[i];
+                                contentHtml += '<tr>' +
+                                    '<td>' + (item.detectProgram || '') + '</td>' +
+                                    '<td>' + formatRiskLevel(item.riskLevel) + '</td>' +
+                                    '<td>' + (item.details || '') + '</td>' +
+                                    '<td>' + (item.suggest || '') + '</td>' +
+                                    '</tr>';
+                            }
+
+                            contentHtml += '</tbody></table></div>';
+
+                            layer.open({
+                                type: 1,
+                                title: '主机风险详情',
+                                skin: 'layui-layer-molv',
+                                content: contentHtml,
+                                area: ['800px', '500px'],
+                                btn: ['关闭'],
+                                btnAlign: 'c'
+                            });
+                        } else {
+                            layer.msg(res.msg || '获取风险详情失败', {icon: 5});
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        layer.msg("网络异常，请稍后再试", {icon: 2});
+                    }
+                });
+            }
+        });
+
+        // 风险等级格式化函数
+        function formatRiskLevel(level) {
+            switch(level) {
+                case '低风险':
+                    return '<span class="layui-badge risk-level-low">低风险</span>';
+                case '正常':
+                    return '<span class="layui-badge risk-level-low">低风险</span>';
+                case '中风险':
+                    return '<span class="layui-badge risk-level-medium">中风险</span>';
+                case '高风险':
+                    return '<span class="layui-badge risk-level-high">高风险</span>';
+                default:
+                    return '未知';
+            }
+        }
+
+    });
+</script>
+
+<!-- 已探测主机表格工具栏模板 -->
+<script type="text/html" id="detectedHostToolbar">
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="viewDetail"><i class="layui-icon layui-icon-search"></i>查看详情</a>
+    <!-- 新增查看风险详情 -->
+    <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="viewRiskDetails"><i class="layui-icon layui-icon-file"></i>查看风险详情</a>
+</script>
+
+</body>
+</html>
