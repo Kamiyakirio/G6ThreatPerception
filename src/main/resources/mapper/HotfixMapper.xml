@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tpp.threat_perception_platform.dao.HotfixMapper">
+    <select id="findHotfixList" resultType="java.util.Map">
+        SELECT DISTINCT 
+            wcvd.id,
+            wcvd.kb_id as kbId,
+            wcvd.title,
+            wcvd.severity,
+            wcvd.release_date as releaseDate,
+            wcvd.description,
+            CASE 
+                WHEN wpn.id IS NOT NULL THEN 1
+                ELSE 0
+            END as status
+        FROM 
+            win_cvb_db wcvd
+        LEFT JOIN 
+            win_product_name wpn ON wcvd.kb_id = wpn.kb_id
+        <where>
+            <if test="hostId != null">
+                AND wpn.host_id = #{hostId}
+            </if>
+        </where>
+        ORDER BY wcvd.release_date DESC
+    </select>
+</mapper> 

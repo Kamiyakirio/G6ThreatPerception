@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tpp.threat_perception_platform.dao.SystemDetectMapper">
+
+    <resultMap id="BaseResultMap" type="com.tpp.threat_perception_platform.pojo.SystemDetect">
+            <id property="sid" column="sid" />
+            <result property="macAddress" column="mac_address" />
+            <result property="detectProgram" column="detect_program" />
+            <result property="riskLevel" column="risk_level" />
+            <result property="details" column="details" />
+            <result property="suggest" column="suggest" />
+            <result property="sDetectId" column="s_detect_id" />
+            <result property="detectTime" column="detect_time" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        sid,mac_address,detect_program,risk_level,details,suggest,
+        s_detect_id,detect_time
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from system_detect
+        where  sid = #{sid} 
+    </select>
+    <select id="findSystemDetectWithHostInfoByMac" parameterType="string" resultType="map">
+        SELECT
+            s.sid,
+            s.mac_address,
+            s.detect_program,
+            s.risk_level,
+            h.host_name,
+            h.os_type,
+            h.os_name,
+            h.is_alive,
+            s.detect_time
+        FROM
+            system_detect s
+                JOIN
+            host h ON s.mac_address = h.mac_address
+        WHERE
+            s.mac_address = #{macAddress}
+    </select>
+    <select id="findDetectedHosts" resultType="map">
+        SELECT
+            s.s_detect_id AS sDetectId,
+            s.risk_level AS riskLevel,
+            s.detect_time AS detectTime,
+            h.host_name AS hostName,
+            h.mac_address AS macAddress,
+            h.os_type AS osType,
+            h.os_name AS osName,
+            h.os_bit AS osBit,
+
+            (SELECT
+                 CASE
+                     WHEN MAX(CASE WHEN sub.risk_level = '高风险' THEN 3
+                                   WHEN sub.risk_level = '中风险' THEN 2
+                                   WHEN sub.risk_level = '低风险' THEN 1
+                                   ELSE 0 END) = 3 THEN '高风险'
+                     WHEN MAX(CASE WHEN sub.risk_level = '高风险' THEN 3
+                                   WHEN sub.risk_level = '中风险' THEN 2
+                                   WHEN sub.risk_level = '低风险' THEN 1
+                                   ELSE 0 END) = 2 THEN '中风险'
+                     WHEN MAX(CASE WHEN sub.risk_level = '高风险' THEN 3
+                                   WHEN sub.risk_level = '中风险' THEN 2
+                                   WHEN sub.risk_level = '低风险' THEN 1
+                                   ELSE 0 END) = 1 THEN '低风险'
+                     ELSE '未知'
+                     END
+             FROM system_detect sub
+             WHERE sub.mac_address = s.mac_address
+            ) AS maxRiskLevel
+        FROM system_detect s
+                 JOIN host h ON s.mac_address = h.mac_address
+        WHERE s.s_detect_id IS NOT NULL
+    </select>
+    <select id="findSystemDetectByMac" resultType="java.util.Map">
+        SELECT
+            detect_program AS detectProgram,
+            risk_level AS riskLevel,
+            details,
+            suggest
+        FROM
+            system_detect
+        WHERE
+            mac_address = #{macAddress}
+    </select>
+    <select id="selectByMacAddress" resultType="com.tpp.threat_perception_platform.pojo.Host">
+        select
+            mac_address,  -- 根据实际表结构调整字段
+            host_name,
+            os_type,
+            os_name,
+            is_alive,
+            update_time  -- 根据实际表结构调整字段
+        from host
+        where mac_address = #{macAddress}
+    </select>
+    <select id="countByMacAddress" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT s_detect_id)
+        FROM system_detect
+        WHERE mac_address = #{macAddress}
+    </select>
+    <select id="getDetectedHostsWithMaxRisk" resultType="java.util.Map">
+        SELECT
+            mac_address as macAddress,
+            CASE
+                WHEN MAX(CASE WHEN risk_level = '高风险' THEN 3
+                              WHEN risk_level = '中风险' THEN 2
+                              WHEN risk_level = '低风险' THEN 1
+                              ELSE 0 END) = 3 THEN '高风险'
+                WHEN MAX(...) = 2 THEN '中风险'
+                WHEN MAX(...) = 1 THEN '低风险'
+                ELSE '未知'
+                END AS riskLevel
+        FROM system_detect
+        GROUP BY mac_address
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from system_detect
+        where  sid = #{sid} 
+    </delete>
+
+    <insert id="insertSelective" keyColumn="sid" keyProperty="sid" parameterType="com.tpp.threat_perception_platform.pojo.SystemDetect" useGeneratedKeys="true">
+        insert into system_detect
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="sid != null">sid,</if>
+                <if test="macAddress != null">mac_address,</if>
+                <if test="detectProgram != null">detect_program,</if>
+                <if test="riskLevel != null">risk_level,</if>
+                <if test="details != null">details,</if>
+                <if test="suggest != null">suggest,</if>
+                <if test="sDetectId != null">s_detect_id,</if>
+                <if test="detectTime != null">detect_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="sid != null">#{sid},</if>
+                <if test="macAddress != null">#{mac_address},</if>
+                <if test="detectProgram != null">#{detectProgram},</if>
+                <if test="riskLevel != null">#{riskLevel},</if>
+                <if test="details != null">#{details},</if>
+                <if test="suggest != null">#{suggest},</if>
+                <if test="sDetectId != null">#{sDetectId},</if>
+                <if test="detectTime != null">#{detectTime},</if>
+        </trim>
+    </insert>
+    <insert id="insert" parameterType="com.tpp.threat_perception_platform.pojo.SystemDetect">
+        INSERT INTO system_detect
+        (mac_address, detect_program, risk_level, details, suggest, s_detect_id, detect_time)
+        VALUES
+            (#{macAddress}, #{detectProgram}, #{riskLevel}, #{details}, #{suggest}, #{sDetectId}, #{detectTime})
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.tpp.threat_perception_platform.pojo.SystemDetect">
+        update system_detect
+        <set>
+                <if test="mac_address != null">
+                    mac_address = #{mac_address},
+                </if>
+                <if test="detectProgram != null">
+                    detect_program = #{detectProgram},
+                </if>
+                <if test="riskLevel != null">
+                    risk_level = #{riskLevel},
+                </if>
+                <if test="details != null">
+                    details = #{details},
+                </if>
+                <if test="suggest != null">
+                    suggest = #{suggest},
+                </if>
+                <if test="sDetectId != null">
+                    s_detect_id = #{sDetectId},
+                </if>
+                <if test="detectTime != null">
+                    detect_time = #{detectTime},
+                </if>
+        </set>
+        where   sid = #{sid} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.tpp.threat_perception_platform.pojo.SystemDetect">
+        update system_detect
+        set 
+            mac_address =  #{macAddress},
+            detect_program =  #{detectProgram},
+            risk_level =  #{riskLevel},
+            details =  #{details},
+            suggest =  #{suggest},
+            s_detect_id =  #{sDetectId},
+            detect_time =  #{detectTime}
+        where   sid = #{sid} 
+    </update>
+</mapper>

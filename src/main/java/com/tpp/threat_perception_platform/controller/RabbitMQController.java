@@ -10,62 +10,79 @@ import com.tpp.threat_perception_platform.asset.Service;
 import com.tpp.threat_perception_platform.dao.*;
 import com.tpp.threat_perception_platform.pojo.AppRiskResult;
 import com.tpp.threat_perception_platform.pojo.Host;
+import com.tpp.threat_perception_platform.pojo.VulScan;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.amqp.RabbitProperties;
 import org.springframework.stereotype.Component;
 import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+
 import com.tpp.threat_perception_platform.asset.Process;
 
 @Component
 public class RabbitMQController {
+    private static final Logger logger = LoggerFactory.getLogger(RabbitMQController.class);
 
     @Autowired
     private HostMapper hostMapper;
     @Autowired
-    private AccountMapper  accountMapper;
+    private AccountMapper accountMapper;
     @Autowired
     private AppMapper appMapper;
     @Autowired
-    private ProcessMapper  processMapper;
+    private ProcessMapper processMapper;
     @Autowired
     private ServiceMapper serviceMapper;
     @Autowired
     private AppRiskResultMapper appRiskResultMapper;
-
+    @Autowired
+    private ObjectMapper objectMapper;
+    @Autowired 
+    private VulScanMapper vulScanMapper;
 
     //查询并设置探测结构id
     private int getNextDetectId(String macAddress, AccountMapper mapper) {
         Integer lastId = mapper.selectLastDetectIdByMac(macAddress);
         return (lastId == null) ? 0 : lastId + 1;
     }
+
     private int getNextDetectId(String macAddress, AppMapper mapper) {
         Integer lastId = mapper.selectLastDetectIdByMac(macAddress);
         return (lastId == null) ? 0 : lastId + 1;
     }
+
     private int getNextDetectId(String macAddress, ServiceMapper mapper) {
         Integer lastId = mapper.selectLastDetectIdByMac(macAddress);
         return (lastId == null) ? 0 : lastId + 1;
     }
+
     private int getNextDetectId(String macAddress, ProcessMapper mapper) {
         Integer lastId = mapper.selectLastDetectIdByMac(macAddress);
         return (lastId == null) ? 0 : lastId + 1;
     }
 
-    private int getNextDetectIdForAppRisk(String hostIdentifier) {
-        Integer lastId = appRiskResultMapper.selectLastDetectIdByHostIdentifier(hostIdentifier);
-        return (lastId == null) ? 0 : lastId + 1;
-    }
+// 保留新方法（来自 apprisk 分支）
+private int getNextDetectIdForAppRisk(String hostIdentifier) {
+    Integer lastId = appRiskResultMapper.selectLastDetectIdByHostIdentifier(hostIdentifier);
+    return (lastId == null) ? 0 : lastId + 1;
+}
 
-    @RabbitListener(queues = "hello")
-    public void receiveHostInfo(String messageBody, Message message, Channel channel) throws IOException {
-        long tag = message.getMessageProperties().getDeliveryTag();
-//        System.out.println(messageBody);
+@RabbitListener(queues = "hello")
+public void receiveHostInfo(Message message, Channel channel) throws IOException {
+    long tag = message.getMessageProperties().getDeliveryTag();
+    try {
+        String messageBody = new String(message.getBody());
+
+        System.out.println("收到主机信息消息: " + messageBody);
 
         Host host = new Host();
         HashMap<String, Object> dataDict = JSON.parseObject(messageBody, HashMap.class);
@@ -74,7 +91,7 @@ public class RabbitMQController {
         host.setHostName(dataDict.get("pcName").toString());
         host.setIpAddress(dataDict.get("ipAddress").toString());
         host.setOsType(dataDict.get("osName").toString());
-        host.setOsName(dataDict.get("osName").toString() + " "+dataDict.get("osNameDetailed").toString());
+        host.setOsName(dataDict.get("osName").toString() + " " + dataDict.get("osNameDetailed").toString());
         host.setCpuName(dataDict.get("cpuInfo").toString());
         host.setOsBit(dataDict.get("osBit").toString());
         host.setRam(dataDict.get("memorySize").toString());
@@ -90,7 +107,13 @@ public class RabbitMQController {
         }
 
         channel.basicAck(tag, false);
+        System.out.println("主机信息处理成功");
+    } catch (Exception e) {
+        System.out.println("处理主机信息失败: " + e.getMessage());
+        e.printStackTrace();
+        channel.basicNack(tag, false, true);
     }
+}
 
     @RabbitListener(queues = "detect_result")
     public void receiveDetectResult(String messageBody, Message message, Channel channel) throws IOException {
@@ -217,7 +240,7 @@ public class RabbitMQController {
                         }
                     }
                 }
-                if ("service".equalsIgnoreCase(dataType)){
+                if ("service".equalsIgnoreCase(dataType)) {
                     JSONArray servicesArray = dataItem.getJSONArray("data");
                     int detectId = getNextDetectId(macAddress, serviceMapper);
 
@@ -304,7 +327,47 @@ public class RabbitMQController {
             System.err.println("处理应用风险探测结果失败: " + e.getMessage());
             
             // 如果处理失败，拒绝消息并重新入队
-            channel.basicNack(deliveryTag, false, true);
+            channel.basicNack(deliveryTag, false);
+        }
+    @RabbitListener(queues = "vul_scan_result")
+    public void vul_scan_result(String messageBody, Message message, Channel channel) throws IOException {
+        long deliveryTag = message.getMessageProperties().getDeliveryTag();
+        try {
+            JSONObject fullData = JSON.parseObject(messageBody);
+            JSONObject info = fullData.getJSONObject("info");
+            JSONArray dataList = fullData.getJSONArray("data");
+
+            String hostName = info.getString("hostName");
+            String macAddress = info.getString("macAddress");
+            String timeStr = info.getString("time");
+            Integer id = info.getInteger("id");
+
+            Date time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(timeStr);
+
+            for (int i = 0; i < dataList.size(); i++) {
+                JSONObject data = dataList.getJSONObject(i);
+
+                VulScan vulScan = new VulScan();
+                vulScan.setVulId(data.getInteger("id"));
+                vulScan.setResultCode(data.getInteger("code"));
+                vulScan.setMacAddress(macAddress);
+                vulScan.setResultDesc(data.getString("message"));
+                vulScan.setTime(time);
+
+                VulScan dbVulscan = vulScanMapper.selectByMacAddressAndVulId(macAddress, (long) data.getInteger("id"));
+                if (dbVulscan == null) {
+                    vulScanMapper.insertSelective(vulScan);
+                } else if (!dbVulscan.equals(vulScan)) {
+                    vulScan.setId(dbVulscan.getId());
+                    vulScanMapper.updateByPrimaryKeySelective(vulScan);
+                }
+            }
+
+
+            channel.basicAck(deliveryTag, false);
+
+        } catch (Exception e) {
+            channel.basicAck(deliveryTag, false);
         }
     }
 }

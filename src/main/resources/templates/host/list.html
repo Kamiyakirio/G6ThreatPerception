@@ -275,7 +275,29 @@
                     }
                 });
 
-            } else if (obj.event === 'showResult') {
+            } else if (obj.event === "systemRiskDetect") {
+                var data = obj.data;
+                layer.open({
+                    type: 2,
+                    title: '系统风险探测',
+                    skin: 'layui-layer-molv',
+                    content: '/page/host/systemRiskDetect', // 对应你实际的 HTML 路径
+                    maxmin: true,
+                    area: ['480px', '310px'],
+                    success: function(layero, index) {
+                        // 获取 iframe 内容窗口对象
+                        var contentWindow = layero.find('iframe')[0].contentWindow;
+
+                        // 回填数据到弹窗表单中（可选）
+                        contentWindow.layui.form.val('layuiadmin-form-useradmin', {
+                            "id": data.id,
+                            "hostName": data.hostName,
+                            "macAddress": data.macAddress
+                        });
+                    }
+                });
+            }
+            else if (obj.event === 'showResult') {
                 layer.open({
                     type: 2
                     , title: '探测结果显示'
