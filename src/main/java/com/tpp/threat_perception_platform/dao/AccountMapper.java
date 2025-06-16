@@ -12,13 +12,13 @@ import java.util.List;
 */
 public interface AccountMapper {
 
-    int deleteByPrimaryKey(Long id);
+    int deleteByPrimaryKey(Integer id);
 
     int insert(Account record);
 
     int insertSelective(Account record);
 
-    Account selectByPrimaryKey(String id);
+    Account selectByPrimaryKey(Integer account_id);
 
     int updateByPrimaryKeySelective(Account record);
 

@@ -33,11 +33,11 @@
     ORDER BY detect_id DESC LIMIT 1
     </select>
 
-    <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List" />
         from account
-        where  sid = #{sid} 
+        where  account_id = #{account_id}
     </select>
     <select id="selectAllByMacAddress" resultType="com.tpp.threat_perception_platform.asset.Account">
         select
@@ -46,11 +46,11 @@
         where mac_address = #{macAddress}
     </select>
 
-    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
         delete from account
-        where  sid = #{sid} 
+        where  account_id = #{account_id}
     </delete>
-    <insert id="insert" keyColumn="sid" keyProperty="sid" parameterType="com.tpp.threat_perception_platform.asset.Account" useGeneratedKeys="true">
+    <insert id="insert" keyColumn="account_id" keyProperty="account_id" parameterType="com.tpp.threat_perception_platform.asset.Account" useGeneratedKeys="true">
         insert into account
         ( sid,name,full_name,disabled,lockout,password_changeable,
         password_expires,password_required,host_name,id,mac_address,
@@ -59,7 +59,7 @@
         #{passwordExpires},#{passwordRequired},#{hostName},#{id},#{macAddress},
         #{time},#{sidType},#{status},#{detectId})
     </insert>
-    <insert id="insertSelective" keyColumn="sid" keyProperty="sid" parameterType="com.tpp.threat_perception_platform.asset.Account" useGeneratedKeys="true">
+    <insert id="insertSelective" keyColumn="account_id" keyProperty="account_id" parameterType="com.tpp.threat_perception_platform.asset.Account" useGeneratedKeys="true">
         insert into account
         <trim prefix="(" suffix=")" suffixOverrides=",">
                 <if test="sid != null">sid,</if>
@@ -142,7 +142,7 @@
                     detect_id = #{detectId},
                 </if>
         </set>
-        where   sid = #{sid} 
+        where   account_id = #{account_id}
     </update>
     <update id="updateByPrimaryKey" parameterType="com.tpp.threat_perception_platform.asset.Account">
         update account
@@ -161,6 +161,6 @@
             sid_type =  #{sidType},
             status =  #{status},
             detect_id =  #{detectId}
-        where   sid = #{sid} 
+        where   account_id = #{account_id}
     </update>
 </mapper>
