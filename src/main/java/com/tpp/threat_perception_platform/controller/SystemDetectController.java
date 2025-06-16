@@ -37,6 +37,19 @@ public class SystemDetectController {
         return systemDetectService.systemDetect(param);
     }
 
+    @GetMapping("/riskDetailsByDetectId/{macAddress}/{sDetectId}")
+    public Result getRiskDetailsByDetectId(@PathVariable String macAddress, @PathVariable Integer sDetectId) {
+        List<Map<String, Object>> riskDetails = systemDetectService.getSystemDetectByMacAndSDetectId(macAddress, sDetectId);
+        return Result.success(riskDetails);
+    }
+
+    @GetMapping("/detectionIds/{macAddress}")
+    public Result getDetectionIds(@PathVariable String macAddress) {
+        System.out.println("接收到的 MAC 地址：" + macAddress); // 打印看看
+        List<Integer> detectionIds = systemDetectService.getDetectionIdsByMac(macAddress);
+        return Result.success(detectionIds);
+    }
+
 
 
 

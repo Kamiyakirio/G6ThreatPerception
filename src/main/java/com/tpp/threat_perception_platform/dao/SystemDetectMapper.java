@@ -4,6 +4,7 @@ import com.tpp.threat_perception_platform.pojo.Host;
 import com.tpp.threat_perception_platform.pojo.SystemDetect;
 import com.tpp.threat_perception_platform.param.SystemDetectParam;
 import io.lettuce.core.dynamic.annotation.Param;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 import java.util.Map;
@@ -41,4 +42,11 @@ public interface SystemDetectMapper {
     void insert(SystemDetect systemDetect);
 
     List<Map<String, Object>> getDetectedHostsWithMaxRisk();
+
+    List<Map<String, Object>> findSystemDetectByMacAndSDetectId(@Param("macAddress") String macAddress, @Param("sDetectId") Integer sDetectId);
+
+    @Select("SELECT DISTINCT s_detect_id FROM system_detect WHERE mac_address = #{macAddress} ORDER BY s_detect_id ASC")
+    List<Integer> getDetectionIdsByMac(@Param("macAddress") String macAddress);
+
+
 }

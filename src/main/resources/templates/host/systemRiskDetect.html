@@ -237,95 +237,125 @@
         table.on('tool(detectedHostTable)', function(obj) {
             var data = obj.data;
             if (obj.event === 'viewDetail') {
+
+                // 获取当前主机的 macAddress
+                var macAddress = data.macAddress;
+
+                // 获取可用的探测次数列表
                 $.ajax({
-                    url: '/host/riskDetails/' + data.macAddress,
+                    url: '/host/detectionIds/' + encodeURIComponent(macAddress),
                     type: 'GET',
                     headers: {
                         'Authorization': localStorage.getItem('token')
                     },
                     success: function(res) {
-                        if (res.code === 0) {
-                            var riskData = res.data;
-                            var contentHtml = '<div style="padding: 15px;">' +
-                                '<table class="layui-table">' +
-                                '<thead><tr><th>探测项目</th><th>风险等级</th><th>详情</th><th>保护建议</th></tr></thead>' +
-                                '<tbody>';
+                        if (res.code === 0 && res.data.length > 0) {
+                            var detectionIds = res.data;
 
-                            for(var i = 0; i < riskData.length; i++) {
-                                var item = riskData[i];
-                                contentHtml += '<tr>' +
-                                    '<td>' + (item.detectProgram || '') + '</td>' +
-                                    '<td>' + formatRiskLevel(item.riskLevel) + '</td>' +
-                                    '<td>' + (item.details || '') + '</td>' +
-                                    '<td>' + (item.suggest || '') + '</td>' +
-                                    '</tr>';
-                            }
-
-                            contentHtml += '</tbody></table></div>';
+                            var dialogContent = `            <div class="layui-fluid" style="padding: 25px;">
+                <p class="layui-text layui-font-18" style="margin-bottom: 20px;">请选择要查看的探测记录：</p>
+                <div class="layui-row layui-col-space15" id="detectIdList"></div>
+            </div>
+        `;
 
                             layer.open({
                                 type: 1,
-                                title: '主机风险详情',
-                                skin: 'layui-layer-molv',
-                                content: contentHtml,
-                                area: ['1350px', '700px'],
-                                btn: ['关闭'],
-                                btnAlign: 'c'
+                                title: '选择探测次数',
+                                content: dialogContent,
+                                area: ['600px', '350px'],
+                                btn: [],
+                                success: function() {
+                                    var detectIdList = $('#detectIdList');
+                                    detectionIds.forEach(function(id, index) {
+                                        var btnClass = 'layui-btn-normal';
+                                        if (id % 3 === 0) btnClass = 'layui-btn-primary';
+                                        else if (id % 3 === 1) btnClass = 'layui-btn-warm';
+                                        else if (id % 3 === 2) btnClass = 'layui-btn-danger';
+
+                                        var $btn = $(`                        <div class="layui-col-md4">
+                            <button class="layui-btn ${btnClass} detect-choice-btn"
+                                    data-id="${id}"
+                                    style="width: 100%; transition: all 0.2s ease-in-out;">
+                                <i class="layui-icon layui-icon-document"></i> 第 ${id} 次探测
+                            </button>
+                        </div>
+                    `);
+
+                                        detectIdList.append($btn);
+                                    });
+
+                                    $('.detect-choice-btn').on('click', function() {
+                                        var selectedId = $(this).data('id');
+
+                                        $.ajax({
+                                            url: '/host/riskDetailsByDetectId/' + encodeURIComponent(macAddress) + '/' + selectedId,
+                                            type: 'GET',
+                                            headers: {
+                                                'Authorization': localStorage.getItem('token')
+                                            },
+                                            success: function(detailRes) {
+                                                if (detailRes.code === 0) {
+                                                    var riskData = detailRes.data;
+
+                                                    var contentHtml = `                                    <div style="padding: 15px;">
+                                        <table class="layui-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>探测项目</th>
+                                                    <th>风险等级</th>
+                                                    <th>详情</th>
+                                                    <th>保护建议</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                `;
+
+                                                    for (var i = 0; i < riskData.length; i++) {
+                                                        var item = riskData[i];
+                                                        contentHtml += `                                        <tr>
+                                            <td>${item.detectProgram || ''}</td>
+                                            <td>${formatRiskLevel(item.riskLevel)}</td>
+                                            <td>${item.details || ''}</td>
+                                            <td>${item.suggest || ''}</td>
+                                        </tr>
+                                    `;
+                                                    }
+
+                                                    contentHtml += '</tbody></table></div>';
+
+                                                    layer.closeAll();
+                                                    layer.open({
+                                                        type: 1,
+                                                        title: '第 ' + selectedId + ' 次探测结果详情',
+                                                        skin: 'layui-layer-molv',
+                                                        content: contentHtml,
+                                                        area: ['1350px', '700px'],
+                                                        btn: ['关闭'],
+                                                        btnAlign: 'c'
+                                                    });
+                                                } else {
+                                                    layer.msg(detailRes.msg || '数据加载失败', { icon: 5 });
+                                                }
+                                            },
+                                            error: function(xhr, status, error) {
+                                                layer.msg("网络异常，请稍后再试", {icon: 2});
+                                            }
+                                        });
+                                    });
+                                }
                             });
                         } else {
-                            layer.msg(res.msg || '获取风险详情失败', {icon: 5});
+                            layer.msg("暂无探测记录", { icon: 5 });
                         }
                     },
                     error: function(xhr, status, error) {
-                        layer.msg("网络异常，请稍后再试", {icon: 2});
+                        layer.msg("获取探测次数失败", {icon: 2});
                     }
                 });
-            } else if (obj.event === 'viewRiskDetails') {
-                $.ajax({
-                    url: '/host/riskDetails/' + data.macAddress,
-                    type: 'GET',
-                    headers: {
-                        'Authorization': localStorage.getItem('token')
-                    },
-                    success: function(res) {
-                        if (res.code === 0) {
-                            var riskData = res.data;
-                            var contentHtml = '<div style="padding: 15px;">' +
-                                '<table class="layui-table">' +
-                                '<thead><tr><th>探测项目</th><th>风险等级</th><th>详情</th><th>保护建议</th></tr></thead>' +
-                                '<tbody>';
 
-                            for(var i = 0; i < riskData.length; i++) {
-                                var item = riskData[i];
-                                contentHtml += '<tr>' +
-                                    '<td>' + (item.detectProgram || '') + '</td>' +
-                                    '<td>' + formatRiskLevel(item.riskLevel) + '</td>' +
-                                    '<td>' + (item.details || '') + '</td>' +
-                                    '<td>' + (item.suggest || '') + '</td>' +
-                                    '</tr>';
-                            }
-
-                            contentHtml += '</tbody></table></div>';
-
-                            layer.open({
-                                type: 1,
-                                title: '主机风险详情',
-                                skin: 'layui-layer-molv',
-                                content: contentHtml,
-                                area: ['800px', '500px'],
-                                btn: ['关闭'],
-                                btnAlign: 'c'
-                            });
-                        } else {
-                            layer.msg(res.msg || '获取风险详情失败', {icon: 5});
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        layer.msg("网络异常，请稍后再试", {icon: 2});
-                    }
-                });
             }
         });
+
 
         // 风险等级格式化函数
         function formatRiskLevel(level) {
