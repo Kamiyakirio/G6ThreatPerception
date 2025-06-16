@@ -177,3 +177,6 @@ cython_debug/
 cookie_file.txt
 data/
 test.py
+**/rabbit_config.py
+encrypt_file.py
+vulscripts/

@@ -12,7 +12,6 @@ import datetime
 
 
 def asset_detect(data):
-    print(data)
     threads = []
     thread_pool = ThreadPoolExecutor(16)
 
@@ -21,6 +20,7 @@ def asset_detect(data):
         "host_name": data["host_name"],
         "mac_address": data["mac_address"],
         "id": data["id"],
+        "type": "assets",
     }
     return_data["info"] = {underscore_to_camelcase(k): v for k, v in basic_info.items()}
 
