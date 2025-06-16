@@ -1,4 +1,3 @@
-# pwd_crack.py
 import os
 from impacket.examples.utils import parse_target
 from impacket.smbconnection import SMBConnection

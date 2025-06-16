@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from password_detect.pwd_crack import pwd_detect
+from password_detect.pwd_detect_impl import pwd_detect
 from system.pc_information import PcInfo
 from utils.naming_convert import underscore_to_camelcase
 
@@ -35,7 +35,7 @@ def password_detect(data):
             result = i.result()
             # 组装完整的 JSON 结构
             return_data["data"].append({
-                "type": "pwd",
+                "type": "password",
                 "data": result
             })
 
@@ -45,6 +45,7 @@ def password_detect(data):
 
         # 🔥 最终返回为字符串
         return json.dumps(return_data, ensure_ascii=False)
+
 
 if __name__ == "__main__":
     test_data = {
