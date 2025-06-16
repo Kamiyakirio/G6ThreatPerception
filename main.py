@@ -4,6 +4,7 @@ import time
 import requests
 import threading
 import os
+import logging
 
 from mq.rabbit_producer import RabbitProducer
 from mq.rabbit_consumer import RabbitConsumer
@@ -53,23 +54,29 @@ def create_asset_detect_message_callback(mac_address):
 
             print(f"[*] 解析后的数据: {data}")
 
-            if not isinstance(data, dict):
-                print(f"[!] 数据格式错误，期望字典类型，实际是: {type(data)}")
-                return
+            if data.get("info", {}) != {}:
+                message_mac = data.get("info", {}).get("macAddress")
+                if not message_mac:
+                    print(f"[!] 消息中未包含 MAC 地址")
+                    return
 
-            message_mac = data.get("info", {}).get("macAddress")
-            if not message_mac:
-                print(f"[!] 消息中未包含 MAC 地址")
-                return
+                if message_mac.upper() != mac_address.upper():
+                    print(f"[!] MAC 地址不匹配: 期望 {mac_address}, 实际 {message_mac}")
+                    return
 
-            if message_mac.upper() != mac_address.upper():
-                print(f"[!] MAC 地址不匹配: 期望 {mac_address}, 实际 {message_mac}")
-                return
+                print("[*] MAC 地址验证通过")
+                detect_type = data.get("info", {}).get("type")
+            else:
+                message_mac = data.get("macAddress")
+                detect_type = data.get("type")
+                if message_mac.upper() != mac_address.upper():
+                    print(f"[!] MAC 地址不匹配: 期望 {mac_address}, 实际 {message_mac}")
+                    return
 
-            print("[*] MAC 地址验证通过")
+                print("[*] MAC 地址验证通过")
 
             data = rename_dict_key(data, camelcase_to_underscore)
-            detect_type = data.get("info", {}).get("type")
+
             detect_result = None
             queue_name = None
 
@@ -99,7 +106,7 @@ def create_asset_detect_message_callback(mac_address):
 
             if detect_result and queue_name:
                 print(f"[*] 发送检测结果到 {queue_name} 队列")
-                print(f"[*] 发送的 JSON 数据: {detect_result}")
+                # print(f"[*] 发送的 JSON 数据: {detect_result}")
                 producer = RabbitProducer(
                     host=HOST, port=PORT, username=USERNAME, password=PASSWORD
                 )
@@ -117,6 +124,7 @@ def create_asset_detect_message_callback(mac_address):
 
 
 if __name__ == "__main__":
+    logging.getLogger("pika").setLevel(logging.WARNING)
     info = PcInfo()
     producer = RabbitProducer(
         host=HOST, port=PORT, username=USERNAME, password=PASSWORD
