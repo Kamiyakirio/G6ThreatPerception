@@ -31,6 +31,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addViewController("/page/host/systemRiskDetect").setViewName("host/systemRiskDetect");
         registry.addViewController("/page/host/result_display").setViewName("host/result_display");
         registry.addViewController("/page/host/systemDetectResult").setViewName("host/systemDetectResult");
+        registry.addViewController("/page/host/hotfix").setViewName("host/hotfix");
+
+        registry.addViewController("/page/vul_scan/index").setViewName("vul_scan/index");
 
     }
 }
