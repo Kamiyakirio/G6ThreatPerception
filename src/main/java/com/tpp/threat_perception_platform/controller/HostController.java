@@ -2,10 +2,8 @@ package com.tpp.threat_perception_platform.controller;
 
 import com.tpp.threat_perception_platform.param.MyParam;
 import com.tpp.threat_perception_platform.pojo.Host;
-import com.tpp.threat_perception_platform.pojo.Role;
 import com.tpp.threat_perception_platform.response.ResponseResult;
 import com.tpp.threat_perception_platform.service.HostService;
-import com.tpp.threat_perception_platform.service.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -24,15 +22,22 @@ public class HostController {
     private HostService hostService;
 
     /**
-     * 获取主机列表
-     *
-     * @param param 分页参数
-     * @return 响应结果
+     * 获取主机列表（分页）
      */
     @PostMapping("/list")
-    @ResponseBody // 保留 @ResponseBody 用于返回 JSON 数据
+    @ResponseBody
     public ResponseResult hostList(MyParam param){
         return hostService.findAll(param);
+    }
+
+    /**
+     * 获取全部主机列表（不分页） - 来自 apprisk 分支
+     */
+    @GetMapping("/listAll")
+    @ResponseBody
+    public ResponseResult listAllHosts(){
+        List<Host> hosts = hostService.listAll();
+        return new ResponseResult(0, hosts);
     }
 
     /**
@@ -49,9 +54,6 @@ public class HostController {
 
     /**
      * 主机探测
-     *
-     * @param data 请求数据
-     * @return 返回 HashMap 格式的结果
      */
     @PostMapping("/detect")
     @ResponseBody
@@ -59,10 +61,12 @@ public class HostController {
         return hostService.hostDetect(data);
     }
 
-    @GetMapping("/host/list")
+    /**
+     * 获取主机列表（分页，另一种路径）
+     */
+    @GetMapping("/list")
     @ResponseBody
     public ResponseResult listHosts(MyParam param) {
         return hostService.findAll(param);
     }
-
 }

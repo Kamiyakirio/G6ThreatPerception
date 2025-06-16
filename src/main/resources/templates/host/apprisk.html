@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>编辑用户</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
+    <script src="/layui/layui.js"></script>
+    <style>
+        .st {
+            width: 270px !important;
+        }
+
+        .layui-form-label {
+            width: 120px !important;
+        }
+
+        .xinghao {
+            color: red !important;
+        }
+
+        .host-select-container {
+            background: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+        }
+
+        .host-select-title {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .host-select-form {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .host-select-wrapper {
+            flex: 1;
+        }
+
+        .layui-select {
+            width: 100%;
+            height: 38px;
+            border: 1px solid #e6e6e6;
+            border-radius: 4px;
+        }
+
+        .confirm-btn {
+            background-color: #009688;
+            color: white;
+            border: none;
+            padding: 0 25px;
+            height: 38px;
+            line-height: 38px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .confirm-btn:hover {
+            background-color: #008577;
+        }
+
+        .result-container {
+            margin-top: 30px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .result-title {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .layui-tab-title {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .layui-tab-title li {
+            text-align: center;
+            flex-grow: 1;
+            flex-basis: 0;
+        }
+
+        .layui-fluid {
+            padding: 15px;
+        }
+
+        .layui-tab {
+            margin: 5px 15px;
+        }
+
+        .content-display-area {
+            padding: 15px;
+            border: 1px solid #e6e6e6;
+            min-height: 200px;
+            background-color: #f8f8f8;
+            color: #333;
+            overflow-y: auto;
+        }
+
+        .layui-tab-content {
+            padding: 0;
+        }
+
+        .layui-card {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+
+<!--表单-->
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="host-select-container">
+            <div class="host-select-title">选择目标主机</div>
+            <div class="layui-form host-select-form" lay-filter="layuiadmin-form-useradmin" id="layuiadmin-form-useradmin">
+                <input type="hidden" name="id">
+                <input type="hidden" name="selectedMacAddress" id="selectedMacAddress">
+                <div class="host-select-wrapper">
+                    <select id="host-select" name="selectedMacAddress" lay-verify="required" class="layui-select">
+                        <option value="">请选择主机</option>
+                    </select>
+                </div>
+                <button type="submit" class="confirm-btn" lay-submit lay-filter="demo1">开始检测</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="layui-card">
+        <div class="layui-card-body" style="padding: 0;">
+            <div class="layui-tab layui-tab-brief" lay-filter="apprisk-result-tabs">
+                <ul class="layui-tab-title">
+                    <li class="layui-this" lay-id="apprisk-tab">应用风险结果</li>
+                </ul>
+                <div class="layui-tab-content">
+                    <div class="layui-tab-item layui-show">
+                        <div style="padding: 10px; text-align: right;">
+                            <span id="detectStatus" style="margin-right: 15px; display: none;">
+                                <i class="layui-icon layui-icon-loading layui-anim layui-anim-rotate layui-anim-loop"></i>
+                                正在检测中...
+                            </span>
+                            <button type="button" class="layui-btn layui-btn-normal" id="refreshAppRiskBtn">
+                                <i class="layui-icon layui-icon-refresh"></i> 刷新结果
+                            </button>
+                        </div>
+                        <div class="content-display-area">
+                            <table id="appriskTable" lay-filter="appriskTable"></table>
+                            <p id="apprisk-no-data" style="display:none; text-align: center; color: #999;">
+                                未选择探测或无数据</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+layui.config({
+    base: '/layui/layuiAdmin/'
+}).extend({
+    index: 'lib/index'
+}).use(['index', 'form', 'layer', 'table', 'element'], function(){
+    var $ = layui.$
+        , form = layui.form
+        , layer = layui.layer
+        , table = layui.table
+        , element = layui.element;
+
+    // 定义表格列配置
+    var appriskCols = [
+        {field: 'id', title: 'ID', fixed: 'left', minWidth: 80}
+        , {field: 'macAddress', title: '主机MAC地址', minWidth: 150}
+        , {field: 'hostIdentifier', title: '主机标识', minWidth: 150}
+        , {field: 'appriskName', title: '应用风险名称', minWidth: 200}
+        , {
+            field: 'isVulnerable',
+            title: '是否存在风险',
+            width: 120,
+            templet: function(d) {
+                if(d.isVulnerable == 1) {
+                    return '<span style="color: #FF5722;">是</span>';
+                }
+                return '<span style="color: #009688;">否</span>';
+            }
+        }
+        , {field: 'resultEvidence', title: '探测到的具体证据', width: 300}
+        , {
+            field: 'detectedAt',
+            title: '检测时间',
+            width: 180,
+            templet: function(d) {
+                return d.detectedAt ? layui.util.toDateString(d.detectedAt, 'yyyy-MM-dd HH:mm:ss') : '';
+            }
+        }
+    ];
+
+    // 定义轮询函数
+    function startPollingResults(macAddress) {
+        let pollCount = 0;
+        const maxPolls = 30;
+        const pollInterval = 3000;
+
+        const pollTimer = setInterval(function() {
+            pollCount++;
+
+            layui.jquery.ajax({
+                url: '/apprisk/checkStatus',
+                method: 'GET',
+                data: {
+                    macAddress: macAddress
+                },
+                headers: {
+                    'Authorization': localStorage.getItem('token')
+                },
+                success: function(res) {
+                    if (res.code == 0 && res.data.completed) {
+                        clearInterval(pollTimer);
+                        layui.jquery('#detectStatus').hide();
+                        layui.jquery('#refreshAppRiskBtn').removeClass('layui-btn-disabled').removeAttr('disabled');
+                        renderAppRiskTable(macAddress);
+                        layer.msg('检测已完成', {icon: 1});
+                    } else if (pollCount >= maxPolls) {
+                        clearInterval(pollTimer);
+                        layui.jquery('#detectStatus').hide();
+                        layui.jquery('#refreshAppRiskBtn').removeClass('layui-btn-disabled').removeAttr('disabled');
+                        layer.msg('检测时间过长，请手动刷新查看结果', {icon: 0});
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('轮询失败:', error);
+                    clearInterval(pollTimer);
+                    layui.jquery('#detectStatus').hide();
+                    layui.jquery('#refreshAppRiskBtn').removeClass('layui-btn-disabled').removeAttr('disabled');
+                    layer.msg('检测状态查询失败，请手动刷新', {icon: 2});
+                }
+            });
+        }, pollInterval);
+    }
+
+    // 渲染表格函数
+    function renderAppRiskTable(macAddress) {
+        table.render({
+            elem: '#appriskTable'
+            , method: 'post'
+            , url: '/apprisk/list'
+            , headers: {
+                'Authorization': localStorage.getItem('token')
+            }
+            , where: {"macAddress": macAddress}
+            , cols: [appriskCols]
+            , page: true
+            , limit: 10
+            , limits: [5, 10, 15, 20, 30]
+            , autoSort: false
+            , height: 'full-200'
+            , done: function(res) {
+                if (res.data && res.data.length === 0) {
+                    document.getElementById('apprisk-no-data').style.display = 'block';
+                } else {
+                    document.getElementById('apprisk-no-data').style.display = 'none';
+                }
+                element.render('tab', 'apprisk-result-tabs');
+            }
+        });
+    }
+
+    // 加载主机列表
+    layui.jquery.ajax({
+        url: '/host/listAll',
+        type: 'GET',
+        headers: {
+            'Authorization': localStorage.getItem('token')
+        },
+        success: function(res) {
+            if (res && res.code === 0 && Array.isArray(res.data) && res.data.length > 0) {
+                var selectElem = layui.jquery('#host-select');
+                selectElem.find('option:not(:first)').remove();
+                res.data.forEach(function(host) {
+                    selectElem.append('<option value="' + host.macAddress + '">' + host.hostName + ' </option>');
+                });
+                form.render('select');
+            } else {
+                layer.msg('无法加载主机数据，请检查后端接口', {icon: 5});
+            }
+        },
+        error: function(xhr, status, error) {
+            layer.msg('加载主机数据失败: ' + error, {icon: 5});
+        }
+    });
+
+    // 表单提交
+    form.on('submit(demo1)', function(data) {
+        var selectedMacAddress = layui.jquery('#host-select').val();
+        if (!selectedMacAddress) {
+            layer.msg('请选择主机！', {icon: 5});
+            return false;
+        }
+
+        layui.jquery('#detectStatus').show();
+        layui.jquery('#refreshAppRiskBtn').addClass('layui-btn-disabled').attr('disabled', true);
+
+        layui.jquery.ajax({
+            url: '/apprisk/trigger',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                "macAddress": selectedMacAddress
+            }),
+            headers: {
+                'Authorization': localStorage.getItem('token')
+            },
+            success: function(res) {
+                if (res.code == 0) {
+                    layer.msg(res.msg);
+                    startPollingResults(selectedMacAddress);
+                } else {
+                    layer.msg(res.msg, {icon: 5});
+                    layui.jquery('#detectStatus').hide();
+                    layui.jquery('#refreshAppRiskBtn').removeClass('layui-btn-disabled').removeAttr('disabled');
+                }
+            },
+            error: function(xhr, status, error) {
+                layer.msg('请求失败: ' + error, {icon: 5});
+                layui.jquery('#detectStatus').hide();
+                layui.jquery('#refreshAppRiskBtn').removeClass('layui-btn-disabled').removeAttr('disabled');
+            }
+        });
+        return false;
+    });
+
+    // 刷新按钮点击事件
+    layui.jquery('#refreshAppRiskBtn').on('click', function() {
+        var selectedMacAddress = layui.jquery('#host-select').val();
+        if (selectedMacAddress) {
+            layer.msg('正在刷新数据...', {icon: 16, time: 500});
+            renderAppRiskTable(selectedMacAddress);
+        } else {
+            layer.msg('请先选择主机！', {icon: 5});
+        }
+    });
+});
+</script>
+</body>
+</html>

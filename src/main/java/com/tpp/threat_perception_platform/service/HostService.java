@@ -14,6 +14,12 @@ public interface HostService {
     public ResponseResult findAll(MyParam param);
     public ResponseResult delete(Integer[] ids);
 
+    public List<Host> listAll();
+
+    public Host selectByPrimaryKey(Integer id);
+    
+    public Host selectByMacAddress(String macAddress);
+
     public HashMap<String,Object> hostDetect(HashMap<String,Object> data);
 
 

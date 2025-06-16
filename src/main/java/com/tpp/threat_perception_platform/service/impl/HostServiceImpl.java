@@ -64,6 +64,28 @@ public class HostServiceImpl implements HostService {
     }
 
     @Override
+    public List<Host> listAll() {
+        List<Host> hosts = hostMapper.findAll(new MyParam()); // 调用 findAll 方法，不带分页参数
+        System.out.println("HostServiceImpl.listAll() - Hosts retrieved: " + (hosts != null ? hosts.size() : "null"));
+        if (hosts != null) {
+            for (Host host : hosts) {
+                System.out.println("Host: " + host.getHostName() + " - " + host.getMacAddress());
+            }
+        }
+        return hosts;
+    }
+
+    @Override
+    public Host selectByPrimaryKey(Integer id) {
+        return hostMapper.selectByPrimaryKey(Long.valueOf(id));
+    }
+
+    @Override
+    public Host selectByMacAddress(String macAddress) {
+        return hostMapper.selectByMacAddress(macAddress);
+    }
+
+    @Override
     public HashMap<String, Object> hostDetect(HashMap<String, Object> data) {
         HashMap<String, Object> result = new HashMap<>();
 

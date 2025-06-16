@@ -8,6 +8,7 @@ import com.tpp.threat_perception_platform.asset.Account;
 import com.tpp.threat_perception_platform.asset.App;
 import com.tpp.threat_perception_platform.asset.Service;
 import com.tpp.threat_perception_platform.dao.*;
+import com.tpp.threat_perception_platform.pojo.AppRiskResult;
 import com.tpp.threat_perception_platform.pojo.Host;
 import com.tpp.threat_perception_platform.pojo.VulScan;
 import org.springframework.amqp.core.Message;
@@ -42,6 +43,8 @@ public class RabbitMQController {
     @Autowired
     private ServiceMapper serviceMapper;
     @Autowired
+    private AppRiskResultMapper appRiskResultMapper;
+    @Autowired
     private ObjectMapper objectMapper;
     @Autowired 
     private VulScanMapper vulScanMapper;
@@ -67,15 +70,19 @@ public class RabbitMQController {
         return (lastId == null) ? 0 : lastId + 1;
     }
 
+// 保留新方法（来自 apprisk 分支）
+private int getNextDetectIdForAppRisk(String hostIdentifier) {
+    Integer lastId = appRiskResultMapper.selectLastDetectIdByHostIdentifier(hostIdentifier);
+    return (lastId == null) ? 0 : lastId + 1;
+}
+
 @RabbitListener(queues = "hello")
 public void receiveHostInfo(Message message, Channel channel) throws IOException {
     long tag = message.getMessageProperties().getDeliveryTag();
     try {
         String messageBody = new String(message.getBody());
 
-        // 可选：保留调试日志或替换为结构化日志
-        // System.out.println(messageBody);
-        logger.info("收到主机信息消息: {}", messageBody);
+        System.out.println("收到主机信息消息: " + messageBody);
 
         Host host = new Host();
         HashMap<String, Object> dataDict = JSON.parseObject(messageBody, HashMap.class);
@@ -100,9 +107,10 @@ public void receiveHostInfo(Message message, Channel channel) throws IOException
         }
 
         channel.basicAck(tag, false);
-        logger.info("主机信息处理成功");
+        System.out.println("主机信息处理成功");
     } catch (Exception e) {
-        logger.error("处理主机信息失败: {}", e.getMessage(), e);
+        System.out.println("处理主机信息失败: " + e.getMessage());
+        e.printStackTrace();
         channel.basicNack(tag, false, true);
     }
 }
@@ -278,6 +286,49 @@ public void receiveHostInfo(Message message, Channel channel) throws IOException
         }
     }
 
+    @RabbitListener(queues = "apprisk_detect_result")
+    public void receiveAppRiskDetectResult(String messageBody, Message message, Channel channel) throws IOException {
+        long deliveryTag = message.getMessageProperties().getDeliveryTag();
+        System.out.println("收到应用风险探测结果: " + messageBody);
+        
+        try {
+            JSONObject jsonObject = JSON.parseObject(messageBody);
+            JSONObject info = jsonObject.getJSONObject("info");
+            JSONArray data = jsonObject.getJSONArray("data");
+            
+            // 获取MAC地址和主机标识符
+            String macAddress = info.getString("macAddress");
+            String hostIdentifier = info.getString("hostIdentifier");
+            
+            if (data != null && !data.isEmpty()) {
+                for (int i = 0; i < data.size(); i++) {
+                    JSONObject riskData = data.getJSONObject(i);
+                    AppRiskResult result = new AppRiskResult();
+                    
+                    // 设置基本字段
+                    result.setHostIdentifier(hostIdentifier);
+                    result.setMacAddress(macAddress);
+                    result.setAppriskId(riskData.getInteger("appriskId"));
+                    result.setIsVulnerable(riskData.getByte("isVulnerable"));
+                    result.setResultEvidence(riskData.getString("resultEvidence"));
+                    result.setDetectedAt(new Date());
+                    
+                    // 插入数据库
+                    appRiskResultMapper.insertSelective(result);
+                }
+                System.out.println("应用风险探测结果已保存到数据库");
+            }
+            
+            // 确认消息已被处理
+            channel.basicAck(deliveryTag, false);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("处理应用风险探测结果失败: " + e.getMessage());
+            
+            // 如果处理失败，拒绝消息并重新入队
+            channel.basicNack(deliveryTag, false);
+        }
     @RabbitListener(queues = "vul_scan_result")
     public void vul_scan_result(String messageBody, Message message, Channel channel) throws IOException {
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
