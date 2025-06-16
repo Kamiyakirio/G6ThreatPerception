@@ -138,7 +138,7 @@ public class RabbitMQController {
                         account.setPasswordExpires(Boolean.TRUE.equals(accountData.getBoolean("password_expires")) ? 1 : 0);
                         account.setPasswordRequired(Boolean.TRUE.equals(accountData.getBoolean("password_required")) ? 1 : 0);
 
-                        Account dbAccount = accountMapper.selectByPrimaryKey(account.getSid());
+                        Account dbAccount = accountMapper.selectByPrimaryKey(account.getId());
                         if (dbAccount == null) {
                             accountMapper.insertSelective(account);
                         } else if (!dbAccount.equals(account)) {
@@ -261,7 +261,7 @@ public class RabbitMQController {
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("处理应用风险探测结果失败: " + e.getMessage());
-            channel.basicNack(deliveryTag, false);
+            channel.basicAck(deliveryTag, false);
         }
     }
 

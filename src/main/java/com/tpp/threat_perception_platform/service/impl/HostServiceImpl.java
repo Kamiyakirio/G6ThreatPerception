@@ -102,24 +102,23 @@ public class HostServiceImpl implements HostService {
             String macAddress = data.get("macAddress").toString().replace(":", "");
             String type = data.get("type").toString();
 
-            // 检查主机是否在线
+            // 构建消息体
+            HashMap<String, Object> messageMap = new HashMap<>();
+            messageMap.put("hostName", hostName);
+            messageMap.put("macAddress", originMacAddress);
+            messageMap.put("type", type);
+            messageMap.put("id", id);
+            messageMap.put("detectAccount", "on".equals(data.get("detect-account")));
+            messageMap.put("detectService", "on".equals(data.get("detect-service")));
+            messageMap.put("detectProcess", "on".equals(data.get("detect-process")));
+            messageMap.put("detectApp", "on".equals(data.get("detect-app")));
+
             if (redisCache.getCacheObject("Heartbeat from " + originMacAddress) == null) {
                 throw new IllegalAccessException("主机不在线！");
             }
 
-            // 构建消息体
-            HashMap<String, Object> messageMap = new HashMap<>();
-            HashMap<String, Object> infoMap = new HashMap<>();
-            infoMap.put("hostName", hostName);
-            infoMap.put("macAddress", originMacAddress);
-            infoMap.put("type", type);
-            infoMap.put("id", id);
-            messageMap.put("info", infoMap);
-
-            // 发送消息到主机专属队列
-            String queueName = "agentQueue" + macAddress;
-            System.out.println("发送检测请求到队列: " + queueName);
-            rabbitMQService.sendMessage("", queueName, JSON.toJSONString(messageMap));
+            // 发送消息（默认 exchange，队列名以 MAC 地址标识）
+            rabbitMQService.sendMessage("", "agentQueue" + macAddress, JSON.toJSONString(messageMap));
 
             // 成功响应
             result.put("code", 0);

@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.tpp.threat_perception_platform.dao.SystemDetectMapper;
 import com.tpp.threat_perception_platform.pojo.SystemDetect;
+import org.springframework.amqp.core.Message;
 import org.slf4j.Logger;
 import com.rabbitmq.client.Channel;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.io.IOException;
 import java.util.Date;
 
@@ -24,14 +26,15 @@ public class systemDetectConsume {
     @Autowired
     private SystemDetectMapper systemDetectMapper;
 
-    @RabbitListener(queues = "system_detect_queue", ackMode = "MANUAL")
-    public void processMessage(String message, Channel channel, @Header("amqp_deliveryTag") long tag) throws IOException {
-        logger.info("【收到消息】{}", message);
+    @RabbitListener(queues = "system_detect_queue")
+    public void processMessage(String messageBody, Message message, Channel channel)  throws IOException {
+        long tag=message.getMessageProperties().getDeliveryTag();
+//        System.out.println("【收到消息】" + message);
+            try {
+                JSONObject json = JSON.parseObject(new String(message.getBody(),StandardCharsets.UTF_8));
+                JSONObject hostInfo = json.getJSONObject("host_info");
+                JSONArray detectionResults = json.getJSONArray("detection_results");
 
-        try {
-            JSONObject json = JSON.parseObject(message);
-            JSONObject hostInfo = json.getJSONObject("host_info");
-            JSONArray detectionResults = json.getJSONArray("detection_results");
 
             String macAddress = hostInfo.getString("mac_address");
 
@@ -73,7 +76,7 @@ public class systemDetectConsume {
 
             // 异常时拒绝消息并重新入队
             if (channel.isOpen()) {
-                channel.basicReject(tag, true);
+                channel.basicAck(tag, false);
             } else {
                 logger.warn("Channel is not open, cannot reject message.");
             }
