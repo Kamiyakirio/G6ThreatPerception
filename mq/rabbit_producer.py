@@ -33,7 +33,7 @@ class RabbitProducer:
                 ),
                 mandatory=True,
             )
-            print(f"[*] 消息已成功发送到队列: {routing_key}")
+            # print(f"[*] 消息已成功发送到队列: {routing_key}")
         except Exception as e:
             print(f"[!] 发送消息时出错: {e}")
             raise e
