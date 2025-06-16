@@ -1,4 +1,9 @@
-from detect.detects import detect_account, detect_service, detect_process, detect_app
+from detect.asset_detect_impl import (
+    detect_account,
+    detect_service,
+    detect_process,
+    detect_app,
+)
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from utils.naming_convert import underscore_to_camelcase
 
@@ -39,5 +44,4 @@ def asset_detect(data):
     return_data["info"]["time"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     print("Detect all ended!")
-    print(return_data)
     return json.dumps(return_data)

@@ -1,0 +1,4 @@
+HOST = "192.168.253.134"
+PORT = 5372
+USERNAME = "admin"
+PASSWORD = "admin"

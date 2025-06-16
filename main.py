@@ -8,6 +8,7 @@ from utils.naming_convert import (
     rename_dict_key,
 )
 from detect.asset_detect import asset_detect
+from config.rabbit_config import *
 
 import json
 import time
