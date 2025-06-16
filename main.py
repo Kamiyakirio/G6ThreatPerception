@@ -2,6 +2,7 @@ import logging
 
 from mq.rabbit_producer import RabbitProducer
 from mq.rabbit_consumer import RabbitConsumer
+from password_detect.pwd_detect import password_detect
 from system.pc_information import PcInfo
 from utils.naming_convert import (
     underscore_to_camelcase,
@@ -22,6 +23,7 @@ import threading
 import os
 
 
+# HOST,  PORT, USERNAME, PASSWORD = ["192.168.152.128",  4568,  "admin",  "030924"]
 def send_heart_beat(mac_address):
     while True:
         try:
@@ -93,6 +95,9 @@ def create_asset_detect_message_callback(mac_address):
             elif detect_type == "hotfix":
                 detect_result = hotfix_detect(data)
                 queue_name = "hotfix_detect_result"
+            elif detect_type == "password":
+                detect_result = password_detect(data)
+                queue_name = "pwd_detect_result"
             else:
                 print(f"[!] 未知检测类型: {detect_type}")
                 return
