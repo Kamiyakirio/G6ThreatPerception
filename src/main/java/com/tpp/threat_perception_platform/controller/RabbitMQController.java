@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -101,7 +102,7 @@ public class RabbitMQController {
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
 
         try {
-            JSONObject fullData = JSON.parseObject(messageBody);
+            JSONObject fullData = JSON.parseObject(new String(message.getBody(), StandardCharsets.UTF_8));
             JSONObject info = fullData.getJSONObject("info");
             JSONArray dataList = fullData.getJSONArray("data");
 
@@ -138,12 +139,8 @@ public class RabbitMQController {
                         account.setPasswordExpires(Boolean.TRUE.equals(accountData.getBoolean("password_expires")) ? 1 : 0);
                         account.setPasswordRequired(Boolean.TRUE.equals(accountData.getBoolean("password_required")) ? 1 : 0);
 
-                        Account dbAccount = accountMapper.selectByPrimaryKey(account.getId());
-                        if (dbAccount == null) {
-                            accountMapper.insertSelective(account);
-                        } else if (!dbAccount.equals(account)) {
-                            accountMapper.updateByPrimaryKeySelective(account);
-                        }
+
+                        accountMapper.insertSelective(account);
                     }
                 }
 
@@ -183,13 +180,7 @@ public class RabbitMQController {
                         process.setPriority(processData.getInteger("priority"));
                         process.setDescription(processData.getString("description"));
 
-                        Process dbProcess = processMapper.selectByPidAndHost(process.getPid(), process.getHostName());
-                        if (dbProcess == null) {
-                            processMapper.insertSelective(process);
-                        } else if (!dbProcess.equals(process)) {
-                            process.setProcessId(dbProcess.getProcessId());
-                            processMapper.updateByPrimaryKeySelective(process);
-                        }
+                        processMapper.insertSelective(process);
                     }
                 }
 
@@ -212,13 +203,8 @@ public class RabbitMQController {
                         service.setVersion(serviceData.getString("version"));
                         service.setExtrainfo(serviceData.getString("extrainfo"));
 
-                        Service dbService = serviceMapper.selectByNameAndHost(service.getName(), service.getHostName());
-                        if (dbService == null) {
-                            serviceMapper.insertSelective(service);
-                        } else if (!dbService.equals(service)) {
-                            service.setServiceId(dbService.getServiceId());
-                            serviceMapper.updateByPrimaryKeySelective(service);
-                        }
+
+                        serviceMapper.updateByPrimaryKeySelective(service);
                     }
                 }
             }
@@ -232,10 +218,10 @@ public class RabbitMQController {
     @RabbitListener(queues = "apprisk_detect_result")
     public void receiveAppRiskDetectResult(String messageBody, Message message, Channel channel) throws IOException {
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
-        System.out.println("收到应用风险探测结果: " + messageBody);
+//        System.out.println("收到应用风险探测结果: " + messageBody);
 
         try {
-            JSONObject jsonObject = JSON.parseObject(messageBody);
+            JSONObject jsonObject = JSON.parseObject(new String(message.getBody(),StandardCharsets.UTF_8));
             JSONObject info = jsonObject.getJSONObject("info");
             JSONArray data = jsonObject.getJSONArray("data");
 
@@ -267,11 +253,11 @@ public class RabbitMQController {
 
     @RabbitListener(queues = "pwd_detect_result")
     public void receivePwdDetectResult(String messageBody, Message message, Channel channel) throws IOException {
-        System.out.println("接收到密码检测结果：" + messageBody);
+//        System.out.println("接收到密码检测结果：" + messageBody);
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
 
         try {
-            JSONObject fullData = JSON.parseObject(messageBody);
+            JSONObject fullData = JSON.parseObject(new String(message.getBody(),StandardCharsets.UTF_8));
             JSONObject info = fullData.getJSONObject("info");
             JSONArray dataList = fullData.getJSONArray("data");
 
@@ -305,7 +291,7 @@ public class RabbitMQController {
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
 
         try {
-            JSONObject fullData = JSON.parseObject(messageBody);
+            JSONObject fullData = JSON.parseObject(new String(message.getBody(),StandardCharsets.UTF_8));
             JSONObject info = fullData.getJSONObject("info");
             JSONArray dataList = fullData.getJSONArray("data");
 

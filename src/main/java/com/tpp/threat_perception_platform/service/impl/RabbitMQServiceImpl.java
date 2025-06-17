@@ -109,8 +109,8 @@ public void handleHotfixDetectResult(String message) {
         System.out.println("开始处理补丁检测结果消息");
         System.out.println("收到补丁检测结果消息: " + message);
 
-        String innerJson = objectMapper.readValue(message, String.class);
-        List<Map<String, String>> result = objectMapper.readValue(innerJson, new TypeReference<List<Map<String, String>>>() {});
+//        String innerJson = objectMapper.readValue(message, String.class);
+        List<Map<String, String>> result = objectMapper.readValue(message, new TypeReference<List<Map<String, String>>>() {});
         
         System.out.println("消息解析成功，包含 " + result.size() + " 条记录");
 
