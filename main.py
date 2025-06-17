@@ -110,9 +110,12 @@ def create_asset_detect_message_callback(mac_address):
                 producer = RabbitProducer(
                     host=HOST, port=PORT, username=USERNAME, password=PASSWORD
                 )
-                producer.publish_message(
-                    "", queue_name, json.dumps(detect_result, ensure_ascii=False)
-                )
+                if type(detect_result) == str:
+                    producer.publish_message("", queue_name, detect_result)
+                else:
+                    producer.publish_message(
+                        "", queue_name, json.dumps(detect_result, ensure_ascii=False)
+                    )
 
         except Exception as e:
             print(f"[!] 处理消息时出错: {str(e)}")
