@@ -137,6 +137,7 @@
             });
         }
 
+
         var accountCols = [
             {field: 'sid', title: 'SID', fixed: 'left', minWidth: 100}
             , {field: 'name', title: '名称', minWidth: 100}
@@ -366,7 +367,15 @@
             $('#account-ai-analysis').click(function () {
                 // 在这里编写点击事件的逻辑
                 // console.log(table.getData("accountTable"))
-                data=table.getData("accountTable");
+                var data=table.getData('accountTable');
+                data.forEach(obj => {
+                    delete obj.hostName;
+                    delete obj.macAddress;
+                    delete obj.time;
+                    delete obj.id;
+                    delete obj.risk;
+                    delete obj.riskDesc;
+                });
                 ai(data,"/ai/account_analysis");
 
             });
