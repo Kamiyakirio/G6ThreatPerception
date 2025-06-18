@@ -17,7 +17,9 @@ class RabbitConsumer:
     ):
         self.queue_name = queue_name
         creds = pika.PlainCredentials(username, password)
-        params = pika.ConnectionParameters(host=host, port=port, credentials=creds)
+        params = pika.ConnectionParameters(
+            host=host, port=port, credentials=creds, heartbeat=600
+        )
         self.connection = pika.BlockingConnection(params)
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue=queue_name, durable=True)
