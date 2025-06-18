@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -183,10 +181,10 @@
           </div>
           <div class="layui-col-md12">
             <div class="layui-card">
-              <div class="layui-card-header">数据概览</div>
+              <div class="layui-card-header">安全风险概览</div>
               <div class="layui-card-body">
                 <!-- 为 ECharts 准备一个定义了宽高的 DOM -->
-                <div id="main" style="width: 600px;height:400px;"></div>
+                <div id="riskChart" style="width: 100%;height:400px;"></div>
               </div>
             </div>
           </div>
@@ -275,33 +273,120 @@
   <script type="text/javascript" src="/layui/layui.js"></script>
 
   <script type="text/javascript">
-    // 基于准备好的dom，初始化echarts实例
-    var myChart = echarts.init(document.getElementById('main'));
+    layui.config({
+      base: '/layui/layuiAdmin/' //静态资源所在路径
+    }).extend({
+      index: 'lib/index' //主入口模块
+    }).use(['jquery', 'element'], function($, element){
+      // 基于准备好的dom，初始化echarts实例
+      var riskChart = echarts.init(document.getElementById('riskChart'));
 
-    // 指定图表的配置项和数据
-    var option = {
-      title: {
-        text: '销量图'
-      },
-      tooltip: {},
-      legend: {
-        data: ['销量']
-      },
-      xAxis: {
-        data: ['衬衫', '羊毛衫', '雪纺衫', '裤子', '高跟鞋', '袜子']
-      },
-      yAxis: {},
-      series: [
-        {
-          name: '销量',
-          type: 'bar',
-          data: [5, 20, 36, 10, 10, 20]
+      // 加载统计数据
+      function loadStatistics() {
+        $.ajax({
+          url: '/log/statistics',
+          type: 'GET',
+          headers: {
+            'Authorization': localStorage.getItem('token')
+          },
+          success: function (res) {
+            if (res.code === 200) {
+              // 更新图表
+              updateRiskChart(res.data.riskDistribution || []);
+            }
+          },
+          error: function (xhr, status, error) {
+            console.error('加载统计数据失败:', error);
+            // 如果请求失败，显示默认数据
+            updateRiskChart([]);
+          }
+        });
+      }
+
+      // 更新风险图表
+      function updateRiskChart(data) {
+        // 处理数据格式，确保有4个等级的数据
+        var chartData = [0, 0, 0, 0]; // 无风险、低风险、中风险、高风险
+        
+        if (data && data.length > 0) {
+          data.forEach(function(item) {
+            var riskLevel = parseInt(item.risk_level);
+            var count = parseInt(item.count);
+            if (riskLevel >= 0 && riskLevel < 4) {
+              chartData[riskLevel] = count;
+            }
+          });
         }
-      ]
-    };
+        
+        var option = {
+          title: {
+            text: '风险等级分布',
+            left: 'center',
+            textStyle: {
+              fontSize: 16,
+              fontWeight: 'bold'
+            }
+          },
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+              type: 'shadow'
+            },
+            formatter: function(params) {
+              return params[0].name + '<br/>' + 
+                     params[0].seriesName + ': ' + params[0].value + ' 条';
+            }
+          },
+          grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+          },
+          xAxis: {
+            type: 'category',
+            data: ['无风险', '低风险', '中风险', '高风险'],
+            axisLabel: {
+              fontSize: 12
+            }
+          },
+          yAxis: {
+            type: 'value',
+            name: '数量',
+            axisLabel: {
+              fontSize: 12
+            }
+          },
+          series: [{
+            name: '日志数量',
+            type: 'bar',
+            data: chartData,
+            itemStyle: {
+              color: function(params) {
+                var colors = ['#52c41a', '#faad14', '#fa8c16', '#f5222d'];
+                return colors[params.dataIndex];
+              }
+            },
+            label: {
+              show: true,
+              position: 'top',
+              fontSize: 12
+            }
+          }]
+        };
+        riskChart.setOption(option);
+      }
 
-    // 使用刚指定的配置项和数据显示图表。
-    myChart.setOption(option);
+      // 页面加载完成后执行
+      $(document).ready(function() {
+        loadStatistics();
+        
+        // 窗口大小改变时重绘图表
+        $(window).resize(function() {
+          riskChart.resize();
+        });
+      });
+    });
   </script>
 </body>
 </html>
