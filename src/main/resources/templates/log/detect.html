@@ -77,6 +77,7 @@
             <input type="text" name="end_time" id="end_time" lay-verify="required" placeholder="请选择结束时间" autocomplete="off" class="layui-input">
         </div>
     </div>
+
     <!--  提交 -->
     <div class="layui-form-item layui-hide">
         <input type="button" lay-submit lay-filter="LAY-user-front-submit" id="LAY-user-front-submit" value="确认">
@@ -118,7 +119,7 @@
             var id = data.field.id;
             var start_time = data.field.start_time;
             var end_time = data.field.end_time;
-            var analysis_logs = data.field.analysis_logs === 'true';
+            var detectlog = data.field.detectLog === 'true';
 
             // 验证时间范围
             var startDate = new Date(start_time);
@@ -141,7 +142,7 @@
                     macAddress: macAddress,
                     id: Number(id),
                     type: 'log',
-                    analysis_logs: analysis_logs,
+                    detectLog: detectLog,
                     start_time: start_time,
                     end_time: end_time
                 }),

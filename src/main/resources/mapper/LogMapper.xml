@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tpp.threat_perception_platform.dao.LogMapper">
+
+    <resultMap id="BaseResultMap" type="com.tpp.threat_perception_platform.pojo.Log">
+            <id property="logId" column="log_id" />
+            <result property="macAddress" column="mac_address" />
+            <result property="hostName" column="host_name" />
+            <result property="eventId" column="event_id" />
+            <result property="riskLevel" column="risk_level" />
+            <result property="timestamp" column="timestamp" />
+            <result property="riskDesc" column="risk_desc" />
+            <result property="channel" column="channel" />
+            <result property="id" column="id" />
+            <result property="eventData" column="event_data" />
+            <result property="aiResult" column="ai_result" />
+            <result property="time" column="time" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        log_id,mac_address,host_name,event_id,risk_level,timestamp,
+        risk_desc,channel,id,event_data,ai_result,time
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from log
+        where  log_id = #{logId}
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from log
+        where  log_id = #{logId}
+    </delete>
+    <insert id="insert" keyColumn="log_id" keyProperty="logId" parameterType="com.tpp.threat_perception_platform.pojo.Log" useGeneratedKeys="true">
+        insert into log
+        ( log_id,mac_address,host_name,event_id,risk_level,timestamp,
+        risk_desc,channel,id,event_data,ai_result,time)
+        values (#{logId},#{macAddress},#{hostName},#{eventId},#{riskLevel},#{timestamp},
+        #{riskDesc},#{channel},#{id},#{eventData},#{aiResult},#{time})
+    </insert>
+    <insert id="insertSelective" keyColumn="log_id" keyProperty="logId" parameterType="com.tpp.threat_perception_platform.pojo.Log" useGeneratedKeys="true">
+        insert into log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="logId != null">log_id,</if>
+                <if test="macAddress != null">mac_address,</if>
+                <if test="hostName != null">host_name,</if>
+                <if test="eventId != null">event_id,</if>
+                <if test="riskLevel != null">risk_level,</if>
+                <if test="timestamp != null">timestamp,</if>
+                <if test="riskDesc != null">risk_desc,</if>
+                <if test="channel != null">channel,</if>
+                <if test="id != null">id,</if>
+                <if test="eventData != null">event_data,</if>
+                <if test="aiResult != null">ai_result,</if>
+                <if test="time != null">time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="logId != null">#{logId},</if>
+                <if test="macAddress != null">#{macAddress},</if>
+                <if test="hostName != null">#{hostName},</if>
+                <if test="eventId != null">#{eventId},</if>
+                <if test="riskLevel != null">#{riskLevel},</if>
+                <if test="timestamp != null">#{timestamp},</if>
+                <if test="riskDesc != null">#{riskDesc},</if>
+                <if test="channel != null">#{channel},</if>
+                <if test="id != null">#{id},</if>
+                <if test="eventData != null">#{eventData},</if>
+                <if test="aiResult != null">#{aiResult},</if>
+                <if test="time != null">#{time},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.tpp.threat_perception_platform.pojo.Log">
+        update log
+        <set>
+                <if test="macAddress != null">
+                    mac_address = #{macAddress},
+                </if>
+                <if test="hostName != null">
+                    host_name = #{hostName},
+                </if>
+                <if test="eventId != null">
+                    event_id = #{eventId},
+                </if>
+                <if test="riskLevel != null">
+                    risk_level = #{riskLevel},
+                </if>
+                <if test="timestamp != null">
+                    timestamp = #{timestamp},
+                </if>
+                <if test="riskDesc != null">
+                    risk_desc = #{riskDesc},
+                </if>
+                <if test="channel != null">
+                    channel = #{channel},
+                </if>
+                <if test="id != null">
+                    id = #{id},
+                </if>
+                <if test="eventData != null">
+                    event_data = #{eventData},
+                </if>
+                <if test="aiResult != null">
+                    ai_result = #{aiResult},
+                </if>
+                <if test="time != null">
+                    time = #{time},
+                </if>
+        </set>
+        where   log_id = #{logId}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.tpp.threat_perception_platform.pojo.Log">
+        update log
+        set
+            mac_address =  #{macAddress},
+            host_name =  #{hostName},
+            event_id =  #{eventId},
+            risk_level =  #{riskLevel},
+            timestamp =  #{timestamp},
+            risk_desc =  #{riskDesc},
+            channel =  #{channel},
+            id =  #{id},
+            event_data =  #{eventData},
+            ai_result =  #{aiResult},
+            time =  #{time}
+        where   log_id = #{logId}
+    </update>
+    <select id="selectByMacAddressAndEventIdAndTimestampAndChannel" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from log
+        where mac_address = #{macAddress}
+        and event_id = #{eventId}
+        and timestamp = #{timestamp}
+        and channel = #{channel}
+        limit 1
+    </select>
+
+    <!-- 获取登录日志总数 -->
+    <select id="selectTotalLogs" resultType="java.lang.Long">
+        select count(*) from log
+    </select>
+
+    <!-- 获取风险日志总数 -->
+    <select id="selectTotalRiskLogs" resultType="java.lang.Long">
+        select count(*) from log where risk_level > 0
+    </select>
+
+    <!-- 获取风险等级分布统计 -->
+    <select id="selectRiskDistribution" resultType="java.util.Map">
+        select 
+            risk_level,
+            count(*) as count
+        from log 
+        group by risk_level 
+        order by risk_level
+    </select>
+
+    <!-- 分页查询日志列表 -->
+    <select id="selectLogList" parameterType="java.util.Map" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from log
+        <where>
+            <if test="macAddress != null and macAddress != ''">
+                and mac_address = #{macAddress}
+            </if>
+            <if test="hostName != null and hostName != ''">
+                and host_name like concat('%', #{hostName}, '%')
+            </if>
+            <if test="riskLevel != null">
+                and risk_level = #{riskLevel}
+            </if>
+            <if test="channel != null and channel != ''">
+                and channel = #{channel}
+            </if>
+            <if test="startTime != null">
+                and timestamp &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                and timestamp &lt;= #{endTime}
+            </if>
+            <if test="eventIds != null">
+                and event_id in
+                <foreach collection="eventIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+        order by timestamp desc
+    </select>
+
+    <!-- 获取日志总数（用于分页） -->
+    <select id="selectLogCount" parameterType="java.util.Map" resultType="java.lang.Long">
+        select count(*)
+        from log
+        <where>
+            <if test="macAddress != null and macAddress != ''">
+                and mac_address = #{macAddress}
+            </if>
+            <if test="hostName != null and hostName != ''">
+                and host_name like concat('%', #{hostName}, '%')
+            </if>
+            <if test="riskLevel != null">
+                and risk_level = #{riskLevel}
+            </if>
+            <if test="channel != null and channel != ''">
+                and channel = #{channel}
+            </if>
+            <if test="startTime != null">
+                and timestamp >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                and timestamp &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+
+    <select id="countByEventIds" resultType="java.lang.Long">
+        select count(*) from log
+        <where>
+            <if test="eventIds != null">
+                and event_id in
+                <foreach collection="eventIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="riskLevelMin != null">
+                and risk_level &gt;= #{riskLevelMin}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectRiskDistributionByEventIds" resultType="java.util.Map">
+        select 
+            risk_level,
+            count(*) as count
+        from log
+        where event_id in
+        <foreach collection="eventIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        group by risk_level
+        order by risk_level
+    </select>
+
+    <select id="countSystemLogs" resultType="java.lang.Long">
+        select count(*) from log where event_id in (1074, 6005, 6006, 6008, 6009, 6013, 7036, 7040, 7045, 1102)
+    </select>
+    <select id="countSecurityLogs" resultType="java.lang.Long">
+        select count(*) from log where event_id in (4624, 4625, 4634, 4647, 4720, 4722, 4723, 4724, 4728, 4738, 4726)
+    </select>
+</mapper>
