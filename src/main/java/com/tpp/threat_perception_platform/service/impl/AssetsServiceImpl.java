@@ -31,6 +31,8 @@ public class AssetsServiceImpl implements AssetsService {
     private ProcessMapper processMapper;
     @Autowired
     private ServiceMapper serviceMapper;
+    @Autowired
+    private RabbitMQService rabbitMQService;
 
     @Autowired
     private RiskMapper riskMapper;
@@ -40,14 +42,14 @@ public class AssetsServiceImpl implements AssetsService {
         return null;
     }
 
-    public ResponseResult accountList(MyParam param, String macAddress) {
-        // 设置分页参数geInfo<>(roleList);
 
+    public ResponseResult accountList(MyParam param, String macAddress) {
+        Integer ldid=accountMapper.selectLastDetectIdByMac(macAddress);
+        List<Risk> riskList = riskMapper.selectAllByType("account");
+        // 设置分页参数geInfo<>(roleList);
         PageHelper.startPage(param.getPage(), param.getLimit());
         // 查询所有
-        List<Account> accountList = accountMapper.selectAllByMacAddress(macAddress);
-
-        List<Risk> riskList = riskMapper.selectAllByType("account");
+        List<Account> accountList = accountMapper.selectAllByDetectId(ldid);
         for (Account account : accountList) {
             for (Risk risk : riskList) {
                 Pattern pattern = Pattern.compile(risk.getRe());
@@ -66,10 +68,11 @@ public class AssetsServiceImpl implements AssetsService {
 
     @Override
     public ResponseResult appList(MyParam param, String macAddress) {
-        PageHelper.startPage(param.getPage(), param.getLimit());
-        List<App> appList = appMapper.selectAllByMacAddress(macAddress);
-
+        Integer ldid=appMapper.selectLastDetectIdByMac(macAddress);
         List<Risk> riskList = riskMapper.selectAllByType("app");
+
+        PageHelper.startPage(param.getPage(), param.getLimit());
+        List<App> appList = appMapper.selectAllByDetectId(ldid);
         for (App app : appList) {
             for (Risk risk : riskList) {
                 Pattern pattern = Pattern.compile(risk.getRe());
@@ -87,8 +90,9 @@ public class AssetsServiceImpl implements AssetsService {
 
     @Override
     public ResponseResult processList(MyParam param, String macAddress) {
+        Integer ldid = processMapper.selectLastDetectIdByMac(macAddress);
         PageHelper.startPage(param.getPage(), param.getLimit());
-        List<Process> processList = processMapper.selectAllByMacAddress(macAddress);
+        List<Process> processList = processMapper.selectAllByDetectId(ldid);
 
         List<Risk> riskList = riskMapper.selectAllByType("process");
         for (Process process : processList) {
@@ -109,8 +113,9 @@ public class AssetsServiceImpl implements AssetsService {
 
     @Override
     public ResponseResult serviceList(MyParam param, String macAddress) {
+        Integer ldid = serviceMapper.selectLastDetectIdByMac(macAddress);
         PageHelper.startPage(param.getPage(), param.getLimit());
-        List<com.tpp.threat_perception_platform.asset.Service> serviceList = serviceMapper.selectAllByMacAddress(macAddress);
+        List<com.tpp.threat_perception_platform.asset.Service> serviceList = serviceMapper.selectByDetectId(ldid);
 
         List<Risk> riskList = riskMapper.selectAllByType("service");
         for (com.tpp.threat_perception_platform.asset.Service service : serviceList) {

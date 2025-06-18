@@ -28,4 +28,6 @@ public interface AppMapper {
 
     int updateByPrimaryKey(App record);
 
+    List<App> selectAllByDetectId(Integer detectId);
+
 }
