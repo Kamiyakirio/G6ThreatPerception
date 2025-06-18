@@ -1,4 +1,3 @@
-import logging
 import json
 import time
 import requests
@@ -6,6 +5,7 @@ import threading
 import os
 import logging
 
+from log_detect.log_detect import log_detect
 from mq.rabbit_producer import RabbitProducer
 from mq.rabbit_consumer import RabbitConsumer
 from password_detect.pwd_detect import password_detect
@@ -100,6 +100,9 @@ def create_asset_detect_message_callback(mac_address):
             elif detect_type == "apprisk":
                 detect_result = app_risk_detect(data)
                 queue_name = "apprisk_detect_result"
+            elif detect_type == "log":
+                detect_result = log_detect(data)
+                queue_name = "log_detect_result"
             else:
                 print(f"[!] 未知检测类型: {detect_type}")
                 return
