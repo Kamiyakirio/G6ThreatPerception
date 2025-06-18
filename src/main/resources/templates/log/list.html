@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>日志审计</title>
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
+    <style>
+        /* 统计卡片样式 */
+        .layui-card {
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .layui-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        .layui-card-body {
+            padding: 20px;
+            text-align: center;
+        }
+        .card-value {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .card-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* 空状态样式（简化版） */
+        .empty-table {
+            text-align: center;
+            padding: 40px 0;
+        }
+        .empty-table p {
+            color: #999;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="layui-fluid">
+    <!-- 简化后的统计卡片 -->
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md3">
+            <div class="layui-card">
+                <div class="layui-card-body" style="text-align: center; padding: 25px 0;">
+                    <div style="font-size: 24px; font-weight: bold; color: #1E9FFF;">1,254</div>
+                    <div style="margin-top: 5px; color: #666;">总日志量</div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md3">
+            <div class="layui-card">
+                <div class="layui-card-body" style="text-align: center; padding: 25px 0;">
+                    <div style="font-size: 24px; font-weight: bold; color: #FF5722;">86</div>
+                    <div style="margin-top: 5px; color: #666;">系统日志统计数</div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md3">
+            <div class="layui-card">
+                <div class="layui-card-body" style="text-align: center; padding: 25px 0;">
+                    <div style="font-size: 24px; font-weight: bold; color: #009688;">24</div>
+                    <div style="margin-top: 5px; color: #666;">安全日志总数</div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md3">
+            <div class="layui-card">
+                <div class="layui-card-body" style="text-align: center; padding: 25px 0;">
+                    <div style="font-size: 24px; font-weight: bold; color: #1b0096;">24</div>
+                    <div style="margin-top: 5px; color: #666;">风险日志总数</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="layui-card">
+        <div class="layui-form layui-card-header layuiadmin-card-header-auto"
+             style="border-radius: 0;border-top: 4px solid #d2d2d2;">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">用户名</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="keywords" placeholder="请输入用户名" autocomplete="off"
+                               class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <button class="layui-btn layuiadmin-btn-useradmin" lay-submit lay-filter="LAY-sysuser-front-search">
+                        <i class="layui-icon layui-icon-search layuiadmin-button-btn"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="layui-card-body">
+
+            <div style="padding-bottom: 10px; text-align: left; margin-left: 0px">
+                <button class="layui-btn layuiadmin-btn-useradmin" data-type="refresh">刷新</button>
+            </div>
+
+            <!--  表格数据加载 -->
+            <table id="LAY-user-manage" lay-filter="LAY-user-manage"></table>
+
+            <script type="text/html" id="table-useradmin-webuser">
+                <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="detect">
+                    <i class="layui-icon layui-icon-search"></i>日志审计
+                </a>
+                <a class="layui-btn layui-btn-warm layui-btn-xs" lay-event="sync">
+                    <i class="layui-icon layui-icon-chart"></i>定时同步
+                </a>
+            </script>
+
+
+            <!--  创建时间格式化处理 -->
+            <script type="text/html" id="createTimeTpl">
+                {{formatDate(d.createTime)}}
+            </script>
+
+            <!--  更新时间格式化处理 -->
+            <script type="text/html" id="updateTimeTpl">
+                {{formatDate(d.updateTime)}}
+            </script>
+
+        </div>
+    </div>
+</div>
+
+<script src="/layui/layui.js"></script>
+<script type="text/javascript">
+    // 日期格式转换函数
+    function formatDate(str) {
+        if (str != null) {
+            var now = new Date(str);
+            var year = now.getFullYear();  //取得4位数的年份
+            var month = now.getMonth() + 1;  //取得日期中的月份，其中0表示1月，11表示12月
+            var date = now.getDate();      //返回日期月份中的天数（1到31）
+            var hours = now.getHours();
+            var minutes = now.getMinutes();
+            var seconds = now.getSeconds();
+            return year + "-" + month + "-" + date + " " + hours + ":" + minutes + ":" + seconds;
+        }
+        return "";
+    }
+</script>
+<script type="text/javascript">
+    layui.config({
+        base: '/layui/layuiAdmin/' //静态资源所在路径
+    }).extend({
+        index: 'lib/index' //主入口模块
+    }).use(['layer', 'table', 'form'], function () {
+        var $ = layui.$
+            , form = layui.form
+            , layer = layui.layer
+            , table = layui.table;
+
+        //加载table
+        table.render({
+            elem: '#LAY-user-manage'
+            , method: 'post'
+            , url: '/host/list' //后端接口
+            , headers: {
+                'Authorization': localStorage.getItem('token')
+            }
+            // , width: 'auto'// 自适应宽度
+            , cellMinWidth: 80 //全局定义常规单元格的最小宽度
+            , title: '系统用户数据表'
+            , cols: [
+                [
+                    {type: 'checkbox', fixed: 'left', align:'left'}
+                    , {field: 'id', title: 'ID', width: 60, align:'left'}
+                    , {field: 'macAddress', title: 'MAC地址', width: 150,align:'left'}
+                    , {field: 'hostName', title: '主机名称',width: 300, align:'left'}
+                    , {
+                    field: 'isAlive', title: '是否存活', templet: function (d) {
+                        if (d.isAlive === 1) {
+                            return '<button class="layui-btn layui-btn-sm layui-bg-blue">上线</button>';
+                        } else {
+                            return '<button class="layui-btn layui-btn-sm layui-bg-red">离线</button>';
+                        }
+                    }
+                    , width: 100
+                }
+                    , {field: 'updateTime', title: '更改时间', width: 300, align:'left'}
+                    , {title: '操作', toolbar: '#table-useradmin-webuser', width: 260, align:'left'}
+                ]]
+            , page: {
+                curr: 1 //设定初始在第 5 页
+                , limit: 5 //设定初始每页显示 5 条
+            },
+            limits: [5, 10, 15, 20]
+        });
+
+        //监听行工具事件: 单行删除和修改
+        table.on('tool(LAY-user-manage)', function (obj) {
+            var data = obj.data;
+            console.log('Tool event:', obj.event); // 添加调试日志
+            
+            if (obj.event === "detect") {
+                layer.open({
+                    type: 2
+                    , title: '日志审计'
+                    , skin: 'layui-layer-molv'
+                    , content: '/page/log/detect'
+                    , maxmin: true
+                    , area: ['600px', '400px']  // 修改为更大的尺寸
+                    , btn: ['确定', '取消']
+                    , success: function (layero, index) { //弹出层加载之前执行
+                        // 获取选中行的数据
+                        // 获取弹出层的表单
+                        var body = layer.getChildFrame("body", index);
+                        var contentWindow = layero.find('iframe')[0].contentWindow;//得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
+                        // 获取编辑表单中用户名元素
+                        // 数据回显到弹出的表单中
+                        contentWindow.layui.form.val('layuiadmin-form-useradmin', {
+                            "id": data.id
+                            , "hostName": data.hostName
+                            , "macAddress": data.macAddress
+                        });
+
+                    }
+                    , yes: function (index, layero) {
+                        var iframeWindow = window['layui-layer-iframe' + index]
+                            , submitID = 'LAY-user-front-submit'
+                            , submit = layero.find('iframe').contents().find('#' + submitID);
+                        //监听提交--隐藏按钮
+                        iframeWindow.layui.form.on('submit(' + submitID + ')', function (data) {
+                            var field = data.field; //获取提交的字段
+                            // 通过Ajax方式将参数提交到后端--保存数据库中
+                            $.ajax({
+                                url: "/log/log_detect",
+                                type: "post",
+                                headers: {
+                                    'Authorization': localStorage.getItem('token'),
+                                    'Content-Type': 'application/json;charset=utf-8'
+                                },
+                                data: JSON.stringify({
+                                    hostName: field.hostName,
+                                    macAddress: field.macAddress,
+                                    id: Number(field.id),
+                                    type: 'log',
+                                    startTime: field.start_time,
+                                    endTime: field.end_time,
+                                    detectLog: field.detectLog === 'true'
+                                }),
+                                dataType: "json",
+                                success: function (res) {
+                                    if (res.code == 0) {//成功
+                                        layer.msg(res.msg);//弹出提示
+                                        // 将探测结果保存到 localStorage
+                                        if (res.data) {
+                                            localStorage.setItem('detectionResults_' + field.id, JSON.stringify(res.data));
+                                        }
+                                        table.reload('LAY-user-manage'); //数据刷新
+                                        layer.close(index); //关闭弹层
+                                    } else {//系统出问题
+                                        layer.msg(res.msg, {icon: 5});//弹出提示
+                                    }
+                                }
+                            })
+                        });
+                        submit.trigger('click');
+                    }
+                });
+
+            } else if (obj.event === "sync") {
+                console.log('Sync event triggered'); // 添加调试日志
+                console.log('Host data:', data); // 添加主机数据日志
+                
+                // 首先检查是否有日志记录
+                var requestData = {
+                    hostId: data.id,
+                    macAddress: data.macAddress
+                };
+                console.log('Request data:', requestData); // 添加请求数据日志
+                
+                $.ajax({
+                    url: "/log/check_logs",
+                    type: "post",
+                    headers: {
+                        'Authorization': localStorage.getItem('token'),
+                        'Content-Type': 'application/json;charset=utf-8'
+                    },
+                    data: JSON.stringify(requestData),
+                    contentType: "application/json;charset=utf-8",
+                    dataType: "json",
+                    success: function(res) {
+                        console.log('Check logs response:', res); // 添加调试日志
+                        console.log('Response code:', res.code); // 添加响应码日志
+                        console.log('Response data:', res.data); // 添加数据日志
+                        
+                        // 修改判断逻辑，确保正确处理返回数据
+                        if (res.code === 0) {
+                            // 有日志记录，显示时间间隔设置弹窗
+                            layer.open({
+                                type: 1,
+                                title: '设置同步时间间隔',
+                                skin: 'layui-layer-molv',
+                                area: ['400px', '250px'],
+                                content: `
+                                    <div class="layui-form" style="padding: 20px;">
+                                        <div class="layui-form-item">
+                                            <label class="layui-form-label">时间间隔</label>
+                                            <div class="layui-input-block">
+                                                <input type="number" name="interval" required lay-verify="required|number" 
+                                                       placeholder="请输入时间间隔（分钟）" class="layui-input" min="1" value="5">
+                                            </div>
+                                        </div>
+                                        <div class="layui-form-item" style="margin-top: 30px;">
+                                            <div class="layui-input-block">
+                                                <button class="layui-btn" lay-submit lay-filter="setInterval">确认</button>
+                                                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `,
+                                success: function(layero, index) {
+                                    form.render(); // 重新渲染表单
+                                    form.on('submit(setInterval)', function(formData) {
+                                        console.log('Form submitted:', formData.field); // 添加调试日志
+                                        // 获取最新日志时间并发送定时同步请求
+                                        $.ajax({
+                                            url: "/log/get_latest_log_time",
+                                            type: "post",
+                                            headers: {
+                                                'Authorization': localStorage.getItem('token'),
+                                                'Content-Type': 'application/json;charset=utf-8'
+                                            },
+                                            data: JSON.stringify({
+                                                hostId: data.id,
+                                                macAddress: data.macAddress
+                                            }),
+                                            contentType: "application/json;charset=utf-8",
+                                            dataType: "json",
+                                            success: function(timeRes) {
+                                                console.log('Latest log time response:', timeRes); // 添加调试日志
+                                                if (timeRes.code === 0) {
+                                                    // 发送定时同步请求
+                                                    $.ajax({
+                                                        url: "/log/set_sync_interval",
+                                                        type: "post",
+                                                        headers: {
+                                                            'Authorization': localStorage.getItem('token'),
+                                                            'Content-Type': 'application/json;charset=utf-8'
+                                                        },
+                                                        data: JSON.stringify({
+                                                            hostId: data.id,
+                                                            macAddress: data.macAddress,
+                                                            interval: formData.field.interval,
+                                                            startTime: timeRes.data.latestLogTime,
+                                                            endTime: new Date().getTime(),
+                                                            type: 'log'
+                                                        }),
+                                                        contentType: "application/json;charset=utf-8",
+                                                        dataType: "json",
+                                                        success: function(res) {
+                                                            console.log('Set sync interval response:', res); // 添加调试日志
+                                                            if (res.code === 0) {
+                                                                layer.msg('定时同步设置成功', {icon: 1});
+                                                                layer.close(index);
+                                                            } else {
+                                                                layer.msg(res.msg, {icon: 2});
+                                                            }
+                                                        }
+                                                    });
+                                                } else {
+                                                    layer.msg('获取最新日志时间失败：' + timeRes.msg, {icon: 2});
+                                                }
+                                            }
+                                        });
+                                        return false;
+                                    });
+                                }
+                            });
+                        } else {
+                            // 没有日志记录，显示提醒
+                            layer.msg('该主机尚未进行日志审计！', {icon: 2});
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Check logs error:', error); // 添加错误日志
+                        console.error('Status:', status); // 添加状态日志
+                        console.error('Response:', xhr.responseText); // 添加响应内容日志
+                        console.error('Request URL:', '/log/check_logs'); // 添加请求URL日志
+                        console.error('Request Data:', requestData); // 添加请求数据日志
+                        layer.msg('检查日志记录失败：' + error, {icon: 2});
+                    }
+                });
+            }
+        });
+
+        //监听搜索
+        form.on('submit(LAY-sysuser-front-search)', function (data) {
+            var field = data.field;
+            //执行重载
+            table.reload('LAY-user-manage', {
+                url: '/host/list',
+                method: "post",
+                headers: {
+                    'Authorization': localStorage.getItem('token')
+                },
+                where: field
+            });
+        });
+
+
+        //事件 批量删除，添加用户
+        var active = {
+            batchdel: function () {
+                var checkStatus = table.checkStatus('LAY-user-manage')
+                    , checkData = checkStatus.data; //得到选中的数据
+
+                if (checkData.length == 0) {
+                    return layer.msg('请选择数据');
+                }
+
+                // 程序走到这里，表示已经有选中要删除的数据了。
+                layer.confirm('确定删除吗？', function () {
+                    var hostIds = new Array();
+                    $.each(checkData, function (index, item) {
+                        hostIds.push(item.id);
+                    })
+                    // 提交给后端
+                    $.ajax({
+                        url: "/host/delete",
+                        type: "post",
+                        headers: {
+                            'Authorization': localStorage.getItem('token')
+                        },
+                        data: {ids: hostIds},
+                        dataType: "json",
+                        success: function (res) {
+                            if (res.code == 0) {//成功
+                                layer.msg(res.msg);
+                                table.reload('LAY-user-manage'); //数据刷新
+                                layer.close(index); //关闭弹层
+                            } else {
+                                layer.msg(res.msg, {icon: 5});//弹出提示
+                            }
+                        }
+                    })
+                })
+            }
+            , add: function () {
+                layer.open({
+                    type: 2
+                    , title: '添加用户'
+                    , skin: 'layui-layer-molv'
+                    , content: '/page/user/add'
+                    , maxmin: true
+                    , area: ['580px', '350px']
+                    , btn: ['确定', '取消']
+                    , yes: function (index, layero) {
+                        var iframeWindow = window['layui-layer-iframe' + index]
+                            , submitID = 'LAY-user-front-submit'
+                            , submit = layero.find('iframe').contents().find('#' + submitID);
+                        //监听提交--隐藏按钮
+                        iframeWindow.layui.form.on('submit(' + submitID + ')', function (data) {
+                            var field = data.field; //获取提交的字段
+                            // 通过Ajax方式将参数提交到后端--保存数据库中
+                            $.ajax({
+                                url: "/user/save",
+                                type: "post",
+                                headers: {
+                                    'Authorization': localStorage.getItem('token')
+                                },
+                                data: JSON.stringify(field),
+                                contentType: "application/json;charset=utf-8", //提交参数类型为json格式
+                                dataType: "json",
+                                success: function (res) {
+                                    if (res.code === 0) {//成功
+                                        layer.msg(res.msg);//弹出提示
+                                        table.reload('LAY-user-manage'); //数据刷新
+                                        layer.close(index); //关闭弹层
+                                    } else {//系统出问题
+                                        layer.msg(res.msg, {icon: 5});//弹出提示
+                                    }
+                                }
+                            })
+                        });
+                        submit.trigger('click');
+                    }
+
+                });
+            }
+            , refresh: function () {
+                table.reload('LAY-user-manage', {
+                    url: '/host/list',
+                    method: "post",
+                    headers: {
+                        'Authorization': localStorage.getItem('token')
+                    },
+                    where: ""
+                });
+            }
+        };
+
+        $('.layui-btn.layuiadmin-btn-useradmin').on('click', function () {
+            var type = $(this).data('type');
+            active[type] ? active[type].call(this) : '';
+        });
+
+    });
+</script>
+</body>
+</html>
