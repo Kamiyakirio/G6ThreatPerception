@@ -11,6 +11,7 @@ import com.tpp.threat_perception_platform.asset.Service;
 import com.tpp.threat_perception_platform.dao.*;
 import com.tpp.threat_perception_platform.pojo.AppRiskResult;
 import com.tpp.threat_perception_platform.pojo.Host;
+import com.tpp.threat_perception_platform.pojo.Log;
 import com.tpp.threat_perception_platform.pojo.Risk;
 import com.tpp.threat_perception_platform.pojo.VulScan;
 import org.springframework.amqp.core.Message;
@@ -36,6 +37,7 @@ public class RabbitMQController {
     @Autowired private RiskMapper riskMapper;
     @Autowired private VulScanMapper vulScanMapper;
     @Autowired private AppRiskResultMapper appRiskResultMapper;
+    @Autowired private LogMapper logMapper;
 
     // 获取下一个 detectId
     private int getNextDetectId(String macAddress, AccountMapper mapper) {
@@ -323,4 +325,104 @@ public class RabbitMQController {
             channel.basicAck(deliveryTag, false);
         }
     }
+
+
+    @RabbitListener(queues = "log_detect_result")
+public void receiveLogDetectResult(String messageBody, Message message, Channel channel) throws IOException {
+    long deliveryTag = message.getMessageProperties().getDeliveryTag();
+    try {
+        // 1. 解析消息体
+        JSONObject fullData = JSON.parseObject(new String(message.getBody(), StandardCharsets.UTF_8));
+        JSONObject info = fullData.getJSONObject("info");
+        JSONArray dataList = fullData.getJSONArray("data");
+
+        String macAddress = info.getString("macAddress");
+        String hostName = info.getString("hostName");
+        Integer infoId = info.getInteger("id");
+        String timeStr = info.getString("time");
+        Date time = null;
+        try {
+            time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(timeStr);
+        } catch (Exception e) {
+            System.err.println("解析info.time失败: " + timeStr + ", 错误: " + e.getMessage());
+        }
+
+        for (int i = 0; i < dataList.size(); i++) {
+            JSONObject dataItem = dataList.getJSONObject(i);
+            String dataType = dataItem.getString("type");
+            if ("log".equalsIgnoreCase(dataType)) {
+                JSONArray logsArray = dataItem.getJSONArray("data");
+                for (int j = 0; j < logsArray.size(); j++) {
+                    JSONObject logData = logsArray.getJSONObject(j);
+                    Log log = new Log();
+                    log.setMacAddress(macAddress);
+                    log.setHostName(hostName);
+                    log.setId(infoId);
+                    log.setTime(time); // 使用info中的time
+
+                    // event_id
+                    Integer eventId = logData.getInteger("event_id");
+                    if (eventId == null && logData.containsKey("eventId")) {
+                        eventId = logData.getInteger("eventId");
+                    }
+                    log.setEventId(eventId);
+
+                    // risk_level
+                    log.setRiskLevel(logData.getInteger("risk_level"));
+
+                    // timestamp - 解析日志中的timestamp字段
+                    String timestampStr = logData.getString("timestamp");
+                    if (timestampStr != null) {
+                        try {
+                            // 移除UTC后缀并解析
+                            String cleanTimestamp = timestampStr.replace(" UTC", "");
+                            Date timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS").parse(cleanTimestamp);
+                            log.setTimestamp(timestamp);
+                        } catch (Exception e) {
+                            try {
+                                // 尝试不带毫秒的格式
+                                String cleanTimestamp = timestampStr.replace(" UTC", "");
+                                Date timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(cleanTimestamp);
+                                log.setTimestamp(timestamp);
+                            } catch (Exception e2) {
+                                System.err.println("解析timestamp失败: " + timestampStr + ", 错误: " + e2.getMessage());
+                                log.setTimestamp(null);
+                            }
+                        }
+                    }
+
+                    // risk_desc
+                    log.setRiskDesc(logData.getString("risk_desc"));
+
+                    // channel
+                    log.setChannel(logData.getString("channel"));
+
+                    // event_data
+                    Object eventData = logData.get("event_data");
+                    if (eventData != null) {
+                        log.setEventData(JSON.toJSONString(eventData));
+                    }
+
+                    // ai_result
+                    log.setAiResult(logData.getString("ai_result"));
+
+                    // 避免重复插入
+                    Log existingLog = logMapper.selectByMacAddressAndEventIdAndTimestampAndChannel(
+                        log.getMacAddress(), log.getEventId(), log.getTimestamp(), log.getChannel());
+                    if (existingLog == null) {
+                        logMapper.insertSelective(log);
+                        System.out.println("日志记录已保存到数据库");
+                    } else {
+                        System.out.println("相同的日志记录已存在，跳过保存");
+                    }
+                }
+            }
+        }
+        channel.basicAck(deliveryTag, false);
+    } catch (Exception e) {
+        e.printStackTrace();
+        System.err.println("处理日志探测结果失败: " + e.getMessage());
+        channel.basicAck(deliveryTag, false);
+    }
+}
 }
