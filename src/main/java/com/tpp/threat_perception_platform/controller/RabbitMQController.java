@@ -204,7 +204,7 @@ public class RabbitMQController {
                         service.setExtrainfo(serviceData.getString("extrainfo"));
 
 
-                        serviceMapper.updateByPrimaryKeySelective(service);
+                        serviceMapper.insertSelective(service);
                     }
                 }
             }

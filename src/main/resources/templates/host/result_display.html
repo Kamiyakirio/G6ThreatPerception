@@ -65,6 +65,7 @@
                     <table id="accountTable" lay-filter="accountTable"></table>
                     <p id="account-no-data" style="display:none; text-align: center; color: #999;">
                         未选择探测或无数据</p>
+                    <button type="button" id="account-ai-analysis" class="layui-btn layui-bg-blue">使用AI分析</button>
                 </div>
             </div>
             <div class="layui-tab-item">
@@ -72,6 +73,7 @@
                     <table id="serviceTable" lay-filter="serviceTable"></table>
                     <p id="service-no-data" style="display:none; text-align: center; color: #999;">
                         未选择探测或无数据</p>
+                    <button type="button" id="service-ai-analysis" class="layui-btn layui-bg-blue">使用AI分析</button>
                 </div>
             </div>
             <div class="layui-tab-item">
@@ -79,6 +81,7 @@
                     <table id="processTable" lay-filter="processTable"></table>
                     <p id="process-no-data" style="display:none; text-align: center; color: #999;">
                         未选择探测或无数据</p>
+                    <button type="button" id="process-ai-analysis" class="layui-btn layui-bg-blue">使用AI分析</button>
                 </div>
             </div>
             <div class="layui-tab-item">
@@ -102,6 +105,7 @@
         var element = layui.element;
         var form = layui.form;
         var table = layui.table;
+        var layer = layui.layer;
 
         function renderTable(urlName, tableId, data, cols, noDataId) {
 
@@ -114,12 +118,11 @@
                 , headers: {
                     'Authorization': localStorage.getItem('token')
                 }
-
                 , where: {"macAddress": macAddress}
                 , cols: [cols]
                 , page: true // 开启分页
                 , limit: 10
-                , limits: [5, 10, 15, 20, 30]
+                , limits: [5, 10, 15, 20, 30, 500]
                 , autoSort: false
                 , height: 'full-150'
 
@@ -133,7 +136,6 @@
 
             });
         }
-
 
         var accountCols = [
             {field: 'sid', title: 'SID', fixed: 'left', minWidth: 100}
@@ -274,76 +276,6 @@
             , {field: 'time', title: '时间', minWidth: 180}
         ];
 
-        // --- 模拟数据 --- (为了演示表格显示和未选择探测状态)
-        // var mockHostName = "模拟主机-A";
-        // var mockMacAddress = "00:11:22:33:44:55";
-        //
-        // var mockAccountResults = [
-        //     {
-        //         name: 'testuser1',
-        //         full_name: 'Test User One',
-        //         sid: 'S-1-5-21-mock1',
-        //         status: '正常',
-        //         disabled: 0,
-        //         lockout: 0,
-        //         host_name: mockHostName,
-        //         mac_address: mockMacAddress,
-        //         time: '2024-07-26 10:00:00'
-        //     },
-        //     {
-        //         name: 'testuser2',
-        //         full_name: 'Test User Two',
-        //         sid: 'S-1-5-21-mock2',
-        //         status: '禁用',
-        //         disabled: 1,
-        //         lockout: 0,
-        //         host_name: mockHostName,
-        //         mac_address: mockMacAddress,
-        //         time: '2024-07-26 10:01:00'
-        //     }
-        // ];
-        //
-        // var mockServiceResults = [
-        //     {
-        //         service_name: 'MockService1',
-        //         display_name: 'Mock Service A',
-        //         status: 'Running',
-        //         start_type: 'Auto',
-        //         host_name: mockHostName,
-        //         mac_address: mockMacAddress,
-        //         time: '2024-07-26 10:05:00'
-        //     },
-        //     {
-        //         service_name: 'MockService2',
-        //         display_name: 'Mock Service B',
-        //         status: 'Stopped',
-        //         start_type: 'Manual',
-        //         host_name: mockHostName,
-        //         mac_address: mockMacAddress,
-        //         time: '2024-07-26 10:06:00'
-        //     }
-        // ];
-        //
-        // var mockProcessResults = []; // 模拟未选择进程探测或无数据
-        //
-        // var mockAppResults = [
-        //     {
-        //         display_name: 'Mock App A',
-        //         install_location: 'C:\\Program Files\\MockAppA',
-        //         host_name: mockHostName,
-        //         mac_address: mockMacAddress,
-        //         time: '2024-07-26 10:10:00'
-        //     },
-        //     {
-        //         display_name: 'Mock App B',
-        //         install_location: 'D:\\Apps\\MockAppB',
-        //         host_name: mockHostName,
-        //         mac_address: mockMacAddress,
-        //         time: '2024-07-26 10:11:00'
-        //     }
-        // ];
-        // --- 模拟数据结束 ---
-
         window.addEventListener('message', function (event) {
             var data = event.data;
             if (data && data.type === 'initialData') {
@@ -361,17 +293,6 @@
             }
         });
 
-        // 填充主机信息 (使用模拟数据)
-        // form.val('result-display-form', {
-        //     "hostName": mockHostName,
-        //     "macAddress": mockMacAddress
-        // });
-
-        // 渲染表格 (直接使用模拟数据)
-        // renderTable("account", 'accountTable', accountCols, 'account-no-data');
-        // renderTable("service", 'serviceTable', serviceCols, 'service-no-data');
-        // renderTable("process", 'processTable', processCols, 'process-no-data'); // 进程探测模拟无数据
-        // renderTable("app", 'appTable', appCols, 'app-no-data');
 
         function fetchAndRenderData(type, tableId, cols, noDataId, macAddress) {
             $.ajax({
@@ -397,6 +318,83 @@
             });
         }
 
+        var ai=function(data,url) {
+            layer.msg("正在将请求发送至大模型，请勿关闭页面！");
+            var loadIndex = layer.load(1);
+            var aiResultLayerIndex=999999;
+            $.ajax({
+                url: url,
+                method: "post",
+                headers: {
+                    'Authorization': localStorage.getItem('token')
+                },
+                contentType: "application/json",
+                dataType: "json",
+                data: JSON.stringify(data),
+                success: function (response) {
+                    layer.close(loadIndex);
+                    layer.closeAll('iFrame');
+                    layer.open({
+                        type: 2
+                        //,skin: 'layui-layer-molv'
+                        , maxmin: true
+                        ,area: ['480px', '310px']
+                        ,content: '/page/ai/aiResultTmpl2'
+                        ,success: function (layero, index) { //弹出层加载之前执行
+                            // 获取弹出层的表单
+                            var contentWindow = layero.find('iframe')[0].contentWindow; //得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
+                            contentWindow.postMessage(response.msg)
+                            aiResultLayerIndex=index;
+                        }
+                        ,cancel: function(index, layero, that){
+                            layer.confirm("关闭窗口后将无法再次查看AI检测结果，再次点击将产生二次花费，是否确认关闭？",function(index){
+                              layer.close(aiResultLayerIndex);
+                              layer.close(index);
+                            })
+                            return false;
+                        }
+                    });
+                }
+                , error: function(xhr, status, error) {
+                    layer.close(loadIndex);
+                    layer.msg(error,{icon: 5});
+                }
+            });
+        };
+
+        $(document).ready(function () {
+            $('#account-ai-analysis').click(function () {
+                // 在这里编写点击事件的逻辑
+                // console.log(table.getData("accountTable"))
+                data=table.getData("accountTable");
+                ai(data,"/ai/account_analysis");
+
+            });
+
+            $("#process-ai-analysis").click(function () {
+                // console.log(table.getData("processTable"));
+                var data=table.getData('processTable');
+                data.forEach(obj => {
+                    delete obj.hostName;
+                    delete obj.macAddress;
+                    delete obj.time;
+                });
+                console.log(data);
+            });
+
+            $("#service-ai-analysis").click(function () {
+                // console.log(table.getData("processTable"));
+                var data=table.getData('serviceTable');
+                data.forEach(obj => {
+                    delete obj.hostName;
+                    delete obj.macAddress;
+                    delete obj.time;
+                    delete obj.id
+                });
+                // console.log(data);
+                ai(data,"/ai/port_analysis");
+            });
+        });
 
         //监听Tab切换
         element.on('tab(detect-tabs)', function (data) {
