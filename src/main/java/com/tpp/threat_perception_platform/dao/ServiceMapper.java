@@ -29,4 +29,6 @@ public interface ServiceMapper {
     Integer selectLastDetectIdByMac(String macAddress);
 
     Service selectByNameAndHost(String name, String hostName);
+
+    List<Service> selectByDetectId(Integer detectId);
 }

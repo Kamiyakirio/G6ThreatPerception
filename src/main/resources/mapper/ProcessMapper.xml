@@ -26,7 +26,7 @@
     </sql>
 
     <select id="selectLastDetectIdByMac" parameterType="string" resultType="int">
-    SELECT detect_id FROM account WHERE mac_address = #{macAddress}
+    SELECT detect_id FROM process WHERE mac_address = #{macAddress}
     ORDER BY detect_id DESC LIMIT 1
     </select>
 
@@ -45,6 +45,11 @@
             <include refid="Base_Column_List"/>
             from process
         where mac_address = #{macAddress}
+    </select>
+    <select id="selectAllByDetectId" resultType="com.tpp.threat_perception_platform.asset.Process">
+        select <include refid="Base_Column_List"/>
+            from process
+        where detect_id=#{detectId}
     </select>
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">

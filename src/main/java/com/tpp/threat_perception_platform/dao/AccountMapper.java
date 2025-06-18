@@ -28,4 +28,6 @@ public interface AccountMapper {
 
     List<Account> selectAllByMacAddress(String macAddress);
 
+    List<Account> selectAllByDetectId(Integer detect_id);
+
 }
