@@ -40,6 +40,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
         registry.addViewController("/page/vul_scan/index").setViewName("vul_scan/index");
 
+
+        //log related pages
+        registry.addViewController("/page/log/list").setViewName("log/list");
+        registry.addViewController("/page/log/account").setViewName("log/account");
+        registry.addViewController("/page/log/detect").setViewName("log/detect");
+        registry.addViewController("/page/log/loginStatistics").setViewName("log/loginStatistics");
+//        registry.addViewController("/page/log/login").setViewName("log/login");
+      
         registry.addViewController("/page/ai/aiResultTmpl1").setViewName("ai/aiResultTmpl1");
         registry.addViewController("/page/ai/aiResultTmpl2").setViewName("ai/aiResultTmpl2");
     }
