@@ -46,7 +46,7 @@ public interface LogService {
 
     /**
      * 获取登录日志统计数据（含风险等级分布）
-     * 
+     *
      */
     ResponseResult getLoginLogStatistics();
 

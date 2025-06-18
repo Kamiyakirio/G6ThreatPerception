@@ -285,91 +285,80 @@
                 });
 
             } else if (obj.event === "sync") {
-                console.log('Sync event triggered');
-                console.log('Host data:', data);
+                console.log('Sync event triggered'); // 添加调试日志
+                console.log('Host data:', data); // 添加主机数据日志
 
-                // 首先检查当前同步状态
+                // 首先检查是否有日志记录
+                var requestData = {
+                    hostId: data.id,
+                    macAddress: data.macAddress
+                };
+                console.log('Request data:', requestData); // 添加请求数据日志
+
                 $.ajax({
-                    url: "/log/check_sync_status",
+                    url: "/log/check_logs",
                     type: "post",
                     headers: {
                         'Authorization': localStorage.getItem('token'),
                         'Content-Type': 'application/json;charset=utf-8'
                     },
-                    data: JSON.stringify({
-                        hostId: data.id,
-                        macAddress: data.macAddress
-                    }),
+                    data: JSON.stringify(requestData),
+                    contentType: "application/json;charset=utf-8",
                     dataType: "json",
-                    success: function(statusRes) {
-                        console.log('Sync status response:', statusRes);
+                    success: function(res) {
+                        console.log('Check logs response:', res); // 添加调试日志
+                        console.log('Response code:', res.code); // 添加响应码日志
+                        console.log('Response data:', res.data); // 添加数据日志
 
-                        // 检查是否有日志记录
-                        $.ajax({
-                            url: "/log/check_logs",
-                            type: "post",
-                            headers: {
-                                'Authorization': localStorage.getItem('token'),
-                                'Content-Type': 'application/json;charset=utf-8'
-                            },
-                            data: JSON.stringify({
-                                hostId: data.id,
-                                macAddress: data.macAddress
-                            }),
-                            dataType: "json",
-                            success: function(res) {
-                                console.log('Check logs response:', res);
-
-                                if (res.code === 0) {
-                                    // 有日志记录，显示时间间隔设置弹窗
-                                    layer.open({
-                                        type: 1,
-                                        title: '定时同步设置',
-                                        skin: 'layui-layer-molv',
-                                        area: ['400px', '300px'],
-                                        content: `
-                                            <div class="layui-form" style="padding: 20px;">
-                                                <div class="layui-form-item">
-                                                    <label class="layui-form-label">启用同步</label>
-                                                    <div class="layui-input-block">
-                                                        <input type="checkbox" name="enableSync" lay-skin="switch" lay-text="开启|关闭" ${statusRes.data.isEnabled ? 'checked' : ''}>
-                                                    </div>
-                                                </div>
-                                                <div class="layui-form-item" id="intervalSetting" ${statusRes.data.isEnabled ? '' : 'style="display:none"'}>
-                                                    <label class="layui-form-label">时间间隔</label>
-                                                    <div class="layui-input-block">
-                                                        <input type="number" name="interval" required lay-verify="required|number"
-                                                               placeholder="请输入时间间隔（分钟）" class="layui-input" min="1" value="${statusRes.data.interval || 5}">
-                                                    </div>
-                                                </div>
-                                                <div class="layui-form-item" style="margin-top: 30px;">
-                                                    <div class="layui-input-block">
-                                                        <button class="layui-btn" lay-submit lay-filter="setInterval">确认</button>
-                                                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
-                                                    </div>
-                                                </div>
+                        // 修改判断逻辑，确保正确处理返回数据
+                        if (res.code === 0) {
+                            // 有日志记录，显示时间间隔设置弹窗
+                            layer.open({
+                                type: 1,
+                                title: '设置同步时间间隔',
+                                skin: 'layui-layer-molv',
+                                area: ['400px', '250px'],
+                                content: `
+                                    <div class="layui-form" style="padding: 20px;">
+                                        <div class="layui-form-item">
+                                            <label class="layui-form-label">时间间隔</label>
+                                            <div class="layui-input-block">
+                                                <input type="number" name="interval" required lay-verify="required|number"
+                                                       placeholder="请输入时间间隔（分钟）" class="layui-input" min="1" value="5">
                                             </div>
-                                        `,
-                                        success: function(layero, index) {
-                                            form.render(); // 重新渲染表单
-
-                                            // 监听开关切换
-                                            form.on('switch(enableSync)', function(switchData){
-                                                var intervalSetting = layero.find('#intervalSetting');
-                                                if(this.checked) {
-                                                    intervalSetting.show();
-                                                } else {
-                                                    intervalSetting.hide();
-                                                }
-                                            });
-
-                                            form.on('submit(setInterval)', function(formData) {
-                                                console.log('Form submitted:', formData.field);
-
-                                                if(!formData.field.enableSync) {
-                                                    // 如果关闭同步，直接发送停止请求
+                                        </div>
+                                        <div class="layui-form-item" style="margin-top: 30px;">
+                                            <div class="layui-input-block">
+                                                <button class="layui-btn" lay-submit lay-filter="setInterval">确认</button>
+                                                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `,
+                                success: function(layero, index) {
+                                    form.render(); // 重新渲染表单
+                                    form.on('submit(setInterval)', function(formData) {
+                                        console.log('Form submitted:', formData.field); // 添加调试日志
+                                        // 获取最新日志时间并发送定时同步请求
+                                        $.ajax({
+                                            url: "/log/get_latest_log_time",
+                                            type: "post",
+                                            headers: {
+                                                'Authorization': localStorage.getItem('token'),
+                                                'Content-Type': 'application/json;charset=utf-8'
+                                            },
+                                            data: JSON.stringify({
+                                                hostId: data.id,
+                                                macAddress: data.macAddress
+                                            }),
+                                            contentType: "application/json;charset=utf-8",
+                                            dataType: "json",
+                                            success: function(timeRes) {
+                                                console.log('Latest log time response:', timeRes); // 添加调试日志
+                                                if (timeRes.code === 0) {
+                                                    // 发送定时同步请求
                                                     $.ajax({
-                                                        url: "/log/stop_sync",
+                                                        url: "/log/set_sync_interval",
                                                         type: "post",
                                                         headers: {
                                                             'Authorization': localStorage.getItem('token'),
@@ -377,76 +366,45 @@
                                                         },
                                                         data: JSON.stringify({
                                                             hostId: data.id,
-                                                            macAddress: data.macAddress
+                                                            macAddress: data.macAddress,
+                                                            interval: formData.field.interval,
+                                                            startTime: timeRes.data.latestLogTime,
+                                                            endTime: new Date().getTime(),
+                                                            type: 'log'
                                                         }),
+                                                        contentType: "application/json;charset=utf-8",
                                                         dataType: "json",
                                                         success: function(res) {
+                                                            console.log('Set sync interval response:', res); // 添加调试日志
                                                             if (res.code === 0) {
-                                                                layer.msg('已停止定时同步', {icon: 1});
+                                                                layer.msg('定时同步设置成功', {icon: 1});
                                                                 layer.close(index);
                                                             } else {
                                                                 layer.msg(res.msg, {icon: 2});
                                                             }
                                                         }
                                                     });
-                                                    return false;
+                                                } else {
+                                                    layer.msg('获取最新日志时间失败：' + timeRes.msg, {icon: 2});
                                                 }
-
-                                                // 如果开启同步，获取最新日志时间并发送定时同步请求
-                                                $.ajax({
-                                                    url: "/log/get_latest_log_time",
-                                                    type: "post",
-                                                    headers: {
-                                                        'Authorization': localStorage.getItem('token'),
-                                                        'Content-Type': 'application/json;charset=utf-8'
-                                                    },
-                                                    data: JSON.stringify({
-                                                        hostId: data.id,
-                                                        macAddress: data.macAddress
-                                                    }),
-                                                    dataType: "json",
-                                                    success: function(timeRes) {
-                                                        if (timeRes.code === 0) {
-                                                            $.ajax({
-                                                                url: "/log/set_sync_interval",
-                                                                type: "post",
-                                                                headers: {
-                                                                    'Authorization': localStorage.getItem('token'),
-                                                                    'Content-Type': 'application/json;charset=utf-8'
-                                                                },
-                                                                data: JSON.stringify({
-                                                                    hostId: data.id,
-                                                                    macAddress: data.macAddress,
-                                                                    interval: formData.field.interval,
-                                                                    startTime: timeRes.data.latestLogTime,
-                                                                    endTime: new Date().getTime(),
-                                                                    type: 'log',
-                                                                    enabled: true
-                                                                }),
-                                                                dataType: "json",
-                                                                success: function(res) {
-                                                                    if (res.code === 0) {
-                                                                        layer.msg('定时同步设置成功', {icon: 1});
-                                                                        layer.close(index);
-                                                                    } else {
-                                                                        layer.msg(res.msg, {icon: 2});
-                                                                    }
-                                                                }
-                                                            });
-                                                        } else {
-                                                            layer.msg('获取最新日志时间失败：' + timeRes.msg, {icon: 2});
-                                                        }
-                                                    }
-                                                });
-                                                return false;
-                                            });
-                                        }
+                                            }
+                                        });
+                                        return false;
                                     });
-                                } else {
-                                    layer.msg('该主机尚未进行日志审计！', {icon: 2});
                                 }
-                            }
-                        });
+                            });
+                        } else {
+                            // 没有日志记录，显示提醒
+                            layer.msg('该主机尚未进行日志审计！', {icon: 2});
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Check logs error:', error); // 添加错误日志
+                        console.error('Status:', status); // 添加状态日志
+                        console.error('Response:', xhr.responseText); // 添加响应内容日志
+                        console.error('Request URL:', '/log/check_logs'); // 添加请求URL日志
+                        console.error('Request Data:', requestData); // 添加请求数据日志
+                        layer.msg('检查日志记录失败：' + error, {icon: 2});
                     }
                 });
             }

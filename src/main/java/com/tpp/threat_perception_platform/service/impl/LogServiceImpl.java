@@ -9,6 +9,7 @@ import com.tpp.threat_perception_platform.utils.RedisCache;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -264,14 +265,12 @@ public class LogServiceImpl implements LogService {
 
             // 发送到队列
             String queueName = "agentQueue" + macAddress.replace(":", "");
-            System.out.println("Sending message to queue: " + queueName);
             System.out.println("Message content: " + JSON.toJSONString(messageMap));
-
+            
             rabbitMQService.sendMessage("", queueName, JSON.toJSONString(messageMap));
-
+            
             // 更新最后同步时间
             taskInfo.put("lastSyncTime", currentTime);
-            System.out.println("Updated last sync time to: " + currentTime);
         } catch (Exception e) {
             System.out.println("Error in executeSyncForTask: " + e.getMessage());
             e.printStackTrace();
