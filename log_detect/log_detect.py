@@ -11,7 +11,7 @@ from utils.naming_convert import underscore_to_camelcase
 
 def log_detect(data):
 
-    print(data)
+    # print(data)
     threads = []
     thread_pool = ThreadPoolExecutor(16)
     return_data = {"data": []}
@@ -24,30 +24,32 @@ def log_detect(data):
     # 实时获取本机的mac地址，并与配置文件中的mac地址进行对比，如果相同，则返回数据，否则返回空
     info = PcInfo()
     localhost_mac_address = info.get_info_dict()["mac_address"]
-    print(localhost_mac_address)
+    # print(localhost_mac_address)
     if localhost_mac_address != data["mac_address"]:
         return ""
     else:
-        return_data["info"] = {underscore_to_camelcase(k): v for k, v in basic_info.items()}
+        return_data["info"] = {
+            underscore_to_camelcase(k): v for k, v in basic_info.items()
+        }
 
         if data["detect_log"]:
-            t = thread_pool.submit(log_analysis,data)
+            t = thread_pool.submit(log_analysis, data)
             threads.append(t)
 
         for i in as_completed(threads):
             result = i.result()
             # 组装完整的 JSON 结构
-            return_data["data"].append({
-                "type": "log",
-                "data": result
-            })
+            return_data["data"].append({"type": "log", "data": result})
 
-        return_data["info"]["time"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        return_data["info"]["time"] = datetime.datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
         print(return_data)
         print("Detect ended!")
 
         # 🔥 最终返回为字符串
         return json.dumps(return_data, ensure_ascii=False)
+
 
 def log_analysis(data):
 
@@ -59,18 +61,21 @@ def log_analysis(data):
     if result:
         # 打印整个JSON结果
         print("\n完整JSON结果:")
-        print(json.dumps(result, ensure_ascii=False, indent=2))
-        return  result
+        # print(json.dumps(result, ensure_ascii=False, indent=2))
+        return result
     else:
         print("日志分析失败。")
         return ""
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # 获取当前时间
     end_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # 计算1天前的时间
-    start_time = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
+    start_time = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
 
     # 测试数据
     test_data = {
@@ -79,7 +84,7 @@ if __name__ == '__main__':
         "id": 1,
         "start_time": start_time,
         "end_time": end_time,
-        "detect_log":True,
-        "type": "log"
+        "detect_log": True,
+        "type": "log",
     }
-    print(log_detect(test_data))
+    # print(log_detect(test_data))

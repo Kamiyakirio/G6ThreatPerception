@@ -1,7 +1,7 @@
 import json
 import datetime
 import os
-from evtx import PyEvtxParser
+from Evtx import PyEvtxParser
 import re
 import html
 from xml.dom import minidom
@@ -49,13 +49,31 @@ class LogAnalyzer:
                 7036: {"desc": "服务已启动或停止", "level": 0},
                 7040: {"desc": "服务启动类型已更改", "level": 0},
                 7045: {"desc": "已安装新服务", "level": 0},
-                1102: {"desc": "审核日志已清除", "level": 0}
+                1102: {"desc": "审核日志已清除", "level": 0},
             },
             "dangerous_usernames": [
-                "admin", "administrator", "root", "test", "guest",
-                "backup", "default", "temp", "support", "audit"
+                "admin",
+                "administrator",
+                "root",
+                "test",
+                "guest",
+                "backup",
+                "default",
+                "temp",
+                "support",
+                "audit",
             ],
-            "abnormal_hours": [0, 1, 2, 3, 4, 5, 6, 22, 23]  # 定义非正常时段（22:00-06:00）
+            "abnormal_hours": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                22,
+                23,
+            ],  # 定义非正常时段（22:00-06:00）
         }
 
     def get_log_info(self, event_path, **kwargs):
@@ -66,21 +84,21 @@ class LogAnalyzer:
         :return: 符合条件的日志列表
         """
         # 解析参数
-        event_id_param = kwargs.get('event_id')
-        start_time = kwargs.get('start_time')
-        end_time = kwargs.get('end_time')
+        event_id_param = kwargs.get("event_id")
+        start_time = kwargs.get("start_time")
+        end_time = kwargs.get("end_time")
 
         # 创建Evtx解析器
         parser = PyEvtxParser(event_path)
-        event_id_pattern = re.compile(r'<EventID>(\d+)</EventID>')
-        channel_pattern = re.compile(r'<Channel>(.*?)</Channel>')
+        event_id_pattern = re.compile(r"<EventID>(\d+)</EventID>")
+        channel_pattern = re.compile(r"<Channel>(.*?)</Channel>")
 
         # 存储结果的列表
         event_list = []
 
         # 遍历日志条目
         for record in parser.records():
-            xml_data = record['data']
+            xml_data = record["data"]
 
             # 提取EventID
             event_id_match = re.search(event_id_pattern, xml_data)
@@ -93,9 +111,9 @@ class LogAnalyzer:
             channel = channel_match.group(1) if channel_match else "Unknown"
 
             # 时间范围过滤
-            if start_time is not None and record['timestamp'] < start_time:
+            if start_time is not None and record["timestamp"] < start_time:
                 continue
-            if end_time is not None and record['timestamp'] > end_time:
+            if end_time is not None and record["timestamp"] > end_time:
                 continue
 
             # 事件ID过滤
@@ -104,17 +122,21 @@ class LogAnalyzer:
 
             # 解析XML数据节点
             event_data = {
-                'event_id': event_id,
-                'timestamp': record['timestamp'],
-                'channel': channel
+                "event_id": event_id,
+                "timestamp": record["timestamp"],
+                "channel": channel,
             }
 
             try:
                 xml_doc = minidom.parseString(xml_data)
-                for data_node in xml_doc.getElementsByTagName('Data'):
+                for data_node in xml_doc.getElementsByTagName("Data"):
                     try:
-                        name = data_node.getAttribute('Name')
-                        value = html.unescape(data_node.childNodes[0].data) if data_node.hasChildNodes() else ""
+                        name = data_node.getAttribute("Name")
+                        value = (
+                            html.unescape(data_node.childNodes[0].data)
+                            if data_node.hasChildNodes()
+                            else ""
+                        )
                         event_data[name] = value
                     except Exception:
                         continue
@@ -132,14 +154,26 @@ class LogAnalyzer:
         """
         # 定义日志路径
         log_paths = {
-            "security": r'C:\Windows\System32\winevt\Logs\Security.evtx',
-            "system": r'C:\Windows\System32\winevt\Logs\System.evtx'
+            "security": r"C:\Windows\System32\winevt\Logs\Security.evtx",
+            "system": r"C:\Windows\System32\winevt\Logs\System.evtx",
         }
 
         # 定义要查询的事件ID
         event_dicts = {
-            "security": [4624, 4625, 4634, 4647, 4720, 4722, 4723, 4724, 4728, 4738, 4726],
-            "system": [1074, 6005, 6006, 6008, 6009, 6013, 7036, 7040, 7045, 1102]
+            "security": [
+                4624,
+                4625,
+                4634,
+                4647,
+                4720,
+                4722,
+                4723,
+                4724,
+                4728,
+                4738,
+                4726,
+            ],
+            "system": [1074, 6005, 6006, 6008, 6009, 6013, 7036, 7040, 7045, 1102],
         }
 
         print(f"时间范围: {start_time} - {end_time}")
@@ -165,7 +199,7 @@ class LogAnalyzer:
                         log_path,
                         event_id=event_id,
                         start_time=start_time,
-                        end_time=end_time
+                        end_time=end_time,
                     )
 
                     # 使用log_type/event_id作为键存储结果
@@ -185,7 +219,7 @@ class LogAnalyzer:
         :param filename: 输出文件名
         """
         try:
-            with open(filename, 'w', encoding='utf-8') as f:
+            with open(filename, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
             print(f"\n成功导出到 {filename}")
         except Exception as e:
@@ -194,7 +228,7 @@ class LogAnalyzer:
     def load_logs(self):
         """加载日志数据"""
         try:
-            with open(self.log_file, 'r', encoding='utf-8') as f:
+            with open(self.log_file, "r", encoding="utf-8") as f:
                 self.logs = json.load(f)
             print(f"成功加载 {len(self.logs)} 种类型的日志数据")
             return True
@@ -212,7 +246,7 @@ class LogAnalyzer:
 
         # 遍历所有类型的日志
         for event_type, events in self.logs.items():
-            log_type, event_id = event_type.split('_', 1)
+            log_type, event_id = event_type.split("_", 1)
             event_id = int(event_id)
 
             # 确定事件的基础风险级别
@@ -235,11 +269,13 @@ class LogAnalyzer:
             # 分析每条具体日志
             for event in events:
                 total_events += 1
-                timestamp = event.get('timestamp', '')
-                username = event.get('TargetUserName') or event.get('SubjectUserName', '')
-                ip_address = event.get('IpAddress', 'Unknown')
-                logon_type = event.get('LogonType', 'Unknown')
-                channel = event.get('channel', 'Unknown')
+                timestamp = event.get("timestamp", "")
+                username = event.get("TargetUserName") or event.get(
+                    "SubjectUserName", ""
+                )
+                ip_address = event.get("IpAddress", "Unknown")
+                logon_type = event.get("LogonType", "Unknown")
+                channel = event.get("channel", "Unknown")
 
                 # 初始化风险级别和描述
                 risk_level = base_risk
@@ -248,7 +284,9 @@ class LogAnalyzer:
                 # 特殊处理：用户登录成功事件(4624)
                 if event_id == 4624:
                     # 如果是危险用户名，则提升为高风险
-                    if username.lower() in [name.lower() for name in self.risk_rules["dangerous_usernames"]]:
+                    if username.lower() in [
+                        name.lower() for name in self.risk_rules["dangerous_usernames"]
+                    ]:
                         risk_level = 3
                         risk_details.append(f"使用危险用户名登录: {username}")
                     else:
@@ -256,17 +294,23 @@ class LogAnalyzer:
                         pass
 
                 # 检查是否是危险用户名（除登录成功事件外的其他事件）
-                elif username.lower() in [name.lower() for name in self.risk_rules["dangerous_usernames"]]:
+                elif username.lower() in [
+                    name.lower() for name in self.risk_rules["dangerous_usernames"]
+                ]:
                     risk_level = max(risk_level, 3)  # 危险用户名提升为高风险
                     risk_details.append(f"使用危险用户名: {username}")
 
                 # 检查是否在非正常时段
                 if timestamp:
                     try:
-                        event_time = datetime.datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+                        event_time = datetime.datetime.strptime(
+                            timestamp, "%Y-%m-%d %H:%M:%S"
+                        )
                         if event_time.hour in self.risk_rules["abnormal_hours"]:
                             risk_level = max(risk_level, 2)  # 非正常时段提升为中风险
-                            risk_details.append(f"在非正常时段登录: {event_time.hour}:00")
+                            risk_details.append(
+                                f"在非正常时段登录: {event_time.hour}:00"
+                            )
                     except ValueError:
                         pass
 
@@ -281,7 +325,7 @@ class LogAnalyzer:
                     "timestamp": timestamp,
                     "risk_desc": risk_desc,
                     "channel": channel,
-                    "event_data": event
+                    "event_data": event,
                 }
 
                 self.analysis_results.append(result_entry)
@@ -313,7 +357,9 @@ class LogAnalyzer:
         deduplicated_low = []
         for event in low_risk:
             # 提取关键信息用于比较
-            key_info = f"{event['event_id']}_{event['risk_desc']}_{event['timestamp'][:10]}"
+            key_info = (
+                f"{event['event_id']}_{event['risk_desc']}_{event['timestamp'][:10]}"
+            )
 
             # 检查是否与已保留的事件相似
             is_duplicate = False
@@ -348,7 +394,9 @@ class LogAnalyzer:
         low_risk_events = risk_groups[0] + risk_groups[1]
         deduplicated_low = []
         for event in low_risk_events:
-            key_info = f"{event['event_id']}_{event['risk_desc']}_{event['timestamp'][:10]}"
+            key_info = (
+                f"{event['event_id']}_{event['risk_desc']}_{event['timestamp'][:10]}"
+            )
             is_duplicate = False
             for saved_event in deduplicated_low:
                 saved_key = f"{saved_event['event_id']}_{saved_event['risk_desc']}_{saved_event['timestamp'][:10]}"
@@ -367,7 +415,9 @@ class LogAnalyzer:
                 is_duplicate = False
                 for saved_event in deduplicated_level:
                     saved_key = f"{saved_event['event_id']}_{saved_event['risk_desc']}_{saved_event['timestamp'][:10]}"
-                    if self.similar(key_info, saved_key) > threshold:  # 中高风险使用95%阈值
+                    if (
+                        self.similar(key_info, saved_key) > threshold
+                    ):  # 中高风险使用95%阈值
                         is_duplicate = True
                         break
                 if not is_duplicate:
@@ -406,7 +456,7 @@ class LogAnalyzer:
             # 统计各风险类型的事件数量
             self.count_risk_events()
 
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(self.analysis_results, f, ensure_ascii=False, indent=2)
             print(f"分析结果已导出到 {output_file}")
             return True
@@ -417,8 +467,8 @@ class LogAnalyzer:
 
 def log_risk_judge(data):
     analyzer = LogAnalyzer(metadata=data)
-    start_time = data.get('start_time')
-    end_time = data.get('end_time')
+    start_time = data.get("start_time")
+    end_time = data.get("end_time")
     if not start_time or not end_time:
         print("错误: 传入的数据中缺少开始时间或结束时间。")
         return None
@@ -427,7 +477,7 @@ def log_risk_judge(data):
     if analyzer.load_logs():
         analyzer.analyze_logs()
         if analyzer.export_results():
-            with open(DEFAULT_RESULT_FILE, 'r', encoding='utf-8') as f:
+            with open(DEFAULT_RESULT_FILE, "r", encoding="utf-8") as f:
                 result = json.load(f)
             return result
     return None
