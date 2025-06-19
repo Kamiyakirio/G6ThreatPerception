@@ -88,5 +88,10 @@ public class SystemDetectServiceImpl implements SystemDetectService {
         return systemDetectMapper.getDetectionIdsByMac(macAddress);
     }
 
+    @Override
+    public ResponseResult getSystemRiskTotal() {
+        int total = systemDetectMapper.selectTotalCount();
+        return new ResponseResult(0, "获取系统风险总数成功", total);
+    }
 
 }

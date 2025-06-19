@@ -4,6 +4,8 @@ import com.tpp.threat_perception_platform.asset.App;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Param;
+
 /**
 * @author 86157
 * @description 针对表【app】的数据库操作Mapper
@@ -29,5 +31,9 @@ public interface AppMapper {
     int updateByPrimaryKey(App record);
 
     List<App> selectAllByDetectId(Integer detectId);
+
+    List<App> selectByMacAddress(@Param("macAddress") String macAddress);
+
+    int selectTotalCount();
 
 }

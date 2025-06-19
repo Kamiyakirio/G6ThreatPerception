@@ -28,4 +28,10 @@ public interface VulScanMapper {
 
     VulScan selectByMacAddressAndVulId(String macAddress, Long vulId);
 
+    /**
+     * 获取漏洞检测总数（按ID去重）
+     * @return 漏洞检测总数
+     */
+    int countDistinctVulIds();
+
 }

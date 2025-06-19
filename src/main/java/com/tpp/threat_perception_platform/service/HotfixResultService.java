@@ -84,4 +84,14 @@ public class HotfixResultService {
     public int getGroupedTotalCount(String hostId) {
         return hotfixResultMapper.selectGroupTotalCount(hostId);
     }
+
+    /**
+     * 获取补丁检测总数
+     * @return 补丁检测总数（按mac_address和kb_id去重）
+     */
+    public int getHotfixCount() {
+        int count = hotfixResultMapper.countDistinctKbIds();
+        logger.info("当前补丁检测总数（按主机和补丁号去重）: {}", count);
+        return count;
+    }
 } 

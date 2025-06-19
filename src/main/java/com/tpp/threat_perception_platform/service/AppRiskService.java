@@ -7,4 +7,5 @@ public interface AppRiskService {
     ResponseResult triggerAppRiskDetect(String macAddress);
     ResponseResult getAppRiskResults(String macAddress, Integer page, Integer limit);
     ResponseResult checkDetectionStatus(String macAddress);
+    ResponseResult getAppRiskTotal();
 } 

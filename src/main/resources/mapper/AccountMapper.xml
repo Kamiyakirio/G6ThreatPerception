@@ -169,4 +169,20 @@
             detect_id =  #{detectId}
         where   account_id = #{account_id}
     </update>
+
+    <!-- 获取弱密码账户总数 -->
+    <select id="countWeakPasswords" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM account
+    </select>
+
+    <select id="selectByMacAddress" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from account
+        where mac_address = #{macAddress}
+    </select>
+
+    <select id="selectTotalCount" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM account
+    </select>
 </mapper>

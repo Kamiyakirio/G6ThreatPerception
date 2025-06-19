@@ -4,6 +4,8 @@ import com.tpp.threat_perception_platform.asset.Account;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Param;
+
 /**
 * @author 86157
 * @description 针对表【account】的数据库操作Mapper
@@ -29,5 +31,15 @@ public interface AccountMapper {
     List<Account> selectAllByMacAddress(String macAddress);
 
     List<Account> selectAllByDetectId(Integer detect_id);
+
+    /**
+     * 获取账户总数
+     * @return 账户总数
+     */
+    int countWeakPasswords();
+
+    List<Account> selectByMacAddress(@Param("macAddress") String macAddress);
+
+    int selectTotalCount();
 
 }

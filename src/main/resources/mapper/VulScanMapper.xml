@@ -98,4 +98,9 @@
             time = #{time}
         where id = #{id}
     </update>
+
+    <!-- 获取漏洞检测总数 -->
+    <select id="countDistinctVulIds" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT vul_id) FROM vul_scan
+    </select>
 </mapper>

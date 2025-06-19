@@ -151,4 +151,15 @@
             detect_id =  #{detectId}
         where   process_id = #{processId} 
     </update>
+
+    <select id="selectByMacAddress" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from process
+        where mac_address = #{macAddress}
+    </select>
+
+    <select id="selectTotalCount" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM process
+    </select>
 </mapper>

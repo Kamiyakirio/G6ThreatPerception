@@ -50,6 +50,11 @@ public class SystemDetectController {
         return Result.success(detectionIds);
     }
 
+    @GetMapping("/system/total")
+    public ResponseResult getSystemRiskTotal() {
+        return systemDetectService.getSystemRiskTotal();
+    }
+
 
 
 

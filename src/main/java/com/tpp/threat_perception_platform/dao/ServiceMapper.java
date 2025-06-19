@@ -1,6 +1,7 @@
 package com.tpp.threat_perception_platform.dao;
 
 import com.tpp.threat_perception_platform.asset.Service;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -31,4 +32,8 @@ public interface ServiceMapper {
     Service selectByNameAndHost(String name, String hostName);
 
     List<Service> selectByDetectId(Integer detectId);
+
+    List<Service> selectByMacAddress(@Param("macAddress") String macAddress);
+
+    int selectTotalCount();
 }

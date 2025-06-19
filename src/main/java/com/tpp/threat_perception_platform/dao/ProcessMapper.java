@@ -32,4 +32,6 @@ public interface ProcessMapper {
     Process selectByPidAndHost(Integer pid, String hostName);
 
     List<Process> selectAllByDetectId(Integer detectId);
+
+    int selectTotalCount();
 }

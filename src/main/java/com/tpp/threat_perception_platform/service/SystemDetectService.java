@@ -18,6 +18,6 @@ public interface SystemDetectService {
 
     List<Integer> getDetectionIdsByMac(String macAddress);
 
-
+    ResponseResult getSystemRiskTotal();
 
 }

@@ -4,10 +4,14 @@ import com.tpp.threat_perception_platform.param.MyParam;
 import com.tpp.threat_perception_platform.response.ResponseResult;
 import com.tpp.threat_perception_platform.service.AssetsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 public class AssetsController {
@@ -59,7 +63,9 @@ public class AssetsController {
 
     }
 
-
-
-
+    @GetMapping("/assets/statistics")
+    public ResponseResult getAssetsStatistics() {
+        Map<String, Integer> statistics = assetsService.getAssetsStatistics();
+        return new ResponseResult(0, "获取资产统计成功", statistics);
+    }
 }

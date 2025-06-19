@@ -38,4 +38,9 @@ public class AppRiskController {
         System.out.println("收到/apprisk/list请求，macAddress: " + macAddress + ", page: " + page + ", limit: " + limit);
         return appRiskService.getAppRiskResults(macAddress, page, limit);
     }
+
+    @GetMapping("/apprisk/total")
+    public ResponseResult getAppRiskTotal() {
+        return appRiskService.getAppRiskTotal();
+    }
 } 

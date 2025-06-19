@@ -146,4 +146,10 @@ public class AppRiskServiceImpl implements AppRiskService {
         PageInfo<AppRiskResult> pageInfo = new PageInfo<>(results);
         return new ResponseResult<>(pageInfo.getTotal(), pageInfo.getList());
     }
+
+    @Override
+    public ResponseResult getAppRiskTotal() {
+        int total = appRiskResultMapper.selectTotalCount();
+        return new ResponseResult(0, "获取应用风险总数成功", total);
+    }
 }

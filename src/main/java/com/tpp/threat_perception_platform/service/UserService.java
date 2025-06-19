@@ -4,6 +4,8 @@ import com.tpp.threat_perception_platform.param.MyParam;
 import com.tpp.threat_perception_platform.pojo.User;
 import com.tpp.threat_perception_platform.response.ResponseResult;
 
+import java.util.List;
+
 /**
  * 用户接口
  */
@@ -42,4 +44,10 @@ public interface UserService {
      * @return
      */
     ResponseResult delete(Integer[] ids);
+
+    /**
+     * 获取用户总数
+     * @return 用户总数
+     */
+    Long getTotalUserCount();
 }
