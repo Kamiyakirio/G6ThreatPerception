@@ -121,6 +121,9 @@
                     <table id="appTable" lay-filter="appTable"></table>
                     <p id="app-no-data" class="app-no-data" style="display:none; text-align: center; color: #999;">
                         未选择探测或无数据</p>
+                    <button type="button" id="app-ai-analysis" style="display:none; margin-top: 20px;"
+                            class="layui-btn layui-bg-blue appAiBtn">使用AI分析
+                    </button>
                 </div>
             </div>
         </div>
@@ -458,8 +461,11 @@
                     delete obj.hostName;
                     delete obj.macAddress;
                     delete obj.time;
+                    delete obj.risk;
+                    delete obj.riskDesc;
                 });
-                console.log(data);
+                // console.log(data);
+
             });
 
             $("#service-ai-analysis").click(function () {
@@ -469,10 +475,25 @@
                     delete obj.hostName;
                     delete obj.macAddress;
                     delete obj.time;
-                    delete obj.id
+                    delete obj.id;
+                    delete obj.risk;
+                    delete obj.riskDesc;
                 });
                 // console.log(data);
                 ai(data, "/ai/port_analysis");
+            });
+
+            $("#app-ai-analysis").click(function (){
+                var data = table.getData('appTable');
+                data.forEach(obj => {
+                    delete obj.hostName;
+                    delete obj.macAddress;
+                    delete obj.time;
+                    delete obj.id;
+                    delete obj.risk;
+                    delete obj.riskDesc;
+                });
+                ai(data,"/ai/apprisk_analysis");
             });
 
             $("#riskDetectionBtn").click(function () {
