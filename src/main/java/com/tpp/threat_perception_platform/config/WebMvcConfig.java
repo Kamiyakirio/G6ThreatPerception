@@ -30,10 +30,12 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addViewController("/page/host/detect").setViewName("host/detect");
         registry.addViewController("/page/host/systemRiskDetect").setViewName("host/systemRiskDetect");
         registry.addViewController("/page/host/result_display").setViewName("host/result_display");
+        registry.addViewController("/page/host/result_display1").setViewName("host/result_display1");
         // risk related pages
         registry.addViewController("/page/risk/list").setViewName("risk/list");
         registry.addViewController("/page/risk/detect").setViewName("risk/detect");
         registry.addViewController("/page/risk/result_display").setViewName("risk/result_display");
+        registry.addViewController("/page/risk/result_display1").setViewName("risk/result_display1");
         registry.addViewController("/page/host/apprisk").setViewName("host/apprisk");
         registry.addViewController("/page/host/systemDetectResult").setViewName("host/systemDetectResult");
         registry.addViewController("/page/host/hotfix").setViewName("host/hotfix");

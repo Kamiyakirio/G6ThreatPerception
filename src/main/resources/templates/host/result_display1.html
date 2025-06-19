@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>探测结果显示</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
+    <style>
+        .layui-tab-title {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .layui-tab-title li {
+            text-align: center;
+            flex-grow: 1;
+            flex-basis: 0;
+        }
+
+        .content-display-area {
+            padding: 20px;
+            border: 1px solid #e6e6e6;
+            min-height: 300px;
+            background-color: #f8f8f8;
+            color: #333;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="layui-fluid" style="padding: 20px;">
+    <div class="layui-card">
+        <div class="layui-card-header">探测信息</div>
+        <div class="layui-form-item layui-form-item-short">
+            <label class="layui-form-label">选择主机：</label>
+            <div class="layui-input-block">
+                <div class="host-select-container">
+                    <select name="hostId" lay-verify="required" id="hostSelect">
+                        <option value="">请选择主机</option>
+                    </select>
+                    <!-- 进行风险检测按钮 -->
+                    <button type="button" class="layui-btn" id="riskDetectionBtn">进行风险检测</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="layui-tab layui-tab-brief" lay-filter="detect-tabs">
+        <ul class="layui-tab-title">
+            <li class="layui-this">账号探测</li>
+            <li>服务探测</li>
+            <li>进程探测</li>
+            <li>软件探测</li>
+        </ul>
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <div class="content-display-area" id="account-content">
+                    <table id="accountTable" lay-filter="accountTable"></table>
+                    <p id="account-no-data" style="display:none; text-align: center; color: #999;">
+                        未选择探测或无数据</p>
+                    <button type="button" id="account-ai-analysis" class="layui-btn layui-bg-blue">使用AI分析</button>
+                </div>
+            </div>
+            <div class="layui-tab-item">
+                <div class="content-display-area" id="service-content">
+                    <table id="serviceTable" lay-filter="serviceTable"></table>
+                    <p id="service-no-data" style="display:none; text-align: center; color: #999;">
+                        未选择探测或无数据</p>
+                    <button type="button" id="service-ai-analysis" class="layui-btn layui-bg-blue">使用AI分析</button>
+                </div>
+            </div>
+            <div class="layui-tab-item">
+                <div class="content-display-area" id="process-content">
+                    <table id="processTable" lay-filter="processTable"></table>
+                    <p id="process-no-data" style="display:none; text-align: center; color: #999;">
+                        未选择探测或无数据</p>
+                    <button type="button" id="process-ai-analysis" class="layui-btn layui-bg-blue">使用AI分析</button>
+                </div>
+            </div>
+            <div class="layui-tab-item">
+                <div class="content-display-area" id="app-content">
+                    <table id="appTable" lay-filter="appTable"></table>
+                    <p id="app-no-data" style="display:none; text-align: center; color: #999;">未选择探测或无数据</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/layui/layui.js"></script>
+<script>
+    layui.config({
+        base: '/layui/layuiAdmin/' //静态资源所在路径
+    }).extend({
+        index: 'lib/index' //主入口模块
+    }).use(['element', 'form', 'table'], function () {
+        var $ = layui.jquery;
+        var element = layui.element;
+        var form = layui.form;
+        var table = layui.table;
+        var layer = layui.layer;
+
+        function renderTable(urlName, tableId, data, cols, noDataId) {
+
+            var formData = layui.form.val('result-display-form');
+            var macAddress = formData.macAddress;
+            table.render({
+                elem: '#' + tableId
+                , method: 'post'
+                , url: '/host/detect_result/' + urlName //后端接口
+                , headers: {
+                    'Authorization': localStorage.getItem('token')
+                }
+                , where: {"macAddress": macAddress}
+                , cols: [cols]
+                , page: true // 开启分页
+                , limit: 10
+                , limits: [5, 10, 15, 20, 30, 500]
+                , autoSort: false
+                , height: 'full-150'
+
+                , done: function (res) {
+                    if (res.data && res.data.length === 0) {
+                        document.getElementById(noDataId).style.display = 'block';
+                    } else {
+                        document.getElementById(noDataId).style.display = 'none';
+                    }
+                }
+
+            });
+        }
+
+
+        var accountCols = [
+            {field: 'sid', title: 'SID', fixed: 'left', minWidth: 100}
+            , {field: 'name', title: '名称', minWidth: 100}
+            , {field: 'fullName', title: '全称', minWidth: 150}
+            , {
+                field: 'risk',
+                title: '风险等级',
+                minWidth: 150,
+                templet: function (d) {
+                    if (d.risk == 0) {
+                        return '<span style="background-color: green; color: white; padding: 2px 5px; border-radius: 3px;">无风险</span>';
+                    } else if (d.risk == 1) {
+                        return '<span style="background-color: orange; color: white; padding: 2px 5px; border-radius: 3px;">警告</span>';
+                    } else if (d.risk == 2) {
+                        return '<span style="background-color: red; color: white; padding: 2px 5px; border-radius: 3px;">高风险</span>';
+                    } else {
+                        return '<span style="color: #999;">未知</span>';
+                    }
+                }
+            }
+            , {field: "riskDesc", title: "风险描述", minWidth: 200}
+            , {field: 'sidType', title: 'SID类型', minWidth: 100}
+            , {field: 'status', title: '状态', minWidth: 80}
+            , {field: 'disabled', title: '禁用', templet: '<div>{{d.disabled == 1 ? "是" : "否"}}</div>', minWidth: 80}
+            , {field: 'lockout', title: '锁定', templet: '<div>{{d.lockout == 1 ? "是" : "否"}}</div>', minWidth: 80}
+            , {
+                field: 'password_changeable',
+                title: '可更改密码',
+                templet: '<div>{{d.password_changeable == 1 ? "是" : "否"}}</div>',
+                minWidth: 120
+            }
+            , {
+                field: 'password_expires',
+                title: '密码过期',
+                templet: '<div>{{d.password_expires == 1 ? "是" : "否"}}</div>',
+                minWidth: 120
+            }
+            , {
+                field: 'password_required',
+                title: '需要密码',
+                templet: '<div>{{d.password_required == 1 ? "是" : "否"}}</div>',
+                minWidth: 120
+            }
+            , {field: 'hostName', title: '主机名', minWidth: 120}
+            , {field: 'macAddress', title: 'MAC地址', minWidth: 150}
+            , {field: 'id', title: 'ID', minWidth: 80}
+            , {field: 'time', title: '时间', minWidth: 180}
+        ];
+
+        var serviceCols = [
+            {field: 'serviceId', title: '服务id', fixed: 'left', minWidth: 150},
+            {field: 'name', title: '显示名称', minWidth: 180},
+            {field: 'state', title: '状态', minWidth: 100}
+            , {
+                field: 'risk',
+                title: '风险等级',
+                minWidth: 150,
+                templet: function (d) {
+                    if (d.risk == 0) {
+                        return '<span style="background-color: green; color: white; padding: 2px 5px; border-radius: 3px;">无风险</span>';
+                    } else if (d.risk == 1) {
+                        return '<span style="background-color: orange; color: white; padding: 2px 5px; border-radius: 3px;">警告</span>';
+                    } else if (d.risk == 2) {
+                        return '<span style="background-color: red; color: white; padding: 2px 5px; border-radius: 3px;">高风险</span>';
+                    } else {
+                        return '<span style="color: #999;">未知</span>';
+                    }
+                }
+            }
+            , {field: "riskDesc", title: "风险描述", minWidth: 200},
+            {field: 'protocol', title: '协议', minWidth: 100},
+            {field: 'port', title: '端口', minWidth: 80},
+            {field: 'product', title: '产品', minWidth: 150},
+            {field: 'version', title: '版本', minWidth: 150},
+            {field: 'extrainfo', title: '额外信息', minWidth: 200},
+            {field: 'hostName', title: '主机名', minWidth: 120},
+            {field: 'macAddress', title: 'MAC地址', minWidth: 150},
+            {field: 'time', title: '时间', minWidth: 180}
+        ];
+
+        var processCols = [
+            {field: 'processId', title: '进程ID', fixed: 'left', minWidth: 120}
+            , {field: 'name', title: '名称', minWidth: 120}
+            , {
+                field: 'risk',
+                title: '风险等级',
+                minWidth: 150,
+                templet: function (d) {
+                    if (d.risk == 0) {
+                        return '<span style="background-color: green; color: white; padding: 2px 5px; border-radius: 3px;">无风险</span>';
+                    } else if (d.risk == 1) {
+                        return '<span style="background-color: orange; color: white; padding: 2px 5px; border-radius: 3px;">警告</span>';
+                    } else if (d.risk == 2) {
+                        return '<span style="background-color: red; color: white; padding: 2px 5px; border-radius: 3px;">高风险</span>';
+                    } else {
+                        return '<span style="color: #999;">未知</span>';
+                    }
+                }
+            }
+            , {field: "riskDesc", title: "风险描述", minWidth: 200}
+            , {field: 'pid', title: 'PID', minWidth: 80}
+            , {field: 'ppid', title: 'PPID', minWidth: 80}
+            , {field: 'cmd', title: '命令行', minWidth: 250}
+            , {field: 'priority', title: '优先级', minWidth: 90}
+            , {field: 'description', title: '描述', minWidth: 200}
+            , {field: 'hostName', title: '主机名', minWidth: 120}
+            , {field: 'macAddress', title: 'MAC地址', minWidth: 150}
+            , {field: 'id', title: 'ID', minWidth: 80}
+            , {field: 'time', title: '时间', minWidth: 180}
+        ];
+
+        var appCols = [
+            {field: 'appId', title: '应用ID', fixed: 'left', minWidth: 100}
+            , {field: 'displayName', title: '显示名称', minWidth: 200}
+            , {
+                field: 'risk',
+                title: '风险等级',
+                minWidth: 150,
+                templet: function (d) {
+                    if (d.risk == 0) {
+                        return '<span style="background-color: green; color: white; padding: 2px 5px; border-radius: 3px;">无风险</span>';
+                    } else if (d.risk == 1) {
+                        return '<span style="background-color: orange; color: white; padding: 2px 5px; border-radius: 3px;">警告</span>';
+                    } else if (d.risk == 2) {
+                        return '<span style="background-color: red; color: white; padding: 2px 5px; border-radius: 3px;">高风险</span>';
+                    } else {
+                        return '<span style="color: #999;">未知</span>';
+                    }
+                }
+            }
+            , {field: "riskDesc", title: "风险描述", minWidth: 200}
+            , {field: 'installLocation', title: '安装位置', minWidth: 250}
+            , {field: 'uninstallString', title: '卸载字符串', minWidth: 250}
+            , {field: 'hostName', title: '主机名', minWidth: 120}
+            , {field: 'macAddress', title: 'MAC地址', minWidth: 150}
+            , {field: 'id', title: 'ID', minWidth: 80}
+            , {field: 'time', title: '时间', minWidth: 180}
+        ];
+
+        window.addEventListener('message', function (event) {
+            var data = event.data;
+            if (data && data.type === 'initialData') {
+                // 设置主机信息
+                layui.form.val('result-display-form', {
+                    hostName: data.hostName,
+                    macAddress: data.macAddress
+                });
+
+                // 发起所有类型的请求
+                renderTable('account', 'accountTable', data, accountCols, 'account-no-data');
+                renderTable('service', 'serviceTable', data, serviceCols, 'service-no-data');
+                renderTable('process', 'processTable', data, processCols, 'process-no-data');
+                renderTable('app', 'appTable', data, appCols, 'app-no-data');
+            }
+        });
+
+
+        function fetchAndRenderData(type, tableId, cols, noDataId, macAddress) {
+            $.ajax({
+                url: `/${type}/list`,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    macAddress: macAddress,
+                    page: 1,
+                    limit: 10000  // 或根据需要分页
+                }),
+                success: function (res) {
+                    if (res.code === 200 && res.data && res.data.length > 0) {
+                        renderTable(tableId, res.data, cols, noDataId);
+                    } else {
+                        renderTable(tableId, [], cols, noDataId);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error(`请求 ${type} 数据失败:`, error);
+                    renderTable(tableId, [], cols, noDataId);
+                }
+            });
+        }
+
+        var ai=function(data,url) {
+            layer.msg("正在将请求发送至大模型，请勿关闭页面！");
+            var loadIndex = layer.load(1);
+            var aiResultLayerIndex=999999;
+            $.ajax({
+                url: url,
+                method: "post",
+                headers: {
+                    'Authorization': localStorage.getItem('token')
+                },
+                contentType: "application/json",
+                dataType: "json",
+                data: JSON.stringify(data),
+                success: function (response) {
+                    layer.close(loadIndex);
+                    layer.closeAll('iFrame');
+                    layer.open({
+                        type: 2
+                        //,skin: 'layui-layer-molv'
+                        , maxmin: true
+                        ,area: ['480px', '310px']
+                        ,content: '/page/ai/aiResultTmpl2'
+                        ,success: function (layero, index) { //弹出层加载之前执行
+                            // 获取弹出层的表单
+                            var contentWindow = layero.find('iframe')[0].contentWindow; //得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
+                            contentWindow.postMessage(response.msg)
+                            aiResultLayerIndex=index;
+                        }
+                        ,cancel: function(index, layero, that){
+                            layer.confirm("关闭窗口后将无法再次查看AI检测结果，再次点击将产生二次花费，是否确认关闭？",function(index){
+                              layer.close(aiResultLayerIndex);
+                              layer.close(index);
+                            })
+                            return false;
+                        }
+                    });
+                }
+                , error: function(xhr, status, error) {
+                    layer.close(loadIndex);
+                    layer.msg(error,{icon: 5});
+                }
+            });
+        };
+
+        $(document).ready(function () {
+            $('#account-ai-analysis').click(function () {
+                // 在这里编写点击事件的逻辑
+                // console.log(table.getData("accountTable"))
+                var data=table.getData('accountTable');
+                data.forEach(obj => {
+                    delete obj.hostName;
+                    delete obj.macAddress;
+                    delete obj.time;
+                    delete obj.id;
+                    delete obj.risk;
+                    delete obj.riskDesc;
+                });
+                ai(data,"/ai/account_analysis");
+
+            });
+
+            $("#process-ai-analysis").click(function () {
+                // console.log(table.getData("processTable"));
+                var data=table.getData('processTable');
+                data.forEach(obj => {
+                    delete obj.hostName;
+                    delete obj.macAddress;
+                    delete obj.time;
+                });
+                console.log(data);
+            });
+
+            $("#service-ai-analysis").click(function () {
+                // console.log(table.getData("processTable"));
+                var data=table.getData('serviceTable');
+                data.forEach(obj => {
+                    delete obj.hostName;
+                    delete obj.macAddress;
+                    delete obj.time;
+                    delete obj.id
+                });
+                // console.log(data);
+                ai(data,"/ai/port_analysis");
+            });
+        });
+
+        //监听Tab切换
+        element.on('tab(detect-tabs)', function (data) {
+            // console.log(this); //当前Tab标题所在的dom对象
+            // console.log(data.index); //得到当前Tab的所在下标
+            // console.log(data.elem); //得到当前的Tab大容器
+        });
+        // Explicitly render tabs after dynamic content loading
+        element.render('tab');
+    });
+</script>
+</body>
+</html>
