@@ -458,7 +458,7 @@ public class RabbitMQController {
                             logMapper.insertSelective(log);
                             savedLogs.add(log);
                             logsToAnalyze.add(log);
-                            System.out.println("日志记录已保存到数据库");
+//                            System.out.println("日志记录已保存到数据库");
                         } else {
                             System.out.println("相同的日志记录已存在，跳过保存");
                         }

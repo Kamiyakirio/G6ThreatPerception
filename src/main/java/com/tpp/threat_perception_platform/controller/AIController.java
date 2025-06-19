@@ -72,7 +72,7 @@ public class AIController {
     @PostMapping("/ai/vul_scan_analysis")
     public ResponseResult AIVulScanAnalysis(@RequestBody List<Map<String, Object>> vulscanResults)
     {
-        String prompt = TextFileLoader.loadTextFile("texts/prompts/vul_scan_analysis_prompt.txt");
+        String prompt = TextFileLoader.loadTextFile("texts/prompts/vul_analysis_prompt.txt");
         String result = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(vulscanResults));
         return new ResponseResult(1, result);
     }
