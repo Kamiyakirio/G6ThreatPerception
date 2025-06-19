@@ -7,7 +7,6 @@ import re
 from xml.dom import minidom
 from difflib import SequenceMatcher
 
-from evtx import PyEvtxParser
 
 log_paths = {
     "security": r"C:\Windows\System32\winevt\Logs\Security.evtx",
@@ -302,4 +301,4 @@ if __name__ == "__main__":
         start_time=datetime.datetime.now().strftime("%Y-%m-%d 00:00:00"),
         end_time=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     )
-    print(analyze_risk_grade(data))
+    # print(analyze_risk_grade(data))

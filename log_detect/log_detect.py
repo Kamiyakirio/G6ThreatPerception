@@ -44,7 +44,7 @@ def log_detect(data):
         return_data["info"]["time"] = datetime.datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S"
         )
-        print(return_data)
+        # print(return_data)
         print("Detect ended!")
 
         # 🔥 最终返回为字符串
