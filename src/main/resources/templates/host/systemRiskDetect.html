@@ -322,6 +322,10 @@
                                                     }
 
                                                     contentHtml += '</tbody></table></div>';
+                                                    contentHtml += '<div style="text-align:center;margin-top:20px;">'
+                                                        + '<button id="detail-ai-analysis" class="layui-btn layui-btn-warm" style="margin-right: 10px;"><i class="layui-icon layui-icon-light"></i>AI分析</button>'
+                                                        + '<button class="layui-btn layui-btn-normal" id="detail-close-btn">关闭</button>'
+                                                        + '</div>';
 
                                                     layer.closeAll();
                                                     layer.open({
@@ -330,8 +334,57 @@
                                                         skin: 'layui-layer-molv',
                                                         content: contentHtml,
                                                         area: ['1350px', '700px'],
-                                                        btn: ['关闭'],
-                                                        btnAlign: 'c'
+                                                        btn: []
+                                                    });
+
+                                                    $(document).off('click', '#detail-close-btn').on('click', '#detail-close-btn', function() {
+                                                        var $dialog = $(this).closest('.layui-layer');
+                                                        var index = $dialog.attr('times');
+                                                        layer.close(index);
+                                                    });
+
+                                                    $('#detail-ai-analysis').off('click').on('click', function() {
+                                                        var tableRows = [];
+                                                        var $dialog = $(this).closest('.layui-layer');
+                                                        $dialog.find('table tbody tr').each(function() {
+                                                            var tds = $(this).find('td');
+                                                            tableRows.push({
+                                                                risk_name: tds.eq(0).text(),
+                                                                ai_risk_level: tds.eq(1).text(),
+                                                                analysis: tds.eq(2).text(),
+                                                                recommendation: tds.eq(3).text()
+                                                            });
+                                                        });
+                                                        layer.msg('正在将请求发送至大模型，请勿关闭页面！');
+                                                        var loadIndex = layer.load(1);
+                                                        $.ajax({
+                                                            url: '/ai/systemrisk_analysis',
+                                                            method: 'post',
+                                                            headers: { 'Authorization': localStorage.getItem('token') },
+                                                            contentType: 'application/json',
+                                                            dataType: 'json',
+                                                            data: JSON.stringify(tableRows),
+                                                            success: function(response) {
+                                                                layer.close(loadIndex);
+                                                                let msg = response.msg || '';
+                                                                layer.open({
+                                                                    type: 2,
+                                                                    title: 'AI分析结果',
+                                                                    shadeClose: true,
+                                                                    shade: 0.8,
+                                                                    area: ['60%', '60%'],
+                                                                    content: '/page/ai/aiResultTmpl2',
+                                                                    success: function (layero, index) {
+                                                                        let contentWindow = layero.find('iframe')[0].contentWindow;
+                                                                        contentWindow.postMessage(msg);
+                                                                    }
+                                                                });
+                                                            },
+                                                            error: function(xhr, status, error) {
+                                                                layer.close(loadIndex);
+                                                                layer.msg(error, {icon: 5});
+                                                            }
+                                                        });
                                                     });
                                                 } else {
                                                     layer.msg(detailRes.msg || '数据加载失败', { icon: 5 });
@@ -356,7 +409,6 @@
             }
         });
 
-
         // 风险等级格式化函数
         function formatRiskLevel(level) {
             switch(level) {
@@ -379,7 +431,6 @@
 <!-- 已探测主机表格工具栏模板 -->
 <script type="text/html" id="detectedHostToolbar">
     <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="viewDetail"><i class="layui-icon layui-icon-search"></i>查看详情</a>
-    <!-- 新增查看风险详情 -->
     <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="viewRiskDetails"><i class="layui-icon layui-icon-file"></i>查看风险详情</a>
 </script>
 

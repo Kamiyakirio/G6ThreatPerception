@@ -42,8 +42,8 @@
             <script type="text/html" id="table-useradmin-webuser">
                 <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="detect"><i
                         class="layui-icon layui-icon-edit"></i>资产探测</a>
-                <a class="layui-btn layui-btn-warm layui-btn-xs" lay-event="showResult"><i
-                        class="layui-icon layui-icon-list"></i>结果显示</a>
+<!--                <a class="layui-btn layui-btn-warm layui-btn-xs" lay-event="showResult"><i-->
+<!--                        class="layui-icon layui-icon-list"></i>结果显示</a>-->
                 <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del"><i
                         class="layui-icon layui-icon-delete"></i>删除</a>
             </script>
@@ -112,9 +112,9 @@
                     , {
                     field: 'isAlive', title: '是否存活', templet: function (d) {
                         if (d.isAlive === 1) {
-                            return '<button class="layui-btn layui-btn-sm layui-bg-blue">上线</button>';
+                            return '<button class="layui-btn layui-btn-sm layui-bg-blue" style="margin-bottom: 10px;">上线</button>';
                         } else {
-                            return '<button class="layui-btn layui-btn-sm layui-bg-red">离线</button>';
+                            return '<button class="layui-btn layui-btn-sm layui-bg-red" style="margin-bottom: 10px;">离线</button>';
                         }
                     }
                     , width: 100

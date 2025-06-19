@@ -491,8 +491,8 @@ public class RabbitMQController {
                                     log.setRiskLevel(finalRiskLevel);
                                 }
                                 
-                                // 设置AI分析结果
-                                log.setAiResult(aiAnalysisResult);
+                                // 只存储该条日志的分析内容
+                                log.setAiResult(analysis.toJSONString());
                                 
                                 // 更新数据库
                                 logMapper.updateByPrimaryKeySelective(log);

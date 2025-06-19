@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -27,10 +28,14 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.tpp.threat_perception_platform.dao.LogMapper;
 import com.tpp.threat_perception_platform.pojo.Log;
+import com.tpp.threat_perception_platform.response.ResponseResult;
+import com.tpp.threat_perception_platform.service.LogService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
-
+import java.util.Map;
 import com.tpp.threat_perception_platform.service.AIService;
 import com.tpp.threat_perception_platform.utils.TextFileLoader;
 
@@ -345,7 +350,7 @@ public class LogServiceImpl implements LogService {
         Long total = logMapper.countByEventIds(accountEventIds, null); // 全部
         Long risk = logMapper.countByEventIds(accountEventIds, 1);     // 风险日志 risk_level > 0
         List<Map<String, Object>> riskDistribution = logMapper.selectRiskDistributionByEventIds(accountEventIds);
-        Map<String, Object> data = new HashMap<>();
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
         data.put("totalLogs", total);
         data.put("totalRisks", risk);
         data.put("riskDistribution", riskDistribution);
@@ -358,7 +363,7 @@ public class LogServiceImpl implements LogService {
         Long total = logMapper.countByEventIds(loginEventIds, null); // 全部
         Long risk = logMapper.countByEventIds(loginEventIds, 1);     // 风险日志 risk_level > 0
         List<Map<String, Object>> riskDistribution = logMapper.selectRiskDistributionByEventIds(loginEventIds);
-        Map<String, Object> data = new HashMap<>();
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
         data.put("totalLogs", total);
         data.put("totalRisks", risk);
         data.put("riskDistribution", riskDistribution);
@@ -372,7 +377,7 @@ public class LogServiceImpl implements LogService {
             Long system = logMapper.countSystemLogs();
             Long security = logMapper.countSecurityLogs();
             Long risk = logMapper.selectTotalRiskLogs();
-            Map<String, Object> data = new HashMap<>();
+            java.util.Map<String, Object> data = new java.util.HashMap<>();
             data.put("totalLogs", total);
             data.put("systemLogs", system);
             data.put("securityLogs", security);
