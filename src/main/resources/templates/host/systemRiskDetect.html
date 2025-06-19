@@ -5,45 +5,73 @@
     <title>系统风险检测</title>
     <meta name="renderer" content="webkit">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <link rel="stylesheet" href="/layui/css/layui.css" media="all">
     <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
     <style>
         .layui-form-item-short {
             width: 100% !important; /* 自适应宽度 */
         }
+
         .header-bg {
             background-color: #f0f2f5;
             padding: 15px 20px;
             border-radius: 4px;
             margin-bottom: 20px;
         }
+
         .header-title {
             font-size: 18px;
             font-weight: bold;
             color: #333;
         }
+
         .host-select-container {
             display: flex;
             align-items: center;
         }
+
         .host-select-container select {
             flex: 1;
             margin-right: 20px;
         }
+
         #riskDetectionBtn {
             margin-left: 30px;
         }
+
         .table-container {
             margin-top: 30px;
         }
+
         /* 状态标签样式 */
-        .status-online { background-color: #5FB878; } /* 在线 */
-        .status-offline { background-color: #FF5722; } /* 离线 */
+        .status-online {
+            background-color: #5FB878;
+        }
+
+        /* 在线 */
+        .status-offline {
+            background-color: #FF5722;
+        }
+
+        /* 离线 */
         /* 风险等级标签样式 */
-        .risk-level-low { background-color: #5FB878; } /* 低风险 */
-        .risk-level-medium { background-color: #FAAD14; } /* 中风险 */
-        .risk-level-high { background-color: #FF5722; } /* 高风险 */
+        .risk-level-low {
+            background-color: #5FB878;
+        }
+
+        /* 低风险 */
+        .risk-level-medium {
+            background-color: #FAAD14;
+        }
+
+        /* 中风险 */
+        .risk-level-high {
+            background-color: #FF5722;
+        }
+
+        /* 高风险 */
     </style>
 </head>
 <body>
@@ -55,7 +83,8 @@
     </div>
 
     <div class="layui-card">
-        <div class="layui-form" lay-filter="layuiadmin-form-useradmin" id="layuiadmin-form-useradmin" style="padding: 20px 0 0 0;">
+        <div class="layui-form" lay-filter="layuiadmin-form-useradmin" id="layuiadmin-form-useradmin"
+             style="padding: 20px 0 0 0;">
 
             <!-- 选择主机 -->
             <div class="layui-form-item layui-form-item-short">
@@ -77,7 +106,8 @@
         <div class="layui-card">
             <div class="layui-card-header" style="border-left: 10px solid #FF5722; font-size: 18px;">
                 已探测主机记录
-            </div>            <div class="layui-card-body">
+            </div>
+            <div class="layui-card-body">
                 <table id="detectedHostTable" lay-filter="detectedHostTable"></table>
             </div>
         </div>
@@ -101,16 +131,16 @@
             $.ajax({
                 url: '/host/list',
                 type: 'POST',
-                data: { page: 1, limit: 10 },
+                data: {page: 1, limit: 10},
                 headers: {
                     'Authorization': localStorage.getItem('token')
                 },
-                success: function(res) {
+                success: function (res) {
                     if (res.code === 0) {
                         var hosts = res.data;
                         var select = $('#hostSelect');
                         select.empty().append('<option value="">请选择主机</option>');
-                        hosts.forEach(function(host) {
+                        hosts.forEach(function (host) {
                             select.append(new Option(host.hostName, host.id));
                         });
                         form.render('select');
@@ -118,7 +148,7 @@
                         layer.msg(res.msg || '获取主机失败', {icon: 5});
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function (xhr, status, error) {
                     layer.msg("获取主机列表失败", {icon: 2});
                 }
             });
@@ -146,10 +176,10 @@
                             field: 'maxRiskLevel',
                             title: '风险等级',
                             width: 150,
-                            templet: function(d) {
+                            templet: function (d) {
                                 var levelText = d.maxRiskLevel || '未知';
                                 var levelClass = '';
-                                switch(levelText) {
+                                switch (levelText) {
                                     case '低风险':
                                     case '正常':
                                         levelClass = 'risk-level-low';
@@ -178,13 +208,13 @@
         }
 
         // 页面加载时初始化
-        $(function() {
+        $(function () {
             loadHosts();
             loadDetectedHosts();
         });
 
         // 绑定检测按钮事件
-        $('#riskDetectionBtn').on('click', function() {
+        $('#riskDetectionBtn').on('click', function () {
             var hostId = $('[name="hostId"]').val();
             if (!hostId) {
                 layer.msg('请选择主机', {icon: 5});
@@ -208,7 +238,7 @@
                 headers: {
                     'Authorization': localStorage.getItem('token')
                 },
-                success: function(res) {
+                success: function (res) {
                     if (res.code === 0) {
                         layer.msg(res.msg || '检测任务已提交', {icon: 1});
                         table.reload('detectedHostTable'); // 刷新表格
@@ -216,11 +246,12 @@
                         layer.msg(res.msg || '检测失败', {icon: 5});
                     }
                 },
-                error: function(xhr, status, err) {
+                error: function (xhr, status, err) {
                     layer.msg('网络异常，请稍后再试', {icon: 2});
                 }
             });
         });
+
         function getMacAddressByHostId(hostId) {
             // 这里可以根据 hostId 查询对应的 macAddress
             // 示例代码：
@@ -234,7 +265,7 @@
         }
 
         // 表格工具栏事件
-        table.on('tool(detectedHostTable)', function(obj) {
+        table.on('tool(detectedHostTable)', function (obj) {
             var data = obj.data;
             if (obj.event === 'viewDetail') {
 
@@ -248,7 +279,7 @@
                     headers: {
                         'Authorization': localStorage.getItem('token')
                     },
-                    success: function(res) {
+                    success: function (res) {
                         if (res.code === 0 && res.data.length > 0) {
                             var detectionIds = res.data;
 
@@ -264,9 +295,9 @@
                                 content: dialogContent,
                                 area: ['600px', '350px'],
                                 btn: [],
-                                success: function() {
+                                success: function () {
                                     var detectIdList = $('#detectIdList');
-                                    detectionIds.forEach(function(id, index) {
+                                    detectionIds.forEach(function (id, index) {
                                         var btnClass = 'layui-btn-normal';
                                         if (id % 3 === 0) btnClass = 'layui-btn-primary';
                                         else if (id % 3 === 1) btnClass = 'layui-btn-warm';
@@ -284,7 +315,7 @@
                                         detectIdList.append($btn);
                                     });
 
-                                    $('.detect-choice-btn').on('click', function() {
+                                    $('.detect-choice-btn').on('click', function () {
                                         var selectedId = $(this).data('id');
 
                                         $.ajax({
@@ -293,7 +324,7 @@
                                             headers: {
                                                 'Authorization': localStorage.getItem('token')
                                             },
-                                            success: function(detailRes) {
+                                            success: function (detailRes) {
                                                 if (detailRes.code === 0) {
                                                     var riskData = detailRes.data;
 
@@ -337,16 +368,16 @@
                                                         btn: []
                                                     });
 
-                                                    $(document).off('click', '#detail-close-btn').on('click', '#detail-close-btn', function() {
+                                                    $(document).off('click', '#detail-close-btn').on('click', '#detail-close-btn', function () {
                                                         var $dialog = $(this).closest('.layui-layer');
                                                         var index = $dialog.attr('times');
                                                         layer.close(index);
                                                     });
 
-                                                    $('#detail-ai-analysis').off('click').on('click', function() {
+                                                    $('#detail-ai-analysis').off('click').on('click', function () {
                                                         var tableRows = [];
                                                         var $dialog = $(this).closest('.layui-layer');
-                                                        $dialog.find('table tbody tr').each(function() {
+                                                        $dialog.find('table tbody tr').each(function () {
                                                             var tds = $(this).find('td');
                                                             tableRows.push({
                                                                 risk_name: tds.eq(0).text(),
@@ -360,37 +391,45 @@
                                                         $.ajax({
                                                             url: '/ai/systemrisk_analysis',
                                                             method: 'post',
-                                                            headers: { 'Authorization': localStorage.getItem('token') },
+                                                            headers: {'Authorization': localStorage.getItem('token')},
                                                             contentType: 'application/json',
                                                             dataType: 'json',
                                                             data: JSON.stringify(tableRows),
-                                                            success: function(response) {
+                                                            success: function (response) {
                                                                 layer.close(loadIndex);
-                                                                let msg = response.msg || '';
+                                                                layer.closeAll('iFrame');
                                                                 layer.open({
-                                                                    type: 2,
-                                                                    title: 'AI分析结果',
-                                                                    shadeClose: true,
-                                                                    shade: 0.8,
-                                                                    area: ['60%', '60%'],
-                                                                    content: '/page/ai/aiResultTmpl2',
-                                                                    success: function (layero, index) {
-                                                                        let contentWindow = layero.find('iframe')[0].contentWindow;
-                                                                        contentWindow.postMessage(msg);
+                                                                    type: 2
+                                                                    //,skin: 'layui-layer-molv'
+                                                                    , maxmin: true
+                                                                    , area: ['60%', '60%']
+                                                                    , content: '/page/ai/aiResultTmpl2'
+                                                                    , success: function (layero, index) { //弹出层加载之前执行
+                                                                        // 获取弹出层的表单
+                                                                        var contentWindow = layero.find('iframe')[0].contentWindow; //得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
+                                                                        contentWindow.postMessage(response.msg)
+                                                                        aiResultLayerIndex = index;
+                                                                    }
+                                                                    , cancel: function (index, layero, that) {
+                                                                        layer.confirm("关闭窗口后将无法再次查看AI检测结果，再次点击将产生二次花费，是否确认关闭？", function (index) {
+                                                                            layer.close(aiResultLayerIndex);
+                                                                            layer.close(index);
+                                                                        })
+                                                                        return false;
                                                                     }
                                                                 });
                                                             },
-                                                            error: function(xhr, status, error) {
+                                                            error: function (xhr, status, error) {
                                                                 layer.close(loadIndex);
                                                                 layer.msg(error, {icon: 5});
                                                             }
                                                         });
                                                     });
                                                 } else {
-                                                    layer.msg(detailRes.msg || '数据加载失败', { icon: 5 });
+                                                    layer.msg(detailRes.msg || '数据加载失败', {icon: 5});
                                                 }
                                             },
-                                            error: function(xhr, status, error) {
+                                            error: function (xhr, status, error) {
                                                 layer.msg("网络异常，请稍后再试", {icon: 2});
                                             }
                                         });
@@ -398,10 +437,10 @@
                                 }
                             });
                         } else {
-                            layer.msg("暂无探测记录", { icon: 5 });
+                            layer.msg("暂无探测记录", {icon: 5});
                         }
                     },
-                    error: function(xhr, status, error) {
+                    error: function (xhr, status, error) {
                         layer.msg("获取探测次数失败", {icon: 2});
                     }
                 });
@@ -411,7 +450,7 @@
 
         // 风险等级格式化函数
         function formatRiskLevel(level) {
-            switch(level) {
+            switch (level) {
                 case '低风险':
                     return '<span class="layui-badge risk-level-low">低风险</span>';
                 case '正常':
@@ -430,8 +469,10 @@
 
 <!-- 已探测主机表格工具栏模板 -->
 <script type="text/html" id="detectedHostToolbar">
-    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="viewDetail"><i class="layui-icon layui-icon-search"></i>查看详情</a>
-    <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="viewRiskDetails"><i class="layui-icon layui-icon-file"></i>查看风险详情</a>
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="viewDetail"><i
+            class="layui-icon layui-icon-search"></i>查看详情</a>
+    <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="viewRiskDetails"><i
+            class="layui-icon layui-icon-file"></i>查看风险详情</a>
 </script>
 
 </body>
