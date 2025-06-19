@@ -41,6 +41,16 @@ public class HostController {
     }
 
     /**
+     * 获取主机统计数据（已探测/在线数量）
+     */
+    @GetMapping("/statistics")
+    @ResponseBody
+    public ResponseResult hostStatistics(){
+        HashMap<String, Integer> statistics = hostService.getHostStatistics();
+        return new ResponseResult(0, statistics);
+    }
+
+    /**
      * 删除主机
      *
      * @param ids 主机ID数组

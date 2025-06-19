@@ -31,4 +31,7 @@ public interface AppRiskResultMapper {
 
     // 获取最新一次检测的结果
     List<AppRiskResult> selectLatestByMacAddress(@Param("macAddress") String macAddress);
+
+    // 获取所有应用风险结果的总数
+    int selectTotalCount();
 } 

@@ -5,10 +5,77 @@
     <title>资产管理</title>
     <link rel="stylesheet" href="/layui/css/layui.css" media="all">
     <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
+    <style>
+        /* 统计卡片美化 */
+        .layui-col-md6 .layui-card {
+            background: linear-gradient(135deg, #f0f6ff 0%, #e6f4ff 100%); /* 恢复初始渐变背景 */
+            box-shadow: 0 4px 12px rgba(52, 144, 255, 0.15); /* 更柔和的阴影 */
+            transition: transform 0.3s ease, box-shadow 0.3s ease; /* 悬停动画 */
+        }
+        .layui-col-md6 .layui-card:hover {
+            transform: translateY(-4px); /* 向上偏移 */
+            box-shadow: 0 6px 18px rgba(52, 144, 255, 0.25); /* 阴影加深 */
+        }
+        .card-value {
+            color: #2c3e50; /* 深灰色文字 */
+            font-size: 2.2em; /* 更大的数值 */
+            font-weight: 600; /* 加粗 */
+            text-shadow: 0 2px 4px rgba(0,0,0,0.05); /* 文字阴影 */
+        }
+        .card-label {
+            color: #66758c; /* 浅灰色标签 */
+            font-size: 1.1em; /* 适当增大 */
+            margin-top: 8px;
+        }
+        /* 表格优化 */
+        .layui-table thead tr {
+            background-color: #ffffff; /* 白色表头 */
+        }
+        .layui-table thead th {
+            color: #333333; /* 默认文字颜色 */
+            font-weight: 500;
+        }
+        .layui-table tbody tr:hover {
+            background-color: #f8f9fa; /* 浅灰悬停 */
+        }
+        /* 加载动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .layui-row.layui-col-space15 {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
 </head>
 <body>
 
 <div class="layui-fluid">
+    <!-- 新增主机统计卡片 -->
+    <div class="layui-row layui-col-space15" style="margin-bottom: 20px;">
+        <div class="layui-col-md6">
+            <div class="layui-card" style="box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 12px; transition: all 0.3s ease; cursor: pointer;">
+                <div class="layui-card-body" style="text-align: center; padding: 25px 0; background: #ffffff;">
+                    <div class="card-value" id="detectedHostCount">0</div>
+                    <div class="card-label">已探测主机</div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md6">
+            <div class="layui-card" style="box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 12px; transition: all 0.3s ease; cursor: pointer;">
+                <div class="layui-card-body" style="text-align: center; padding: 25px 0; background: #ffffff;">
+                    <div class="card-value" id="onlineHostCount">0</div>
+                    <div class="card-label">在线主机</div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="layui-card">
         <div class="layui-form layui-card-header layuiadmin-card-header-auto"
              style="border-radius: 0;border-top: 4px solid #d2d2d2;">
@@ -92,6 +159,41 @@
             , table = layui.table
             , util = layui.util;
 
+        // 加载主机统计数据
+        function loadHostStatistics() {
+            // 先请求一次主机列表，触发后端is_alive刷新
+            $.ajax({
+                url: '/host/list',
+                method: 'post',
+                headers: {'Authorization': localStorage.getItem('token')},
+                data: {page: 1, limit: 1}, // 只查一条，减少压力
+                success: function() {
+                    // 列表请求完再查统计
+                    $.ajax({
+                        url: '/host/statistics',
+                        method: 'get',
+                        headers: {'Authorization': localStorage.getItem('token')},
+                        success: function(res) {
+                            if(res.code === 0 && res.data) {
+                                $('#detectedHostCount').text(res.data.detectedCount || 0);
+                                $('#onlineHostCount').text(res.data.onlineCount || 0);
+                            } else {
+                                $('#detectedHostCount').text(0);
+                                $('#onlineHostCount').text(0);
+                            }
+                        },
+                        error: function() {
+                            $('#detectedHostCount').text(0);
+                            $('#onlineHostCount').text(0);
+                        }
+                    });
+                }
+            });
+        }
+        // 初始化加载统计
+        loadHostStatistics();
+        // 每5秒刷新一次统计数据
+        setInterval(loadHostStatistics, 5000);
         //加载table
         table.render({
             elem: '#LAY-user-manage'
@@ -160,6 +262,7 @@
                             if (res.code == 0) {//成功
                                 layer.msg(res.msg);//弹出提示
                                 table.reload('LAY-user-manage'); //数据刷新
+            loadHostStatistics(); // 刷新统计数据
                                 layer.close(index); //关闭弹层
                             } else {
                                 layer.msg(res.msg, {icon: 5});//弹出提示

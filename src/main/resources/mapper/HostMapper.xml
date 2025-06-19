@@ -159,4 +159,12 @@
             update_time =  #{updateTime}
         where   id = #{id} 
     </update>
+    <select id="countAll" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM host
+    </select>
+
+    <select id="countAlive" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM host WHERE is_alive = 1
+    </select>
+
 </mapper>

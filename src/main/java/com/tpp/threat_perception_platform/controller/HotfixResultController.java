@@ -2,6 +2,8 @@ package com.tpp.threat_perception_platform.controller;
 
 import com.tpp.threat_perception_platform.pojo.HotfixResult;
 import com.tpp.threat_perception_platform.service.HotfixResultService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,8 +15,24 @@ import java.util.Map;
 @RequestMapping("/hotfix")
 public class HotfixResultController {
 
+    private static final Logger logger = LoggerFactory.getLogger(HotfixResultController.class);
+
     @Autowired
     private HotfixResultService hotfixResultService;
+
+    /**
+     * 获取补丁检测统计数据
+     */
+    @GetMapping("/statistics")
+    public Map<String, Object> getStatistics() {
+        int count = hotfixResultService.getHotfixCount();
+        logger.info("返回补丁检测统计数据: {}", count);
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("code", 0);
+        result.put("data", count);
+        return result;
+    }
 
     @GetMapping("/list")
     public Map<String, Object> list(

@@ -124,4 +124,15 @@
             detect_id =  #{detectId}
         where   app_id = #{appId} 
     </update>
+
+    <select id="selectByMacAddress" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from app
+        where mac_address = #{macAddress}
+    </select>
+
+    <select id="selectTotalCount" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM app
+    </select>
 </mapper>

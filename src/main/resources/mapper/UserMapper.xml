@@ -142,4 +142,9 @@
             last_login_time =  #{lastLoginTime,jdbcType=TIMESTAMP}
         where   id = #{id,jdbcType=INTEGER} 
     </update>
+
+    <!-- 获取用户总数 -->
+    <select id="countTotalUsers" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM user
+    </select>
 </mapper>

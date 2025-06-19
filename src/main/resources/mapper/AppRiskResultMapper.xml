@@ -121,4 +121,8 @@
         AND ar.detected_at = (SELECT latest_time FROM LatestDetection)
         ORDER BY ar.id ASC
     </select>
+
+    <select id="selectTotalCount" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM apprisk_results
+    </select>
 </mapper> 

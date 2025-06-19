@@ -76,6 +76,18 @@ public class HostServiceImpl implements HostService {
     }
 
     @Override
+    public HashMap<String, Integer> getHostStatistics() {
+        HashMap<String, Integer> statistics = new HashMap<>();
+        // 已探测主机数量（总记录数）
+        int detectedCount = hostMapper.countAll();
+        // 在线主机数量（isAlive=1）
+        int onlineCount = hostMapper.countAlive();
+        statistics.put("detectedCount", detectedCount);
+        statistics.put("onlineCount", onlineCount);
+        return statistics;
+    }
+
+    @Override
     public Host selectByPrimaryKey(Integer id) {
         return hostMapper.selectByPrimaryKey(Long.valueOf(id));
     }

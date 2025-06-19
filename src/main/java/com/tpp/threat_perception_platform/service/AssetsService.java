@@ -2,6 +2,7 @@ package com.tpp.threat_perception_platform.service;
 
 import com.tpp.threat_perception_platform.param.MyParam;
 import com.tpp.threat_perception_platform.response.ResponseResult;
+import java.util.Map;
 
 public interface AssetsService {
 
@@ -16,5 +17,6 @@ public interface AssetsService {
 
     public ResponseResult serviceList(MyParam param, String macAddress);
 
+    Map<String, Integer> getAssetsStatistics();
 
 }

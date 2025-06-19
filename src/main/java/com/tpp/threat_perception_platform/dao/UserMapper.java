@@ -3,6 +3,7 @@ package com.tpp.threat_perception_platform.dao;
 import com.tpp.threat_perception_platform.param.MyParam;
 import com.tpp.threat_perception_platform.pojo.User;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
 
@@ -12,6 +13,7 @@ import java.util.List;
 * @createDate 2024-05-20 16:03:56
 * @Entity com.tpp.threat_perception_platform.pojo.User
 */
+@Mapper
 public interface UserMapper {
 
     int deleteByPrimaryKey(Long id);
@@ -43,5 +45,11 @@ public interface UserMapper {
     int updateByPrimaryKeySelective(User record);
 
     int updateByPrimaryKey(User record);
+
+    /**
+     * 获取用户总数
+     * @return 用户总数
+     */
+    Long countTotalUsers();
 
 }

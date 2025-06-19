@@ -87,4 +87,9 @@ public class VulScanServiceImpl implements VulScanService {
         result.put("data", resultData);
         return new ResponseResult(0, resultData);
     }
+
+    @Override
+    public int getVulCount() {
+        return vulScanMapper.countDistinctVulIds();
+    }
 }

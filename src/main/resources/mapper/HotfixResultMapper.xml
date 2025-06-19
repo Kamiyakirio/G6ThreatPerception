@@ -227,4 +227,13 @@
             </if>
         </where>
     </select>
+
+    <!-- 获取补丁检测总数 -->
+    <select id="countDistinctKbIds" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM (
+            SELECT DISTINCT mac_address, kb_id
+            FROM hotfix_result
+            WHERE kb_id IS NOT NULL AND kb_id != ''
+        ) t
+    </select>
 </mapper>

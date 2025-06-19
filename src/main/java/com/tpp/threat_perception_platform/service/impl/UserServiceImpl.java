@@ -118,4 +118,9 @@ public class UserServiceImpl implements UserService {
         userMapper.delete(ids);
         return new ResponseResult<>(0, "删除成功！");
     }
+
+    @Override
+    public Long getTotalUserCount() {
+        return userMapper.countTotalUsers();
+    }
 }

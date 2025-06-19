@@ -1,9 +1,12 @@
 package com.tpp.threat_perception_platform.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.tpp.threat_perception_platform.dao.AccountMapper;
 import com.tpp.threat_perception_platform.service.PwdService;
 import com.tpp.threat_perception_platform.service.RabbitMQService;
 import com.tpp.threat_perception_platform.utils.RedisCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,10 +15,14 @@ import java.util.HashMap;
 @Service
 public class PwdServiceImpl implements PwdService {
 
+    private static final Logger logger = LoggerFactory.getLogger(PwdServiceImpl.class);
+
     @Autowired
     private RabbitMQService rabbitMQService;
     @Autowired
     private RedisCache redisCache;
+    @Autowired
+    private AccountMapper accountMapper;
 
     @Override
     public HashMap<String, Object> pwdDetect(HashMap<String, Object> data) {
@@ -63,5 +70,12 @@ public class PwdServiceImpl implements PwdService {
         }
 
         return result;
+    }
+
+    @Override
+    public int getWeakPasswordCount() {
+        int count = accountMapper.countWeakPasswords();
+        logger.info("当前账户总数: {}", count);
+        return count;
     }
 }

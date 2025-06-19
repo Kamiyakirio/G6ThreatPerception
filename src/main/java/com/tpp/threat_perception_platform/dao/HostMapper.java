@@ -15,6 +15,18 @@ import java.util.List;
 */
 public interface HostMapper {
 
+    /**
+     * Count all detected hosts
+     * @return total number of hosts
+     */
+    int countAll();
+
+    /**
+     * Count online hosts (isAlive=1)
+     * @return number of online hosts
+     */
+    int countAlive();
+
     int deleteByPrimaryKey(Long id);
 
     int insert(Host record);

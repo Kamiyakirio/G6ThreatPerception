@@ -17,8 +17,10 @@ import org.springframework.stereotype.Service;
 
 import javax.security.auth.login.AccountException;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.HashMap;
 
 @Service
 public class AssetsServiceImpl implements AssetsService {
@@ -133,5 +135,27 @@ public class AssetsServiceImpl implements AssetsService {
         return new ResponseResult<>(pageInfo.getTotal(), pageInfo.getList());
     }
 
+    @Override
+    public Map<String, Integer> getAssetsStatistics() {
+        Map<String, Integer> statistics = new HashMap<>();
+        
+        // 获取账号数量
+        int accountCount = accountMapper.selectTotalCount();
+        statistics.put("accountCount", accountCount);
+        
+        // 获取服务数量
+        int serviceCount = serviceMapper.selectTotalCount();
+        statistics.put("serviceCount", serviceCount);
+        
+        // 获取进程数量
+        int processCount = processMapper.selectTotalCount();
+        statistics.put("processCount", processCount);
+        
+        // 获取软件数量
+        int appCount = appMapper.selectTotalCount();
+        statistics.put("appCount", appCount);
+        
+        return statistics;
+    }
 
 }

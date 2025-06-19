@@ -1,6 +1,7 @@
 package com.tpp.threat_perception_platform.dao;
 
 import com.tpp.threat_perception_platform.pojo.HotfixResult;
+import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -55,6 +56,7 @@ public interface HotfixResultMapper {
     /**
      * 按补丁号分组查询结果
      */
+    @MapKey("kb_id")
     List<Map<String, Object>> selectGroupByKbId(@Param("hostId") String hostId, 
                                                @Param("offset") Integer offset, 
                                                @Param("limit") Integer limit);
@@ -63,4 +65,10 @@ public interface HotfixResultMapper {
      * 获取分组后的总记录数
      */
     int selectGroupTotalCount(@Param("hostId") String hostId);
+
+    /**
+     * 获取补丁检测总数（按KB ID去重）
+     * @return 补丁检测总数
+     */
+    int countDistinctKbIds();
 }

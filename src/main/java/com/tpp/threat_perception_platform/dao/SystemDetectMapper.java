@@ -48,5 +48,7 @@ public interface SystemDetectMapper {
     @Select("SELECT DISTINCT s_detect_id FROM system_detect WHERE mac_address = #{macAddress} ORDER BY s_detect_id ASC")
     List<Integer> getDetectionIdsByMac(@Param("macAddress") String macAddress);
 
+    @Select("SELECT COUNT(*) FROM system_detect")
+    int selectTotalCount();
 
 }
