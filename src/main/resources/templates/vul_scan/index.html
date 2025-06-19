@@ -68,6 +68,7 @@
                 <label class="layui-form-label"></label>
                 <a class="layui-btn layui-btn-normal layuiadmin-btn-useradmin" lay-event="refresh_result"><i
                         class="layui-icon layui-icon-refresh"></i>检查探测结果</a>
+                <button type="button" class="layui-btn layui-btn-warm" id="vul-ai-analysis" style="margin-left: 10px;"><i class="layui-icon layui-icon-light"></i>AI分析</button>
             </div>
 
         </div>
@@ -235,6 +236,57 @@
                 },
                 error: function (error) {
                     layer.msg('网络异常，请稍后再试', {icon: 2});
+                }
+            });
+        });
+
+        $('#vul-ai-analysis').off('click').on('click', function () {
+            var tableData = layui.table.cache['LAY-user-manage'] || [];
+            if (!tableData.length) {
+                layer.msg('请先加载漏洞扫描结果！', {icon: 5});
+                return;
+            }
+            // 过滤敏感字段
+            var data = tableData.map(function(obj) {
+                var copy = Object.assign({}, obj);
+                delete copy.hostName;
+                delete copy.macAddress;
+                delete copy.id;
+                delete copy.time;
+                return copy;
+            });
+            layer.msg("正在将请求发送至大模型，请勿关闭页面！");
+            var loadIndex = layer.load(1);
+            $.ajax({
+                url: "/ai/vul_scan_analysis",
+                method: "post",
+                headers: {
+                    'Authorization': localStorage.getItem('token')
+                },
+                contentType: "application/json",
+                dataType: "json",
+                data: JSON.stringify(data),
+                success: function (response) {
+                    layer.close(loadIndex);
+                    let msg = response.msg || '';
+                    let idx = msg.indexOf('###');
+                    let displayMarkdown = idx !== -1 ? msg.substring(idx) : msg;
+                    layer.open({
+                        type: 2,
+                        title: 'AI分析结果',
+                        shadeClose: true,
+                        shade: 0.8,
+                        area: ['60%', '60%'],
+                        content: '/page/ai/aiResultTmpl2',
+                        success: function (layero, index) {
+                            let contentWindow = layero.find('iframe')[0].contentWindow;
+                            contentWindow.postMessage(displayMarkdown);
+                        }
+                    });
+                },
+                error: function(xhr, status, error) {
+                    layer.close(loadIndex);
+                    layer.msg(error, {icon: 5});
                 }
             });
         });

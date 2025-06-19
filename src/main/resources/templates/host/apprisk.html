@@ -29,6 +29,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             margin-bottom: 15px;
+            
         }
 
         .host-select-title {
@@ -159,6 +160,9 @@
                             </span>
                             <button type="button" class="layui-btn layui-btn-normal" id="refreshAppRiskBtn">
                                 <i class="layui-icon layui-icon-refresh"></i> 刷新结果
+                            </button>
+                            <button type="button" class="layui-btn layui-btn-warm" id="apprisk-ai-analysis">
+                                <i class="layui-icon layui-icon-light"></i> AI分析
                             </button>
                         </div>
                         <div class="content-display-area">
@@ -356,6 +360,51 @@ layui.config({
         } else {
             layer.msg('请先选择主机！', {icon: 5});
         }
+    });
+
+    // AI分析按钮点击事件
+    layui.jquery('#apprisk-ai-analysis').off('click').on('click', function() {
+        var data = table.getData('appriskTable');
+        data.forEach(obj => {
+            delete obj.hostIdentifier;
+            delete obj.macAddress;
+            delete obj.id;
+            delete obj.detectedAt;
+        });
+        layer.msg("正在将请求发送至大模型，请勿关闭页面！");
+        var loadIndex = layer.load(1);
+        $.ajax({
+            url: "/ai/apprisk_analysis",
+            method: "post",
+            headers: {
+                'Authorization': localStorage.getItem('token')
+            },
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(data),
+            success: function (response) {
+                layer.close(loadIndex);
+                let msg = response.msg || '';
+                let idx = msg.indexOf('###');
+                let displayMarkdown = idx !== -1 ? msg.substring(idx) : msg;
+                layer.open({
+                    type: 2,
+                    title: 'AI分析结果',
+                    shadeClose: true,
+                    shade: 0.8,
+                    area: ['60%', '60%'],
+                    content: '/page/ai/aiResultTmpl2',
+                    success: function (layero, index) {
+                        let contentWindow = layero.find('iframe')[0].contentWindow;
+                        contentWindow.postMessage(displayMarkdown);
+                    }
+                });
+            },
+            error: function(xhr, status, error) {
+                layer.close(loadIndex);
+                layer.msg(error, {icon: 5});
+            }
+        });
     });
 });
 </script>

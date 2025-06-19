@@ -32,6 +32,11 @@ public interface LogMapper {
     Log selectByMacAddressAndEventIdAndTimestampAndChannel(String macAddress, Integer eventId, Date timestamp, String channel);
 
     /**
+     * 根据MAC地址查询日志记录
+     */
+    List<Log> selectByMacAddress(String macAddress);
+
+    /**
      * 获取登录日志总数
      */
     Long selectTotalLogs();

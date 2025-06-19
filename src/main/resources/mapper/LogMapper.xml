@@ -139,6 +139,14 @@
         limit 1
     </select>
 
+    <select id="selectByMacAddress" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from log
+        where mac_address = #{macAddress}
+        order by timestamp desc
+    </select>
+
     <!-- 获取登录日志总数 -->
     <select id="selectTotalLogs" resultType="java.lang.Long">
         select count(*) from log

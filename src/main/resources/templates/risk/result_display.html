@@ -59,6 +59,9 @@
         <div class="layui-tab-content">
             <div class="layui-tab-item layui-show">
                 <div class="content-display-area" id="account-content">
+                    <button type="button" class="layui-btn layui-btn-danger" id="weakpwd-ai-analysis">
+                        <i class="layui-icon layui-icon-password"></i> 弱密码AI分析
+                    </button>
                     <table id="accountTable" lay-filter="accountTable"></table>
                     <p id="account-no-data" style="display:none; text-align: center; color: #999;">
                         未选择探测或无数据</p>
@@ -212,6 +215,52 @@
         });
         // Explicitly render tabs after dynamic content loading
         element.render('tab');
+
+        $('#weakpwd-ai-analysis').click(function () {
+            var data = layui.table.getData('accountTable');
+            data.forEach(obj => {
+                delete obj.hostName;
+                delete obj.macAddress;
+                delete obj.time;
+                delete obj.id;
+                delete obj.risk;
+                delete obj.riskDesc;
+            });
+            layer.msg("正在将请求发送至大模型，请勿关闭页面！");
+            var loadIndex = layer.load(1);
+            $.ajax({
+                url: "/ai/weakpwd_analysis",
+                method: "post",
+                headers: {
+                    'Authorization': localStorage.getItem('token')
+                },
+                contentType: "application/json",
+                dataType: "json",
+                data: JSON.stringify(data),
+                success: function (response) {
+                    layer.close(loadIndex);
+                    let msg = response.msg || '';
+                    let idx = msg.indexOf('###');
+                    let displayMarkdown = idx !== -1 ? msg.substring(idx) : msg;
+                    layer.open({
+                        type: 2,
+                        title: '弱密码AI分析结果',
+                        shadeClose: true,
+                        shade: 0.8,
+                        area: ['60%', '60%'],
+                        content: '/page/ai/aiResultTmpl2',
+                        success: function (layero, index) {
+                            let contentWindow = layero.find('iframe')[0].contentWindow;
+                            contentWindow.postMessage(displayMarkdown);
+                        }
+                    });
+                },
+                error: function(xhr, status, error) {
+                    layer.close(loadIndex);
+                    layer.msg(error, {icon: 5});
+                }
+            });
+        });
     });
 </script>
 </body>
