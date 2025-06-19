@@ -34,21 +34,45 @@
 <body>
 
 <div class="layui-fluid" style="padding: 20px;">
-    <div class="layui-card">
-        <div class="layui-card-header">探测信息</div>
-        <div class="layui-form-item layui-form-item-short">
-            <label class="layui-form-label">选择主机：</label>
-            <div class="layui-input-block">
-                <div class="host-select-container">
-                    <select name="hostId" lay-verify="required" id="hostSelect">
-                        <option value="">请选择主机</option>
-                    </select>
-                    <!-- 进行风险检测按钮 -->
-                    <button type="button" class="layui-btn" id="riskDetectionBtn">进行风险检测</button>
-                </div>
-            </div>
-        </div>
+    <!--    <div class="layui-card">-->
+    <!--        <div class="layui-card-header">探测信息</div>-->
+    <!--        <div class="layui-form-item layui-form-item-short">-->
+    <!--            <label class="layui-form-label">选择主机：</label>-->
+    <!--            <div class="layui-input-block">-->
+    <!--                <div class="host-select-container">-->
+    <!--                    <select name="hostId" lay-verify="required" id="hostSelect">-->
+    <!--                        <option value="">请选择主机</option>-->
+    <!--                    </select>-->
+    <!--                    &lt;!&ndash; 进行风险检测按钮 &ndash;&gt;-->
+    <!--                    <button type="button" class="layui-btn" id="riskDetectionBtn">进行风险检测</button>-->
+    <!--                </div>-->
+    <!--            </div>-->
+    <!--        </div>-->
 
+    <!--    </div>-->
+
+    <div class="layui-card">
+        <!--        <div class="layui-card-header">主机风险检测</div>-->
+        <div class="layui-card-body">
+            <form class="layui-form" lay-filter="layuiadmin-form-useradmin" id="layuiadmin-form-usradmin">
+                <div class="layui-form-item layui-form-item-short">
+                    <label class="layui-form-label">选择主机：</label>
+                    <div class="layui-input-block">
+                        <div class="host-select-container">
+                            <select name="hostId" lay-verify="required" id="hostSelect" lay-filter="hostSelect">
+                                <option value="">请选择主机</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label"></label>
+                    <!-- 进行风险检测按钮 -->
+                    <button type="button" class="layui-btn" id="riskDetectionBtn">检查探测结果</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <div class="layui-tab layui-tab-brief" lay-filter="detect-tabs">
@@ -58,35 +82,45 @@
             <li>进程探测</li>
             <li>软件探测</li>
         </ul>
-        <div class="layui-tab-content">
-            <div class="layui-tab-item layui-show">
+        <div class="layui-tab-content" >
+            <div class="layui-tab-item layui-show" >
                 <div class="content-display-area" id="account-content">
                     <table id="accountTable" lay-filter="accountTable"></table>
-                    <p id="account-no-data" style="display:none; text-align: center; color: #999;">
+                    <p id="account-no-data" class="account-no-data"
+                       style="display:none; text-align: center; color: #999;">
                         未选择探测或无数据</p>
-                    <button type="button" id="account-ai-analysis" class="layui-btn layui-bg-blue">使用AI分析</button>
+                    <button type="button" id="account-ai-analysis" style="display:none; margin-top: 20px;"
+                            class="layui-btn layui-bg-blue accountAiBtn">使用AI分析
+                    </button>
                 </div>
             </div>
             <div class="layui-tab-item">
                 <div class="content-display-area" id="service-content">
                     <table id="serviceTable" lay-filter="serviceTable"></table>
-                    <p id="service-no-data" style="display:none; text-align: center; color: #999;">
+                    <p id="service-no-data" class="service-no-data"
+                       style="display:none; text-align: center; color: #999;">
                         未选择探测或无数据</p>
-                    <button type="button" id="service-ai-analysis" class="layui-btn layui-bg-blue">使用AI分析</button>
+                    <button type="button" id="service-ai-analysis" style="display:none; margin-top: 20px;"
+                            class="layui-btn layui-bg-blue serviceAiBtn">使用AI分析
+                    </button>
                 </div>
             </div>
             <div class="layui-tab-item">
                 <div class="content-display-area" id="process-content">
                     <table id="processTable" lay-filter="processTable"></table>
-                    <p id="process-no-data" style="display:none; text-align: center; color: #999;">
+                    <p id="process-no-data" class="process-no-data"
+                       style="display:none; text-align: center; color: #999;">
                         未选择探测或无数据</p>
-                    <button type="button" id="process-ai-analysis" class="layui-btn layui-bg-blue">使用AI分析</button>
+                    <button type="button" id="process-ai-analysis" style="display:none; margin-top: 20px;"
+                            class="layui-btn layui-bg-blue processAiBtn">使用AI分析
+                    </button>
                 </div>
             </div>
             <div class="layui-tab-item">
                 <div class="content-display-area" id="app-content">
                     <table id="appTable" lay-filter="appTable"></table>
-                    <p id="app-no-data" style="display:none; text-align: center; color: #999;">未选择探测或无数据</p>
+                    <p id="app-no-data" class="app-no-data" style="display:none; text-align: center; color: #999;">
+                        未选择探测或无数据</p>
                 </div>
             </div>
         </div>
@@ -106,10 +140,10 @@
         var table = layui.table;
         var layer = layui.layer;
 
-        function renderTable(urlName, tableId, data, cols, noDataId) {
+        var savedHosts;
+        var selectedHost;
 
-            var formData = layui.form.val('result-display-form');
-            var macAddress = formData.macAddress;
+        function renderTable(urlName, tableId, cols, noDataId,macAddress) {
             table.render({
                 elem: '#' + tableId
                 , method: 'post'
@@ -123,18 +157,55 @@
                 , limit: 10
                 , limits: [5, 10, 15, 20, 30, 500]
                 , autoSort: false
-                , height: 'full-150'
+                , height: 'full'
 
                 , done: function (res) {
                     if (res.data && res.data.length === 0) {
                         document.getElementById(noDataId).style.display = 'block';
+                        for (let obj of document.getElementsByClassName(urlName + "AiBtn")) {
+                            obj.style.display = 'none';
+                        }
                     } else {
                         document.getElementById(noDataId).style.display = 'none';
+                        for (let obj of document.getElementsByClassName(urlName + "AiBtn")) {
+                            obj.style.display = 'block';
+                        }
                     }
                 }
 
             });
         }
+
+
+        function initialize() {
+            $.ajax({
+                url: '/host/list',
+                type: 'POST', // 如果接口支持 GET 则改为 GET
+                data: {page: 1, limit: 10000}, // 如果需要分页参数
+                headers: {
+                    'Authorization': localStorage.getItem('token')
+                },
+                success: function (res) {
+                    if (res.code === 0) {
+                        var hosts = res.data;
+                        savedHosts = hosts;
+                        var select = $('#hostSelect');
+                        //select.empty().append('<option value="">请选择主机</option>');
+                        hosts.forEach(function (host) {
+                            select.append(new Option(`${host.hostName} (${host.macAddress})`, host.id));
+                        });
+                        form.render('select'); // 渲染下拉框
+                    } else {
+                        layer.msg(res.msg || '获取主机失败', {icon: 5});
+                    }
+                },
+                error: function (xhr, status, error) {
+                    layer.msg("获取主机列表失败", {icon: 2});
+                }
+            });
+        }
+
+        initialize();
 
 
         var accountCols = [
@@ -293,35 +364,17 @@
             }
         });
 
+        // select 事件
+        form.on('select(hostSelect)', function (data) {
+            var elem = data.elem; // 获得 select 原始 DOM 对象
+            selectedHost = data.value; // 获得被选中的值
+            var othis = data.othis; // 获得 select 元素被替换后的 jQuery 对象
+        });
 
-        function fetchAndRenderData(type, tableId, cols, noDataId, macAddress) {
-            $.ajax({
-                url: `/${type}/list`,
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    macAddress: macAddress,
-                    page: 1,
-                    limit: 10000  // 或根据需要分页
-                }),
-                success: function (res) {
-                    if (res.code === 200 && res.data && res.data.length > 0) {
-                        renderTable(tableId, res.data, cols, noDataId);
-                    } else {
-                        renderTable(tableId, [], cols, noDataId);
-                    }
-                },
-                error: function (xhr, status, error) {
-                    console.error(`请求 ${type} 数据失败:`, error);
-                    renderTable(tableId, [], cols, noDataId);
-                }
-            });
-        }
-
-        var ai=function(data,url) {
+        var ai = function (data, url) {
             layer.msg("正在将请求发送至大模型，请勿关闭页面！");
             var loadIndex = layer.load(1);
-            var aiResultLayerIndex=999999;
+            var aiResultLayerIndex = 999999;
             $.ajax({
                 url: url,
                 method: "post",
@@ -338,35 +391,54 @@
                         type: 2
                         //,skin: 'layui-layer-molv'
                         , maxmin: true
-                        ,area: ['480px', '310px']
-                        ,content: '/page/ai/aiResultTmpl2'
-                        ,success: function (layero, index) { //弹出层加载之前执行
+                        , area: ['480px', '310px']
+                        , content: '/page/ai/aiResultTmpl2'
+                        , success: function (layero, index) { //弹出层加载之前执行
                             // 获取弹出层的表单
                             var contentWindow = layero.find('iframe')[0].contentWindow; //得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
                             contentWindow.postMessage(response.msg)
-                            aiResultLayerIndex=index;
+                            aiResultLayerIndex = index;
                         }
-                        ,cancel: function(index, layero, that){
-                            layer.confirm("关闭窗口后将无法再次查看AI检测结果，再次点击将产生二次花费，是否确认关闭？",function(index){
-                              layer.close(aiResultLayerIndex);
-                              layer.close(index);
+                        , cancel: function (index, layero, that) {
+                            layer.confirm("关闭窗口后将无法再次查看AI检测结果，再次点击将产生二次花费，是否确认关闭？", function (index) {
+                                layer.close(aiResultLayerIndex);
+                                layer.close(index);
                             })
                             return false;
                         }
                     });
                 }
-                , error: function(xhr, status, error) {
+                , error: function (xhr, status, error) {
                     layer.close(loadIndex);
-                    layer.msg(error,{icon: 5});
+                    layer.msg(error, {icon: 5});
                 }
             });
+        };
+
+        var rfhr = function () {
+            savedHosts.forEach(obj => {
+                if (obj.id === parseInt(selectedHost)) {
+                    selectedHost = obj;
+                }
+            });
+
+            if(selectedHost==="" || selectedHost===undefined){
+                layer.msg("未选择主机！" || '获取主机失败', {icon: 5});
+                return;
+            }
+
+            renderTable('account', 'accountTable', accountCols, 'account-no-data', selectedHost.macAddress);
+            renderTable('service', 'serviceTable', serviceCols, 'service-no-data', selectedHost.macAddress);
+            renderTable('process', 'processTable', processCols, 'process-no-data', selectedHost.macAddress);
+            renderTable('app', 'appTable', appCols, 'app-no-data', selectedHost.macAddress);
+
         };
 
         $(document).ready(function () {
             $('#account-ai-analysis').click(function () {
                 // 在这里编写点击事件的逻辑
                 // console.log(table.getData("accountTable"))
-                var data=table.getData('accountTable');
+                var data = table.getData('accountTable');
                 data.forEach(obj => {
                     delete obj.hostName;
                     delete obj.macAddress;
@@ -375,13 +447,13 @@
                     delete obj.risk;
                     delete obj.riskDesc;
                 });
-                ai(data,"/ai/account_analysis");
+                ai(data, "/ai/account_analysis");
 
             });
 
             $("#process-ai-analysis").click(function () {
                 // console.log(table.getData("processTable"));
-                var data=table.getData('processTable');
+                var data = table.getData('processTable');
                 data.forEach(obj => {
                     delete obj.hostName;
                     delete obj.macAddress;
@@ -392,7 +464,7 @@
 
             $("#service-ai-analysis").click(function () {
                 // console.log(table.getData("processTable"));
-                var data=table.getData('serviceTable');
+                var data = table.getData('serviceTable');
                 data.forEach(obj => {
                     delete obj.hostName;
                     delete obj.macAddress;
@@ -400,7 +472,12 @@
                     delete obj.id
                 });
                 // console.log(data);
-                ai(data,"/ai/port_analysis");
+                ai(data, "/ai/port_analysis");
+            });
+
+            $("#riskDetectionBtn").click(function () {
+                // console.log(table.getData("processTable"));
+                rfhr();
             });
         });
 
