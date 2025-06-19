@@ -1,14 +1,15 @@
 package com.tpp.threat_perception_platform.controller;
 
+import com.tpp.threat_perception_platform.pojo.Log;
 import com.tpp.threat_perception_platform.response.ResponseResult;
 import com.tpp.threat_perception_platform.service.LogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
+import java.util.List;
 
 @RestController
 public class LogDetectController {
@@ -100,5 +101,27 @@ public class LogDetectController {
     @RequestMapping("/log/all/statistics")
     public ResponseResult getAllLogStatistics() {
         return logService.getAllLogStatistics();
+    }
+
+    /**
+     * AI分析日志数据
+     * @param logs 日志列表
+     * @return AI分析结果
+     */
+    @ResponseBody
+    @RequestMapping(value = "/log/ai/analysis", method = RequestMethod.POST)
+    public ResponseResult analyzeLogsWithAI(@RequestBody List<Log> logs) {
+        return logService.analyzeLogsWithAI(logs);
+    }
+
+    /**
+     * 批量AI分析日志数据（根据查询条件）
+     * @param params 查询参数
+     * @return AI分析结果
+     */
+    @ResponseBody
+    @RequestMapping(value = "/log/ai/batch-analysis", method = RequestMethod.POST)
+    public ResponseResult batchAnalyzeLogsWithAI(@RequestBody Map<String, Object> params) {
+        return logService.batchAnalyzeLogsWithAI(params);
     }
 }

@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -28,14 +27,12 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.tpp.threat_perception_platform.dao.LogMapper;
 import com.tpp.threat_perception_platform.pojo.Log;
-import com.tpp.threat_perception_platform.response.ResponseResult;
-import com.tpp.threat_perception_platform.service.LogService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
+import com.tpp.threat_perception_platform.service.AIService;
+import com.tpp.threat_perception_platform.utils.TextFileLoader;
 
 @Service
 @EnableScheduling
@@ -50,6 +47,8 @@ public class LogServiceImpl implements LogService {
 
     @Autowired
     private LogMapper logMapper;
+    @Autowired
+    private AIService aiService;
 
     // 存储定时任务信息
     private final ConcurrentHashMap<String, Map<String, Object>> syncTasks = new ConcurrentHashMap<>();
@@ -346,7 +345,7 @@ public class LogServiceImpl implements LogService {
         Long total = logMapper.countByEventIds(accountEventIds, null); // 全部
         Long risk = logMapper.countByEventIds(accountEventIds, 1);     // 风险日志 risk_level > 0
         List<Map<String, Object>> riskDistribution = logMapper.selectRiskDistributionByEventIds(accountEventIds);
-        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        Map<String, Object> data = new HashMap<>();
         data.put("totalLogs", total);
         data.put("totalRisks", risk);
         data.put("riskDistribution", riskDistribution);
@@ -359,7 +358,7 @@ public class LogServiceImpl implements LogService {
         Long total = logMapper.countByEventIds(loginEventIds, null); // 全部
         Long risk = logMapper.countByEventIds(loginEventIds, 1);     // 风险日志 risk_level > 0
         List<Map<String, Object>> riskDistribution = logMapper.selectRiskDistributionByEventIds(loginEventIds);
-        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        Map<String, Object> data = new HashMap<>();
         data.put("totalLogs", total);
         data.put("totalRisks", risk);
         data.put("riskDistribution", riskDistribution);
@@ -373,7 +372,7 @@ public class LogServiceImpl implements LogService {
             Long system = logMapper.countSystemLogs();
             Long security = logMapper.countSecurityLogs();
             Long risk = logMapper.selectTotalRiskLogs();
-            java.util.Map<String, Object> data = new java.util.HashMap<>();
+            Map<String, Object> data = new HashMap<>();
             data.put("totalLogs", total);
             data.put("systemLogs", system);
             data.put("securityLogs", security);
@@ -381,6 +380,56 @@ public class LogServiceImpl implements LogService {
             return new ResponseResult<>(200, "success", data);
         } catch (Exception e) {
             return new ResponseResult<>(500, "获取日志统计数据失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public ResponseResult analyzeLogsWithAI(List<Log> logs) {
+        try {
+            if (logs == null || logs.isEmpty()) {
+                return new ResponseResult<>(400, "日志数据为空");
+            }
+            
+            // 调用AI服务分析日志
+            String prompt = TextFileLoader.loadTextFile("texts/prompts/log_analysis_prompt.txt");
+            String aiResult = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(logs));
+            
+            if (aiResult != null) {
+                // 将AI分析结果存储到每条日志记录的ai_result字段中
+                for (Log log : logs) {
+                    if (log.getLogId() != null) {
+                        // 更新数据库中的ai_result字段
+                        Log updateLog = new Log();
+                        updateLog.setLogId(log.getLogId());
+                        updateLog.setAiResult(aiResult);
+                        logMapper.updateByPrimaryKeySelective(updateLog);
+                    }
+                }
+                
+                return new ResponseResult<>(200, "AI分析完成并已保存到数据库", aiResult);
+            } else {
+                return new ResponseResult<>(500, "AI分析失败");
+            }
+        } catch (Exception e) {
+            return new ResponseResult<>(500, "AI分析异常: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public ResponseResult batchAnalyzeLogsWithAI(Map<String, Object> params) {
+        try {
+            // 根据参数查询日志记录
+            List<Log> logs = logMapper.selectLogList(params);
+            
+            if (logs == null || logs.isEmpty()) {
+                return new ResponseResult<>(400, "未找到符合条件的日志记录");
+            }
+            
+            // 调用AI分析
+            return analyzeLogsWithAI(logs);
+            
+        } catch (Exception e) {
+            return new ResponseResult<>(500, "批量AI分析异常: " + e.getMessage());
         }
     }
 

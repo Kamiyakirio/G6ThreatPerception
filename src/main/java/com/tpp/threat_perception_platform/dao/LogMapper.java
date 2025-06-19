@@ -32,6 +32,11 @@ public interface LogMapper {
     Log selectByMacAddressAndEventIdAndTimestampAndChannel(String macAddress, Integer eventId, Date timestamp, String channel);
 
     /**
+     * 根据MAC地址查询日志记录
+     */
+    List<Log> selectByMacAddress(String macAddress);
+
+    /**
      * 获取登录日志总数
      */
     Long selectTotalLogs();
@@ -56,9 +61,9 @@ public interface LogMapper {
      */
     Long selectLogCount(Map<String, Object> params);
 
-    Long countByEventIds(@org.apache.ibatis.annotations.Param("eventIds") java.util.List<Integer> eventIds, @org.apache.ibatis.annotations.Param("riskLevelMin") Integer riskLevelMin);
+    Long countByEventIds(@org.apache.ibatis.annotations.Param("eventIds") List<Integer> eventIds, @org.apache.ibatis.annotations.Param("riskLevelMin") Integer riskLevelMin);
 
-    List<Map<String, Object>> selectRiskDistributionByEventIds(@org.apache.ibatis.annotations.Param("eventIds") java.util.List<Integer> eventIds);
+    List<Map<String, Object>> selectRiskDistributionByEventIds(@org.apache.ibatis.annotations.Param("eventIds") List<Integer> eventIds);
 
     Long countSystemLogs();
     Long countSecurityLogs();

@@ -14,7 +14,7 @@ import java.util.HashMap;
 
 @Service
 public class AIServiceImpl implements AIService {
-    private final String ApiKey="sk-msqkwaaazrumwgtqqlolfkeupojnbherwlvxzsrwpabuaoep";
+    private final String ApiKey="sk-araikidxxfkokfwnezlzrqksbpdweywzracomyebjehfphmw";
     private JSONObject defaultSettings=new JSONObject();
 
     public AIServiceImpl(){

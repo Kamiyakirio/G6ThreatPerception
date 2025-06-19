@@ -1,7 +1,9 @@
 package com.tpp.threat_perception_platform.service;
 
 import com.tpp.threat_perception_platform.response.ResponseResult;
+import com.tpp.threat_perception_platform.pojo.Log;
 
+import java.util.List;
 import java.util.Map;
 
 public interface LogService {
@@ -54,5 +56,19 @@ public interface LogService {
      * 获取所有日志统计数据（总数、system、security、风险日志总数）
      */
     ResponseResult getAllLogStatistics();
+
+    /**
+     * AI分析日志数据
+     * @param logs 日志列表
+     * @return AI分析结果
+     */
+    ResponseResult analyzeLogsWithAI(List<Log> logs);
+
+    /**
+     * 批量AI分析日志数据（根据查询条件）
+     * @param params 查询参数（如macAddress、hostName、时间范围等）
+     * @return AI分析结果
+     */
+    ResponseResult batchAnalyzeLogsWithAI(Map<String, Object> params);
 
 }

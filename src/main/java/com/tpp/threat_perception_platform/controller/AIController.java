@@ -2,6 +2,7 @@ package com.tpp.threat_perception_platform.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.tpp.threat_perception_platform.asset.Account;
+import com.tpp.threat_perception_platform.pojo.Log;
 import com.tpp.threat_perception_platform.response.ResponseResult;
 import com.tpp.threat_perception_platform.service.AIService;
 import com.tpp.threat_perception_platform.utils.TextFileLoader;
@@ -33,6 +34,14 @@ public class AIController {
     {
         String prompt= TextFileLoader.loadTextFile("texts/prompts/port_analysis_prompt.txt");
         String result = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(data));
+        return new ResponseResult(1,result);
+    }
+
+    @PostMapping("/ai/log_analysis")
+    public ResponseResult AILogAnalysis(@RequestBody List<Log> logs)
+    {
+        String prompt= TextFileLoader.loadTextFile("texts/prompts/log_analysis_prompt.txt");
+        String result = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(logs));
         return new ResponseResult(1,result);
     }
 
