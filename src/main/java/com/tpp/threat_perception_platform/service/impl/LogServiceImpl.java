@@ -394,24 +394,21 @@ public class LogServiceImpl implements LogService {
             if (logs == null || logs.isEmpty()) {
                 return new ResponseResult<>(400, "日志数据为空");
             }
-            
             // 调用AI服务分析日志
             String prompt = TextFileLoader.loadTextFile("texts/prompts/log_analysis_prompt.txt");
             String aiResult = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(logs));
-            
             if (aiResult != null) {
                 // 将AI分析结果存储到每条日志记录的ai_result字段中
                 for (Log log : logs) {
                     if (log.getLogId() != null) {
-                        // 更新数据库中的ai_result字段
                         Log updateLog = new Log();
                         updateLog.setLogId(log.getLogId());
                         updateLog.setAiResult(aiResult);
                         logMapper.updateByPrimaryKeySelective(updateLog);
                     }
                 }
-                
-                return new ResponseResult<>(200, "AI分析完成并已保存到数据库", aiResult);
+                // 直接将AI分析内容作为msg返回
+                return new ResponseResult<>(200, aiResult);
             } else {
                 return new ResponseResult<>(500, "AI分析失败");
             }
