@@ -2,7 +2,7 @@ import json
 from concurrent.futures import as_completed
 from concurrent.futures.thread import ThreadPoolExecutor
 
-from log_detect.log_analysis import log_risk_judge
+from log_detect.log_analysis import log_analysis_result_send
 import datetime
 
 from system.pc_information import PcInfo
@@ -53,7 +53,7 @@ def log_analysis(data):
 
     # 调用 log_risk_judge 函数进行测试
     print("\n开始分析日志...")
-    result = log_risk_judge(data)
+    result = log_analysis_result_send(data)
 
     # 处理结果
     if result:
