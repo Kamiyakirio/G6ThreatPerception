@@ -53,6 +53,7 @@
             <option value="">请选择主机</option>
           </select>
           <button type="button" class="layui-btn layui-btn" id="riskDetectionBtn">进行风险检测</button>
+          <button type="button" class="layui-btn layui-btn-warm" id="hotfix-ai-analysis" style="margin-left: 10px;"><i class="layui-icon layui-icon-light"></i>AI分析</button>
         </div>
       </div>
     </div>
@@ -217,6 +218,58 @@
         },
         error: function(xhr, status, err) {
           layer.msg('获取主机信息失败', {icon: 2});
+        }
+      });
+    });
+
+    // 在JS末尾添加AI分析按钮事件
+    $('#hotfix-ai-analysis').off('click').on('click', function () {
+      var tableData = layui.table.cache['hotfixResultTable'] || [];
+      if (!tableData.length) {
+        layer.msg('请先加载补丁检测结果！', {icon: 5});
+        return;
+      }
+      // 过滤敏感字段
+      var data = tableData.map(function(obj) {
+        var copy = Object.assign({}, obj);
+        delete copy.hostName;
+        delete copy.macAddress;
+        delete copy.id;
+        delete copy.latest_dt;
+        return copy;
+      });
+      layer.msg("正在将请求发送至大模型，请勿关闭页面！");
+      var loadIndex = layer.load(1);
+      $.ajax({
+        url: "/ai/hotfix_analysis",
+        method: "post",
+        headers: {
+          'Authorization': localStorage.getItem('token')
+        },
+        contentType: "application/json",
+        dataType: "json",
+        data: JSON.stringify(data),
+        success: function (response) {
+          layer.close(loadIndex);
+          let msg = response.msg || '';
+          let idx = msg.indexOf('###');
+          let displayMarkdown = idx !== -1 ? msg.substring(idx) : msg;
+          layer.open({
+            type: 2,
+            title: 'AI分析结果',
+            shadeClose: true,
+            shade: 0.8,
+            area: ['60%', '60%'],
+            content: '/page/ai/aiResultTmpl2',
+            success: function (layero, index) {
+              let contentWindow = layero.find('iframe')[0].contentWindow;
+              contentWindow.postMessage(displayMarkdown);
+            }
+          });
+        },
+        error: function(xhr, status, error) {
+          layer.close(loadIndex);
+          layer.msg(error, {icon: 5});
         }
       });
     });

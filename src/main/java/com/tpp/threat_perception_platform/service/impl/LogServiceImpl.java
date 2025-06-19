@@ -36,6 +36,8 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.tpp.threat_perception_platform.service.AIService;
+import com.tpp.threat_perception_platform.utils.TextFileLoader;
 
 @Service
 @EnableScheduling
@@ -50,6 +52,8 @@ public class LogServiceImpl implements LogService {
 
     @Autowired
     private LogMapper logMapper;
+    @Autowired
+    private AIService aiService;
 
     // 存储定时任务信息
     private final ConcurrentHashMap<String, Map<String, Object>> syncTasks = new ConcurrentHashMap<>();
@@ -381,6 +385,56 @@ public class LogServiceImpl implements LogService {
             return new ResponseResult<>(200, "success", data);
         } catch (Exception e) {
             return new ResponseResult<>(500, "获取日志统计数据失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public ResponseResult analyzeLogsWithAI(List<Log> logs) {
+        try {
+            if (logs == null || logs.isEmpty()) {
+                return new ResponseResult<>(400, "日志数据为空");
+            }
+            
+            // 调用AI服务分析日志
+            String prompt = TextFileLoader.loadTextFile("texts/prompts/log_analysis_prompt.txt");
+            String aiResult = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(logs));
+            
+            if (aiResult != null) {
+                // 将AI分析结果存储到每条日志记录的ai_result字段中
+                for (Log log : logs) {
+                    if (log.getLogId() != null) {
+                        // 更新数据库中的ai_result字段
+                        Log updateLog = new Log();
+                        updateLog.setLogId(log.getLogId());
+                        updateLog.setAiResult(aiResult);
+                        logMapper.updateByPrimaryKeySelective(updateLog);
+                    }
+                }
+                
+                return new ResponseResult<>(200, "AI分析完成并已保存到数据库", aiResult);
+            } else {
+                return new ResponseResult<>(500, "AI分析失败");
+            }
+        } catch (Exception e) {
+            return new ResponseResult<>(500, "AI分析异常: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public ResponseResult batchAnalyzeLogsWithAI(Map<String, Object> params) {
+        try {
+            // 根据参数查询日志记录
+            List<Log> logs = logMapper.selectLogList(params);
+            
+            if (logs == null || logs.isEmpty()) {
+                return new ResponseResult<>(400, "未找到符合条件的日志记录");
+            }
+            
+            // 调用AI分析
+            return analyzeLogsWithAI(logs);
+            
+        } catch (Exception e) {
+            return new ResponseResult<>(500, "批量AI分析异常: " + e.getMessage());
         }
     }
 

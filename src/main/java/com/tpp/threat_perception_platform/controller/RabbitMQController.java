@@ -14,6 +14,8 @@ import com.tpp.threat_perception_platform.pojo.Host;
 import com.tpp.threat_perception_platform.pojo.Log;
 import com.tpp.threat_perception_platform.pojo.Risk;
 import com.tpp.threat_perception_platform.pojo.VulScan;
+import com.tpp.threat_perception_platform.service.AIService;
+import com.tpp.threat_perception_platform.utils.TextFileLoader;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +24,10 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 
 @Component
@@ -38,6 +42,45 @@ public class RabbitMQController {
     @Autowired private VulScanMapper vulScanMapper;
     @Autowired private AppRiskResultMapper appRiskResultMapper;
     @Autowired private LogMapper logMapper;
+    @Autowired private AIService aiService;
+
+    // 辅助方法：清理和解析AI返回的JSON
+    private JSONObject parseAIResult(String aiResult) throws Exception {
+        if (aiResult == null || aiResult.trim().isEmpty()) {
+            throw new Exception("AI分析结果为空");
+        }
+        
+        String cleanedJson = aiResult.trim();
+        
+        // 移除可能的代码块标记
+        if (cleanedJson.startsWith("```json")) {
+            cleanedJson = cleanedJson.substring(7);
+        } else if (cleanedJson.startsWith("```")) {
+            cleanedJson = cleanedJson.substring(3);
+        }
+        
+        if (cleanedJson.endsWith("```")) {
+            cleanedJson = cleanedJson.substring(0, cleanedJson.length() - 3);
+        }
+        
+        cleanedJson = cleanedJson.trim();
+        
+        // 尝试解析JSON
+        try {
+            return JSON.parseObject(cleanedJson);
+        } catch (Exception e) {
+            // 如果解析失败，尝试查找JSON对象
+            int startBrace = cleanedJson.indexOf('{');
+            int endBrace = cleanedJson.lastIndexOf('}');
+            
+            if (startBrace >= 0 && endBrace > startBrace) {
+                String jsonPart = cleanedJson.substring(startBrace, endBrace + 1);
+                return JSON.parseObject(jsonPart);
+            }
+            
+            throw new Exception("无法解析AI分析结果: " + e.getMessage());
+        }
+    }
 
     // 获取下一个 detectId
     private int getNextDetectId(String macAddress, AccountMapper mapper) {
@@ -328,101 +371,157 @@ public class RabbitMQController {
 
 
     @RabbitListener(queues = "log_detect_result")
-public void receiveLogDetectResult(String messageBody, Message message, Channel channel) throws IOException {
-    long deliveryTag = message.getMessageProperties().getDeliveryTag();
-    try {
-        // 1. 解析消息体
-        JSONObject fullData = JSON.parseObject(new String(message.getBody(), StandardCharsets.UTF_8));
-        JSONObject info = fullData.getJSONObject("info");
-        JSONArray dataList = fullData.getJSONArray("data");
-
-        String macAddress = info.getString("macAddress");
-        String hostName = info.getString("hostName");
-        Integer infoId = info.getInteger("id");
-        String timeStr = info.getString("time");
-        Date time = null;
+    public void receiveLogDetectResult(String messageBody, Message message, Channel channel) throws IOException {
+        long deliveryTag = message.getMessageProperties().getDeliveryTag();
         try {
-            time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(timeStr);
-        } catch (Exception e) {
-            System.err.println("解析info.time失败: " + timeStr + ", 错误: " + e.getMessage());
-        }
+            // 1. 解析消息体
+            JSONObject fullData = JSON.parseObject(new String(message.getBody(), StandardCharsets.UTF_8));
+            JSONObject info = fullData.getJSONObject("info");
+            JSONArray dataList = fullData.getJSONArray("data");
 
-        for (int i = 0; i < dataList.size(); i++) {
-            JSONObject dataItem = dataList.getJSONObject(i);
-            String dataType = dataItem.getString("type");
-            if ("log".equalsIgnoreCase(dataType)) {
-                JSONArray logsArray = dataItem.getJSONArray("data");
-                for (int j = 0; j < logsArray.size(); j++) {
-                    JSONObject logData = logsArray.getJSONObject(j);
-                    Log log = new Log();
-                    log.setMacAddress(macAddress);
-                    log.setHostName(hostName);
-                    log.setId(infoId);
-                    log.setTime(time); // 使用info中的time
+            String macAddress = info.getString("macAddress");
+            String hostName = info.getString("hostName");
+            Integer infoId = info.getInteger("id");
+            String timeStr = info.getString("time");
+            Date time = null;
+            try {
+                time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(timeStr);
+            } catch (Exception e) {
+                System.err.println("解析info.time失败: " + timeStr + ", 错误: " + e.getMessage());
+            }
 
-                    // event_id
-                    Integer eventId = logData.getInteger("event_id");
-                    if (eventId == null && logData.containsKey("eventId")) {
-                        eventId = logData.getInteger("eventId");
-                    }
-                    log.setEventId(eventId);
+            // 收集所有日志用于AI分析
+            List<Log> logsToAnalyze = new ArrayList<>();
+            List<Log> savedLogs = new ArrayList<>();
 
-                    // risk_level
-                    log.setRiskLevel(logData.getInteger("risk_level"));
+            for (int i = 0; i < dataList.size(); i++) {
+                JSONObject dataItem = dataList.getJSONObject(i);
+                String dataType = dataItem.getString("type");
+                if ("log".equalsIgnoreCase(dataType)) {
+                    JSONArray logsArray = dataItem.getJSONArray("data");
+                    for (int j = 0; j < logsArray.size(); j++) {
+                        JSONObject logData = logsArray.getJSONObject(j);
+                        Log log = new Log();
+                        log.setMacAddress(macAddress);
+                        log.setHostName(hostName);
+                        log.setId(infoId);
+                        log.setTime(time); // 使用info中的time
 
-                    // timestamp - 解析日志中的timestamp字段
-                    String timestampStr = logData.getString("timestamp");
-                    if (timestampStr != null) {
-                        try {
-                            // 移除UTC后缀并解析
-                            String cleanTimestamp = timestampStr.replace(" UTC", "");
-                            Date timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS").parse(cleanTimestamp);
-                            log.setTimestamp(timestamp);
-                        } catch (Exception e) {
+                        // event_id
+                        Integer eventId = logData.getInteger("event_id");
+                        if (eventId == null && logData.containsKey("eventId")) {
+                            eventId = logData.getInteger("eventId");
+                        }
+                        log.setEventId(eventId);
+
+                        // risk_level (agent提供的风险等级)
+                        Integer agentRiskLevel = logData.getInteger("risk_level");
+                        log.setRiskLevel(agentRiskLevel);
+
+                        // timestamp - 解析日志中的timestamp字段
+                        String timestampStr = logData.getString("timestamp");
+                        if (timestampStr != null) {
                             try {
-                                // 尝试不带毫秒的格式
+                                // 移除UTC后缀并解析
                                 String cleanTimestamp = timestampStr.replace(" UTC", "");
-                                Date timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(cleanTimestamp);
+                                Date timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS").parse(cleanTimestamp);
                                 log.setTimestamp(timestamp);
-                            } catch (Exception e2) {
-                                System.err.println("解析timestamp失败: " + timestampStr + ", 错误: " + e2.getMessage());
-                                log.setTimestamp(null);
+                            } catch (Exception e) {
+                                try {
+                                    // 尝试不带毫秒的格式
+                                    String cleanTimestamp = timestampStr.replace(" UTC", "");
+                                    Date timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(cleanTimestamp);
+                                    log.setTimestamp(timestamp);
+                                } catch (Exception e2) {
+                                    System.err.println("解析timestamp失败: " + timestampStr + ", 错误: " + e2.getMessage());
+                                    log.setTimestamp(null);
+                                }
                             }
                         }
-                    }
 
-                    // risk_desc
-                    log.setRiskDesc(logData.getString("risk_desc"));
+                        // risk_desc
+                        log.setRiskDesc(logData.getString("risk_desc"));
 
-                    // channel
-                    log.setChannel(logData.getString("channel"));
+                        // channel
+                        log.setChannel(logData.getString("channel"));
 
-                    // event_data
-                    Object eventData = logData.get("event_data");
-                    if (eventData != null) {
-                        log.setEventData(JSON.toJSONString(eventData));
-                    }
+                        // event_data
+                        Object eventData = logData.get("event_data");
+                        if (eventData != null) {
+                            log.setEventData(JSON.toJSONString(eventData));
+                        }
 
-                    // ai_result
-                    log.setAiResult(logData.getString("ai_result"));
-
-                    // 避免重复插入
-                    Log existingLog = logMapper.selectByMacAddressAndEventIdAndTimestampAndChannel(
-                        log.getMacAddress(), log.getEventId(), log.getTimestamp(), log.getChannel());
-                    if (existingLog == null) {
-                        logMapper.insertSelective(log);
-                        System.out.println("日志记录已保存到数据库");
-                    } else {
-                        System.out.println("相同的日志记录已存在，跳过保存");
+                        // 避免重复插入
+                        Log existingLog = logMapper.selectByMacAddressAndEventIdAndTimestampAndChannel(
+                            log.getMacAddress(), log.getEventId(), log.getTimestamp(), log.getChannel());
+                        if (existingLog == null) {
+                            logMapper.insertSelective(log);
+                            savedLogs.add(log);
+                            logsToAnalyze.add(log);
+                            System.out.println("日志记录已保存到数据库");
+                        } else {
+                            System.out.println("相同的日志记录已存在，跳过保存");
+                        }
                     }
                 }
             }
+
+            // 2. 对收集到的日志进行AI分析
+            if (!logsToAnalyze.isEmpty()) {
+                try {
+                    String prompt = TextFileLoader.loadTextFile("texts/prompts/log_analysis_prompt.txt");
+                    String aiAnalysisResult = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(logsToAnalyze));
+                    
+                    if (aiAnalysisResult != null) {
+                        try {
+                            // 使用辅助方法解析AI分析结果
+                            JSONObject aiResult = parseAIResult(aiAnalysisResult);
+                            JSONArray detailedAnalysis = aiResult.getJSONArray("detailed_analysis");
+                            
+                            // 更新每条日志的AI分析结果和风险等级
+                            for (int i = 0; i < savedLogs.size() && i < detailedAnalysis.size(); i++) {
+                                Log log = savedLogs.get(i);
+                                JSONObject analysis = detailedAnalysis.getJSONObject(i);
+                                
+                                // 获取AI评估的风险等级
+                                Integer aiRiskLevel = analysis.getInteger("ai_risk_level");
+                                if (aiRiskLevel != null) {
+                                    // 取agent和AI评分的较高值作为最终风险等级
+                                    Integer finalRiskLevel = Math.max(log.getRiskLevel(), aiRiskLevel);
+                                    log.setRiskLevel(finalRiskLevel);
+                                }
+                                
+                                // 只存储该条日志的分析内容
+                                log.setAiResult(analysis.toJSONString());
+                                
+                                // 更新数据库
+                                logMapper.updateByPrimaryKeySelective(log);
+                            }
+                            
+                            System.out.println("AI分析完成，已更新" + savedLogs.size() + "条日志记录");
+                        } catch (Exception jsonException) {
+                            System.err.println("AI分析结果JSON解析失败: " + jsonException.getMessage());
+                            System.err.println("原始AI分析结果: " + aiAnalysisResult);
+                            
+                            // 即使JSON解析失败，也要保存AI分析结果
+                            for (Log log : savedLogs) {
+                                log.setAiResult(aiAnalysisResult);
+                                logMapper.updateByPrimaryKeySelective(log);
+                            }
+                            System.out.println("已保存AI分析结果（未解析风险等级）");
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("AI分析失败: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+
+            channel.basicAck(deliveryTag, false);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("处理日志探测结果失败: " + e.getMessage());
+            channel.basicAck(deliveryTag, false);
         }
-        channel.basicAck(deliveryTag, false);
-    } catch (Exception e) {
-        e.printStackTrace();
-        System.err.println("处理日志探测结果失败: " + e.getMessage());
-        channel.basicAck(deliveryTag, false);
     }
-}
 }

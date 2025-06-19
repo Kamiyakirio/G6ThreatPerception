@@ -492,13 +492,31 @@
       var data = obj.data;
       if (obj.event === 'viewAiResult') {
         if (data.aiResult) {
+          let aiObj;
+          try {
+            aiObj = JSON.parse(data.aiResult);
+          } catch (e) {
+            aiObj = data.aiResult; // 兼容老数据
+          }
+          let html = '';
+          if (typeof aiObj === 'object') {
+            html += `<table class="layui-table" style="width:100%;margin-bottom:10px;">
+              <tr><th>事件ID</th><td>${aiObj.event_id || ''}</td></tr>
+              
+              <tr><th>分析</th><td>${aiObj.analysis || ''}</td></tr>
+              <tr><th>威胁描述</th><td>${aiObj.threat_description || ''}</td></tr>
+              <tr><th>建议</th><td>${aiObj.recommendation || ''}</td></tr>
+            </table>`;
+          } else {
+            html = `<pre>${data.aiResult}</pre>`;
+          }
           layer.open({
             type: 1, // Page type
             title: 'AI分析结果',
             shadeClose: true,
             shade: 0.8,
             area: ['60%', '60%'], // Adjust size as needed
-            content: '<div style="padding: 20px; word-break: break-all;">' + data.aiResult + '</div>' // Content
+            content: `<div style="padding: 20px; word-break: break-all;">${html}</div>` // Content
           });
         } else {
           layer.msg('无AI分析结果', {icon: 5});
@@ -536,7 +554,23 @@
         }
       });
     }
+
+    // 审计日志页面刷新按钮实现
+    $(document).on('click', '[data-type=refresh]', function() {
+      table.reload('logTable'); // 真实刷新logTable表格
+    });
+
+    $("#ai-analysis-btn").click(function() {
+      var data = table.getData('logTable');
+      data.forEach(obj => {
+        delete obj.hostName;
+        delete obj.macAddress;
+        delete obj.time;
+      });
+      // 发送data给AI
+    });
 });
+
 </script>
 </body>
 </html>
