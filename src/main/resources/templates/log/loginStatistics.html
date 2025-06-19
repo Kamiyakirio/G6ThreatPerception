@@ -236,11 +236,11 @@
     }
 
     var logCols = [
-      {field: 'logId', title: '日志ID', minWidth: 100}
-      , {field: 'hostName', title: '主机名', minWidth: 150}
-      , {field: 'macAddress', title: 'MAC地址', minWidth: 180}
-      , {field: 'eventId', title: '事件ID', minWidth: 100}
-      , {
+      {field: 'logId', title: '日志ID', minWidth: 100},
+      {field: 'hostName', title: '主机名', minWidth: 150},
+      {field: 'macAddress', title: 'MAC地址', minWidth: 180},
+      {field: 'eventId', title: '事件ID', minWidth: 100},
+      {
         field: 'riskLevel',
         title: '风险等级',
         minWidth: 150,
@@ -257,21 +257,11 @@
             return '<span style="color: #999;">未知</span>';
           }
         }
-      }
-      , {field: "riskDesc", title: "风险描述", minWidth: 200}
-      , {field: 'channel', title: '日志类型', minWidth: 100}
-      , {field: 'timestamp', title: '时间', minWidth: 180}
-      , {
-        title: '操作',
-        minWidth: 120,
-        align: 'center',
-        templet: function(d) {
-          if (d.riskLevel > 0 && d.aiResult) {
-            return '<button class="layui-btn layui-btn-xs" lay-event="viewAiResult">查看AI分析</button>';
-          }
-          return '-';
-        }
-      }
+      },
+      {field: "riskDesc", title: "风险描述", minWidth: 200},
+      {field: 'channel', title: '日志类型', minWidth: 100},
+      {field: 'timestamp', title: '时间', minWidth: 180},
+      {title: '操作', minWidth: 120, align: 'center', toolbar: '#logTableBar'}
     ];
 
     // 页面加载完成后执行
@@ -287,21 +277,52 @@
       });
     });
 
-    //监听行工具事件: 查看AI分析结果
-    table.on('tool(logTable)', function (obj) {
+    // 监听logTable操作栏事件
+    layui.table.on('tool(logTable)', function(obj) {
       var data = obj.data;
-      if (obj.event === 'viewAiResult') {
+      if (obj.event === 'aiAnalysis') {
         if (data.aiResult) {
+          // 直接展示数据库中的AI分析结果
           layer.open({
-            type: 1, // Page type
-            title: 'AI分析结果',
-            shadeClose: true,
-            shade: 0.8,
-            area: ['60%', '60%'], // Adjust size as needed
-            content: '<div style="padding: 20px; word-break: break-all;">' + data.aiResult + '</div>' // Content
+            type: 2,
+            title: 'AI日志分析结果',
+            area: ['60%', '60%'],
+            content: '/page/ai/aiResultTmpl2',
+            success: function (layero, index) {
+              let contentWindow = layero.find('iframe')[0].contentWindow;
+              contentWindow.postMessage(data.aiResult);
+            }
           });
         } else {
-          layer.msg('无AI分析结果', {icon: 5});
+          layer.msg('正在将日志发送至AI分析，请稍候...');
+          var loadIndex = layer.load(1);
+          $.ajax({
+            url: '/log/ai/analysis',
+            method: 'post',
+            headers: { 'Authorization': localStorage.getItem('token') },
+            contentType: 'application/json',
+            dataType: 'json',
+            data: JSON.stringify([data]),
+            success: function (response) {
+              layer.close(loadIndex);
+              let msg = response.msg || '';
+              layer.open({
+                type: 2,
+                title: 'AI日志分析结果',
+                area: ['60%', '60%'],
+                content: '/page/ai/aiResultTmpl2',
+                success: function (layero, index) {
+                  let contentWindow = layero.find('iframe')[0].contentWindow;
+                  contentWindow.postMessage(msg);
+                }
+              });
+              layui.table.reload('logTable');
+            },
+            error: function(xhr, status, error) {
+              layer.close(loadIndex);
+              layer.msg(error, {icon: 5});
+            }
+          });
         }
       }
     });
@@ -327,6 +348,9 @@
     // Explicitly render tabs after dynamic content loading
     element.render('tab');
   });
+</script>
+<script type="text/html" id="logTableBar">
+    <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="aiAnalysis">AI分析</a>
 </script>
 </div>
 </body>
