@@ -26,7 +26,7 @@ public class HotfixResultController {
     @GetMapping("/statistics")
     public Map<String, Object> getStatistics() {
         int count = hotfixResultService.getHotfixCount();
-        logger.info("返回补丁检测统计数据: {}", count);
+//        logger.info("返回补丁检测统计数据: {}", count);
         
         Map<String, Object> result = new HashMap<>();
         result.put("code", 0);
