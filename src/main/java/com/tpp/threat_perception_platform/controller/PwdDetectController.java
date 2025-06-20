@@ -31,7 +31,7 @@ public class PwdDetectController {
     @GetMapping("/pwd/statistics")
     public Map<String, Object> getStatistics() {
         int count = pwdService.getWeakPasswordCount();
-        logger.info("返回账户统计数据: {}", count);
+//        logger.info("返回账户统计数据: {}", count);
         
         Map<String, Object> result = new HashMap<>();
         result.put("code", 0);

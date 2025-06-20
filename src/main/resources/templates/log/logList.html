@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>日志审计</title>
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
+    <style>
+        /* 统计卡片样式 */
+        .layui-card {
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .layui-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .layui-card-body {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .card-value {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .card-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* 空状态样式（简化版） */
+        .empty-table {
+            text-align: center;
+        }
+
+        .empty-table p {
+            color: #999;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="layui-fluid">
+    <!--  创建时间格式化处理 -->
+    <script type="text/html" id="createTimeTpl">
+        {{formatDate(d.createTime)}}
+    </script>
+
+    <!--  更新时间格式化处理 -->
+    <script type="text/html" id="updateTimeTpl">
+        {{formatDate(d.updateTime)}}
+    </script>
+
+    <!-- 操作栏模板：增加AI分析按钮 -->
+    <script type="text/html" id="logTableBar">
+        <a class="layui-btn layui-btn-xs" lay-event="logList">查看日志详细</a>
+        <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="aiAnalysis">AI分析</a>
+    </script>
+
+
+    <div class="layui-tab layui-tab-brief" lay-filter="detect-tabs">
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <div class="content-display-area" id="log-content">
+                    <table id="logTable" lay-filter="logTable"></table>
+                    <p id="log-no-data" style="display:none; text-align: center; color: #999;">
+                        暂无数据</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="/layui/layui.js"></script>
+<script type="text/javascript">
+    // 日期格式转换函数
+    function formatDate(str) {
+        if (str != null) {
+            var now = new Date(str);
+            var year = now.getFullYear();  //取得4位数的年份
+            var month = now.getMonth() + 1;  //取得日期中的月份，其中0表示1月，11表示12月
+            var date = now.getDate();      //返回日期月份中的天数（1到31）
+            var hours = now.getHours();
+            var minutes = now.getMinutes();
+            var seconds = now.getSeconds();
+            return year + "-" + month + "-" + date + " " + hours + ":" + minutes + ":" + seconds;
+        }
+        return "";
+    }
+</script>
+<script type="text/javascript">
+    layui.config({
+        base: '/layui/layuiAdmin/' //静态资源所在路径
+    }).extend({
+        index: 'lib/index' //主入口模块
+    }).use(['element', 'form', 'table'], function () {
+        var $ = layui.jquery;
+        var element = layui.element;
+        var form = layui.form;
+        var table = layui.table;
+        var util = layui.util;
+
+        //加载table
+
+        //监听行工具事件: 单行删除和修改
+
+        function renderTable(urlName, tableId, data, cols, noDataId) {
+            table.render({
+                elem: '#' + tableId
+                , method: 'post'
+                , url: '/log/list' //后端接口
+                , headers: {
+                    'Authorization': localStorage.getItem('token')
+                }
+                , where: data
+                , cols: [cols]
+                , page: true // 开启分页
+                , limit: 10
+                , limits: [5, 10, 15, 20, 30]
+                , autoSort: false
+                , height: 'full-150'
+                , done: function (res) {
+                    if (res.data && res.data.length === 0) {
+                        document.getElementById(noDataId).style.display = 'block';
+                    } else {
+                        document.getElementById(noDataId).style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        var logCols = [
+            {field: 'logId', title: '日志ID', minWidth: 100},
+            {field: 'hostName', title: '主机名', minWidth: 150},
+            {field: 'macAddress', title: 'MAC地址', minWidth: 180},
+            {field: 'eventId', title: '事件ID', minWidth: 100},
+            {
+                field: 'riskLevel',
+                title: '风险等级',
+                minWidth: 150,
+                templet: function (d) {
+                    if (d.riskLevel == 0) {
+                        return '<span style="background-color: green; color: white; padding: 2px 5px; border-radius: 3px;">无风险</span>';
+                    } else if (d.riskLevel == 1) {
+                        return '<span style="background-color: orange; color: white; padding: 2px 5px; border-radius: 3px;">低风险</span>';
+                    } else if (d.riskLevel == 2) {
+                        return '<span style="background-color: #fa8c16; color: white; padding: 2px 5px; border-radius: 3px;">中风险</span>';
+                    } else if (d.riskLevel == 3) {
+                        return '<span style="background-color: red; color: white; padding: 2px 5px; border-radius: 3px;">高风险</span>';
+                    } else {
+                        return '<span style="color: #999;">未知</span>';
+                    }
+                }
+            },
+            {field: "riskDesc", title: "风险描述", minWidth: 200},
+            {field: 'channel', title: '日志类型', minWidth: 100},
+            {field: 'timestamp', title: '时间', minWidth: 180},
+            {title: '操作', minWidth: 120, align: 'center', toolbar: '#logTableBar'}
+        ];
+        // 页面加载完成后执行
+        $(document).ready(function () {
+            loadStatistics();
+
+            // 渲染表格
+            renderTable('log', 'logTable', {logType: 'audit'}, logCols, 'log-no-data');
+
+            // 窗口大小改变时重绘图表
+            $(window).resize(function () {
+                riskChart.resize();
+            });
+        });
+
+        //监听行工具事件: 查看AI分析结果
+        table.on('tool(logTable)', function (obj) {
+            var data = obj.data;
+
+            if (obj.event === "logList") {
+
+            }
+
+            if (obj.event === 'viewAiResult') {
+                if (data.aiResult) {
+                    let aiObj;
+                    try {
+                        aiObj = JSON.parse(data.aiResult);
+                    } catch (e) {
+                        aiObj = data.aiResult; // 兼容老数据
+                    }
+                    let html = '';
+                    if (typeof aiObj === 'object') {
+                        html += `<table class="layui-table" style="width:100%;margin-bottom:10px;">
+              <tr><th>事件ID</th><td>${aiObj.event_id || ''}</td></tr>
+
+              <tr><th>分析</th><td>${aiObj.analysis || ''}</td></tr>
+              <tr><th>威胁描述</th><td>${aiObj.threat_description || ''}</td></tr>
+              <tr><th>建议</th><td>${aiObj.recommendation || ''}</td></tr>
+            </table>`;
+                    } else {
+                        html = `<pre>${data.aiResult}</pre>`;
+                    }
+                    layer.open({
+                        type: 1, // Page type
+                        title: 'AI分析结果',
+                        shadeClose: true,
+                        shade: 0.8,
+                        area: ['60%', '60%'], // Adjust size as needed
+                        content: `<div style="padding: 20px; word-break: break-all;">${html}</div>` // Content
+                    });
+                } else {
+                    layer.msg('无AI分析结果', {icon: 5});
+                }
+            }
+        });
+
+        //监听Tab切换
+        element.on('tab(detect-tabs)', function (data) {
+            // console.log(this); //当前Tab标题所在的dom对象
+            // console.log(data.index); //得到当前Tab的所在下标
+            // console.log(data.elem); //得到当前的Tab大容器
+        });
+        // Explicitly render tabs after dynamic content loading
+        element.render('tab');
+
+        // 加载全部日志统计数据
+        function loadStatistics() {
+            $.ajax({
+                url: '/log/all/statistics',
+                type: 'GET',
+                headers: {
+                    'Authorization': localStorage.getItem('token')
+                },
+                success: function (res) {
+                    if (res.code === 200 && res.data) {
+                        $('#totalLogs').text(res.data.totalLogs || 0);
+                        $('#systemLogs').text(res.data.systemLogs || 0);
+                        $('#securityLogs').text(res.data.securityLogs || 0);
+                        $('#riskLogs').text(res.data.riskLogs || 0);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('加载统计数据失败:', error);
+                }
+            });
+        }
+
+        // 审计日志页面刷新按钮实现
+        $(document).on('click', '[data-type=refresh]', function () {
+            table.reload('logTable'); // 真实刷新logTable表格
+        });
+
+        $("#ai-analysis-btn").click(function () {
+            var data = table.getData('logTable');
+            data.forEach(obj => {
+                delete obj.hostName;
+                delete obj.macAddress;
+                delete obj.time;
+            });
+            // 发送data给AI
+        });
+
+        // 监听logTable操作栏事件
+        layui.table.on('tool(logTable)', function (obj) {
+            var data = obj.data;
+            if (obj.event === 'aiAnalysis') {
+                if (data.aiResult) {
+                    // 直接展示数据库中的AI分析结果
+                    layer.open({
+                        type: 2,
+                        title: 'AI日志分析结果',
+                        area: ['60%', '60%'],
+                        content: '/page/ai/aiResultTmpl2',
+                        success: function (layero, index) {
+                            let contentWindow = layero.find('iframe')[0].contentWindow;
+                            contentWindow.postMessage(data.aiResult);
+                        }
+                    });
+                } else {
+                    layer.msg('正在将日志发送至AI分析，请稍候...');
+                    var loadIndex = layer.load(1);
+                    $.ajax({
+                        url: '/log/ai/analysis',
+                        method: 'post',
+                        headers: {'Authorization': localStorage.getItem('token')},
+                        contentType: 'application/json',
+                        dataType: 'json',
+                        data: JSON.stringify([data]),
+                        success: function (response) {
+                            layer.close(loadIndex);
+                            let msg = response.msg || '';
+                            layer.open({
+                                type: 2,
+                                title: 'AI日志分析结果',
+                                area: ['60%', '60%'],
+                                content: '/page/ai/aiResultTmpl2',
+                                success: function (layero, index) {
+                                    let contentWindow = layero.find('iframe')[0].contentWindow;
+                                    contentWindow.postMessage(msg);
+                                }
+                            });
+                            layui.table.reload('logTable');
+                        },
+                        error: function (xhr, status, error) {
+                            layer.close(loadIndex);
+                            layer.msg(error, {icon: 5});
+                        }
+                    });
+                }
+            }
+        });
+    });
+
+</script>
+</body>
+</html>
