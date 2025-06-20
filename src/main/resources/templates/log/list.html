@@ -476,12 +476,24 @@
         // ];
 
         var logScanCols = [
-            {field: "id", title: "扫描ID", minWidth: 80}
+            {field: "id", title: "扫描ID", width: 80}
             , {
-                field: "scanDesc", title: "扫描描述", minWidth: 360, templet: function (d) {
-                    return '<button type="button" class="layui-btn layui-bg-blue layui-btn-xs">' + '主机 (' + d.hostName + ') ' + util.toDateString(new Date(d.startTime), "yyyy-MM-dd HH:mm:ss") + ' - ' + util.toDateString(new Date(d.endTime), "yyyy-MM-dd HH:mm:ss") + ' 的日志记录' + '</button>';
+                field: "scanDesc", title: "扫描描述", align: 'center', minWidth: 360, templet: function (d) {
+                    return '<button type="button" class="layui-btn layui-bg-blue layui-btn-xs">' + '主机 (' + d.host_name + ') ' + util.toDateString(new Date(d.start_time), "yyyy-MM-dd HH:mm:ss") + ' - ' + util.toDateString(new Date(d.end_time), "yyyy-MM-dd HH:mm:ss") + ' 的日志记录' + '</button>';
                 }
             }
+            , {field:"noRiskSummary", title: "无风险项数", align: 'center',width: 120,templet: function (d){
+                    return `<button type="button" class="layui-btn layui-btn-xs">${d.noLevelCount}</button>`
+                }}
+            , {field:"lowRiskSummary", title: "低风险项数", align: 'center',width: 120,templet: function (d){
+                    return `<button type="button" class="layui-btn layui-bg-blue layui-btn-xs">${d.lowLevelCount}</button>`
+                }}
+            , {field:"mediumRiskSummary", title: "中风险项数", align: 'center',width: 120,templet: function (d){
+                    return `<button type="button" class="layui-btn layui-bg-orange layui-btn-xs">${d.mediumLevelCount}</button>`
+                }}
+            , {field:"highRiskSummary", title: "高风险项数", align: 'center',width: 120,templet: function (d){
+                    return `<button type="button" class="layui-btn layui-bg-red layui-btn-xs">${d.highLevelCount}</button>`
+                }}
             , {title: '操作', minWidth: 120, align: 'center', toolbar: '#logTableBar'}
         ]
 

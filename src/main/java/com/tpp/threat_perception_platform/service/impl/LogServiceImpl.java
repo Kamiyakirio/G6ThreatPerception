@@ -350,10 +350,18 @@ public class LogServiceImpl implements LogService {
             // 查询日志列表
 //            List<Log> logList = logMapper.selectLogList(params);
             String sql = "SELECT * from log_scan";
-            List<LogScan> logScanList = jdbcTemplate.query(sql, new BeanPropertyRowMapper<LogScan>(LogScan.class));
+            List<Map<String, Object>> logScanList = jdbcTemplate.queryForList(sql);
+
+            for(Map<String, Object> logScan : logScanList) {
+                sql="SELECT COUNT(*) from log where risk_level = ? and log_scan_id = ?";
+                logScan.put("lowLevelCount", jdbcTemplate.queryForObject(sql,Integer.class,1,logScan.get("id")));
+                logScan.put("mediumLevelCount", jdbcTemplate.queryForObject(sql,Integer.class,2,logScan.get("id")));
+                logScan.put("highLevelCount", jdbcTemplate.queryForObject(sql,Integer.class,3,logScan.get("id")));
+                logScan.put("noLevelCount", jdbcTemplate.queryForObject(sql,Integer.class,0,logScan.get("id")));
+            }
 
             // 构建分页信息
-            PageInfo<LogScan> pageInfo = new PageInfo<>(logScanList);
+            PageInfo<Map<String, Object>> pageInfo = new PageInfo<>(logScanList);
 
             return new ResponseResult<>(pageInfo.getTotal(), pageInfo.getList());
         } catch (Exception e) {
