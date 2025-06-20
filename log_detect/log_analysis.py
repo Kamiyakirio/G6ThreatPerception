@@ -292,7 +292,7 @@ def log_analysis_result_send(data):
     start_time = data.get("start_time")
     end_time = data.get("end_time")
     event_list = log_detect(start_time, end_time)
-    return analyze_risk_grade(event_list)
+    return analyze_risk_grade(event_list), start_time, end_time
 
 
 if __name__ == "__main__":

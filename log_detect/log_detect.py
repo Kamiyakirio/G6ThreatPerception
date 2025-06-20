@@ -6,7 +6,7 @@ from log_detect.log_analysis import log_analysis_result_send
 import datetime
 
 from system.pc_information import PcInfo
-from utils.naming_convert import underscore_to_camelcase
+from utils.naming_convert import underscore_to_camelcase, rename_dict_key
 
 
 def log_detect(data):
@@ -37,13 +37,20 @@ def log_detect(data):
             threads.append(t)
 
         for i in as_completed(threads):
-            result = i.result()
+            result, start_time, end_time = i.result()
             # 组装完整的 JSON 结构
             return_data["data"].append({"type": "log", "data": result})
 
         return_data["info"]["time"] = datetime.datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S"
         )
+        return_data["info"]["start_time"] = start_time
+        return_data["info"]["end_time"] = end_time
+
+        return_data["info"] = rename_dict_key(
+            return_data["info"], underscore_to_camelcase
+        )
+
         # print(return_data)
         print("Detect ended!")
 
@@ -55,14 +62,14 @@ def log_analysis(data):
 
     # 调用 log_risk_judge 函数进行测试
     print("\n开始分析日志...")
-    result = log_analysis_result_send(data)
+    result, start_time, end_time = log_analysis_result_send(data)
 
     # 处理结果
     if result:
         # 打印整个JSON结果
         print("\n完整JSON结果:")
         # print(json.dumps(result, ensure_ascii=False, indent=2))
-        return result
+        return result, start_time, end_time
     else:
         print("日志分析失败。")
         return ""
