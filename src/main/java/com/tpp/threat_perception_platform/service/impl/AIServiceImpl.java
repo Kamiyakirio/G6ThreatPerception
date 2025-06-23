@@ -18,7 +18,6 @@ import java.util.Scanner;
 
 @Service
 public class AIServiceImpl implements AIService {
-    private final String ApiKey = "sk-msqkwaaazrumwgtqqlolfkeupojnbherwlvxzsrwpabuaoep";
     private final JSONObject defaultSettings = new JSONObject();
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -68,7 +67,7 @@ public class AIServiceImpl implements AIService {
                 URL url = new URL("https://api.siliconflow.cn/v1/chat/completions");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
-                conn.setRequestProperty("Authorization", "Bearer sk-njscbsdyvajgokhuktedxhnvykpczjldhqzkpxbqjqzzymtt");
+                conn.setRequestProperty("Authorization", "Bearer sk-1234567890abcdef");
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setDoOutput(true);
 
