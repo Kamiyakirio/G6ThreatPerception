@@ -482,57 +482,6 @@ public class RabbitMQController {
                 }
             }
 
-            // 2. 对收集到的日志进行AI分析
-//            if (!logsToAnalyze.isEmpty()) {
-//                try {
-//                    String prompt = TextFileLoader.loadTextFile("texts/prompts/log_analysis_prompt.txt");
-//                    String aiAnalysisResult = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(logsToAnalyze));
-//
-//                    if (aiAnalysisResult != null) {
-//                        try {
-//                            // 使用辅助方法解析AI分析结果
-//                            JSONObject aiResult = parseAIResult(aiAnalysisResult);
-//                            JSONArray detailedAnalysis = aiResult.getJSONArray("detailed_analysis");
-//
-//                            // 更新每条日志的AI分析结果和风险等级
-//                            for (int i = 0; i < savedLogs.size() && i < detailedAnalysis.size(); i++) {
-//                                Log log = savedLogs.get(i);
-//                                JSONObject analysis = detailedAnalysis.getJSONObject(i);
-//
-//                                // 获取AI评估的风险等级
-//                                Integer aiRiskLevel = analysis.getInteger("ai_risk_level");
-//                                if (aiRiskLevel != null) {
-//                                    // 取agent和AI评分的较高值作为最终风险等级
-//                                    Integer finalRiskLevel = Math.max(log.getRiskLevel(), aiRiskLevel);
-//                                    log.setRiskLevel(finalRiskLevel);
-//                                }
-//
-//                                // 只存储该条日志的分析内容
-//                                log.setAiResult(analysis.toJSONString());
-//
-//                                // 更新数据库
-//                                logMapper.updateByPrimaryKeySelective(log);
-//                            }
-//
-//                            System.out.println("AI分析完成，已更新" + savedLogs.size() + "条日志记录");
-//                        } catch (Exception jsonException) {
-//                            System.err.println("AI分析结果JSON解析失败: " + jsonException.getMessage());
-//                            System.err.println("原始AI分析结果: " + aiAnalysisResult);
-//
-//                            // 即使JSON解析失败，也要保存AI分析结果
-//                            for (Log log : savedLogs) {
-//                                log.setAiResult(aiAnalysisResult);
-//                                logMapper.updateByPrimaryKeySelective(log);
-//                            }
-//                            System.out.println("已保存AI分析结果（未解析风险等级）");
-//                        }
-//                    }
-//                } catch (Exception e) {
-//                    System.err.println("AI分析失败: " + e.getMessage());
-//                    e.printStackTrace();
-//                }
-//            }
-
             channel.basicAck(deliveryTag, false);
         } catch (Exception e) {
             e.printStackTrace();
