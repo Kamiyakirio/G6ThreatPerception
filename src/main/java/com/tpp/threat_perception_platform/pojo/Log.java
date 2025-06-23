@@ -68,6 +68,10 @@ public class Log {
      */
     private String aiResult;
 
+    private int logScanId;
+
+
+
     /**
      *
      */
@@ -294,4 +298,11 @@ public class Log {
     }
 
 
+    public int getLogScanId() {
+        return logScanId;
+    }
+
+    public void setLogScanId(int logScanId) {
+        this.logScanId = logScanId;
+    }
 }

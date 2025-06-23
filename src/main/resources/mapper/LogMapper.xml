@@ -17,11 +17,12 @@
             <result property="eventData" column="event_data" />
             <result property="aiResult" column="ai_result" />
             <result property="time" column="time" />
+            <result property="scanId" column="scan_id"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         log_id,mac_address,host_name,event_id,risk_level,timestamp,
-        risk_desc,channel,id,event_data,ai_result,time
+        risk_desc,channel,id,event_data,ai_result,time,log_scan_id
     </sql>
 
     <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
@@ -38,9 +39,9 @@
     <insert id="insert" keyColumn="log_id" keyProperty="logId" parameterType="com.tpp.threat_perception_platform.pojo.Log" useGeneratedKeys="true">
         insert into log
         ( log_id,mac_address,host_name,event_id,risk_level,timestamp,
-        risk_desc,channel,id,event_data,ai_result,time)
+        risk_desc,channel,id,event_data,ai_result,time,log_scan_id)
         values (#{logId},#{macAddress},#{hostName},#{eventId},#{riskLevel},#{timestamp},
-        #{riskDesc},#{channel},#{id},#{eventData},#{aiResult},#{time})
+        #{riskDesc},#{channel},#{id},#{eventData},#{aiResult},#{time},#{scanId})
     </insert>
     <insert id="insertSelective" keyColumn="log_id" keyProperty="logId" parameterType="com.tpp.threat_perception_platform.pojo.Log" useGeneratedKeys="true">
         insert into log
@@ -57,6 +58,7 @@
                 <if test="eventData != null">event_data,</if>
                 <if test="aiResult != null">ai_result,</if>
                 <if test="time != null">time,</if>
+            <if test="logScanId != null">log_scan_id,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
                 <if test="logId != null">#{logId},</if>
@@ -71,6 +73,7 @@
                 <if test="eventData != null">#{eventData},</if>
                 <if test="aiResult != null">#{aiResult},</if>
                 <if test="time != null">#{time},</if>
+            <if test="logScanId != null">#{logScanId},</if>
         </trim>
     </insert>
     <update id="updateByPrimaryKeySelective" parameterType="com.tpp.threat_perception_platform.pojo.Log">
