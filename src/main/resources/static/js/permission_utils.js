@@ -6,20 +6,17 @@ $(document).on('click', 'a[data-url]', function (e) {
 
     // 向后端发送权限校验请求
     $.ajax({
-        url: '/api/check-permission',  // 改为你的接口地址
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ permission: authCode }),
+        url: '/check_permission/' + authCode,  // 改为你的接口地址
+        method: 'GET',
+        headers: {
+            'Authorization': localStorage.getItem('token')
+        },
         success: function (res) {
-            if (res.allowed) {
-                // 允许访问，打开新标签页
-                layui.index.openTabsPage(url, $(e.target).text().trim());
-            } else {
-                layer.msg('无权限访问该页面', { icon: 5 });
-            }
+            // 允许访问，打开新标签页
+            layui.index.openTabsPage(url, $(e.target).text().trim());
         },
         error: function () {
-            layer.msg('权限验证失败，请稍后再试', { icon: 2 });
+            layer.msg('权限验证失败或没有权限！', {icon: 2});
         }
     });
 });

@@ -1,6 +1,7 @@
 package com.tpp.threat_perception_platform.controller;
 
 import com.tpp.threat_perception_platform.param.MyParam;
+import com.tpp.threat_perception_platform.permission.RequiresPermission;
 import com.tpp.threat_perception_platform.pojo.Role;
 import com.tpp.threat_perception_platform.pojo.User;
 import com.tpp.threat_perception_platform.response.ResponseResult;
