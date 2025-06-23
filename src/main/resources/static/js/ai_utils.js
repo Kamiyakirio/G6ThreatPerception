@@ -30,32 +30,43 @@ var ai = function (data, url, force=0) {
         dataType: "json",
         data: JSON.stringify(data),
         success: function (response) {
-            layer.close(loadIndex);
-            layer.close(msgIndex);
-            layer.closeAll('iFrame');
-            layer.open({
-                type: 2,
-                maxmin: true,
-                area: ['60%', '60%'],
-                content: '/page/ai/aiResultTmpl2',
-                success: function (layero, index) {
-                    var contentWindow = layero.find('iframe')[0].contentWindow;
-                    aiResultLayerIndex = index;
-                    contentWindow.postMessage({index:aiResultLayerIndex,data:response.msg});
-                },
-                cancel: function (index, layero, that) {
-                    // layer.confirm("关闭窗口后将无法再次查看AI检测结果，再次点击将产生二次花费，是否确认关闭？", function (index) {
-                    //     layer.close(aiResultLayerIndex);
-                    //     layer.close(index);
-                    // });
-                    // return false;
-                    console.log(returnData);
-                }
-            });
+            if(response.code<1000)
+            {
+                layer.close(loadIndex);
+                layer.close(msgIndex);
+                layer.closeAll('iFrame');
+                layer.open({
+                    type: 2,
+                    maxmin: true,
+                    area: ['60%', '60%'],
+                    content: '/page/ai/aiResultTmpl2',
+                    success: function (layero, index) {
+                        var contentWindow = layero.find('iframe')[0].contentWindow;
+                        aiResultLayerIndex = index;
+                        contentWindow.postMessage({index:aiResultLayerIndex,data:response.msg});
+                    },
+                    cancel: function (index, layero, that) {
+                        // layer.confirm("关闭窗口后将无法再次查看AI检测结果，再次点击将产生二次花费，是否确认关闭？", function (index) {
+                        //     layer.close(aiResultLayerIndex);
+                        //     layer.close(index);
+                        // });
+                        // return false;
+                        // console.log(returnData);
+                    }
+                });
+            }else{
+                layer.msg(res.msg, {icon: 5});
+            }
         },
         error: function (xhr, status, error) {
+            let responseText = xhr.responseText;
             layer.close(loadIndex);
-            layer.msg(error, {icon: 5});
+            try {
+                let json = JSON.parse(responseText);
+                layer.msg(json.msg || "发生错误", { icon: 5 });
+            } catch (e) {
+                layer.msg(responseText || "服务器异常", { icon: 5 });
+            }
         }
     });
 };

@@ -2,6 +2,7 @@ package com.tpp.threat_perception_platform.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.tpp.threat_perception_platform.asset.Account;
+import com.tpp.threat_perception_platform.permission.RequiresPermission;
 import com.tpp.threat_perception_platform.pojo.Log;
 import com.tpp.threat_perception_platform.response.ResponseResult;
 import com.tpp.threat_perception_platform.service.AIService;

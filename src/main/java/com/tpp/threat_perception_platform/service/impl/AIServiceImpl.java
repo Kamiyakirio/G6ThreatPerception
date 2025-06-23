@@ -91,7 +91,7 @@ public class AIServiceImpl implements AIService {
         URL url = new URL("https://api.siliconflow.cn/v1/chat/completions");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("POST");
-        conn.setRequestProperty("Authorization", "Bearer sk-");
+        conn.setRequestProperty("Authorization", "Bearer sk-njscbsdyvajgokhuktedxhnvykpczjldhqzkpxbqjqzzymtt");
         conn.setRequestProperty("Content-Type", "application/json");
         conn.setDoOutput(true);
 
