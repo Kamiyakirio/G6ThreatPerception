@@ -5,49 +5,51 @@
     <title>基线规则管理</title>
     <link rel="stylesheet" href="/layui/css/layui.css" media="all">
     <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
+    <style>
+        .layui-btn-container {
+            margin-bottom: 10px;
+        }
+        .layui-table-tool {
+            background-color: #f8f8f8;
+        }
+    </style>
 </head>
 <body>
 
 <div class="layui-fluid">
     <div class="layui-card">
-        <div class="layui-form layui-card-header layuiadmin-card-header-auto" style="border-radius: 0;border-top: 4px solid #d2d2d2;">
-            <div class="layui-form-item">
-                <div class="layui-inline">
-                    <label class="layui-form-label">规则名称</label>
-                    <div class="layui-input-inline">
-                        <input type="text" name="keywords" placeholder="请输入规则名称" autocomplete="off" class="layui-input">
-                    </div>
-                </div>
-                <div class="layui-inline">
-                    <label class="layui-form-label">分类</label>
-                    <div class="layui-input-inline">
-                        <input type="text" name="category" placeholder="请输入分类" autocomplete="off" class="layui-input">
-                    </div>
-                </div>
-                <div class="layui-inline">
-                    <button class="layui-btn layuiadmin-btn-useradmin" lay-submit lay-filter="LAY-sysuser-front-search">
-                        <i class="layui-icon layui-icon-search layuiadmin-button-btn"></i>
-                    </button>
-                </div>
-            </div>
+        <div style="padding: 10px 15px; display: flex;">
+            <button class="layui-btn" data-type="refresh" style="background-color: #009688;">
+                <i class="layui-icon layui-icon-refresh"></i> 刷新
+            </button>
         </div>
+
         <div class="layui-card-body">
-
-            <div style="padding-bottom: 10px;">
-                <button class="layui-btn layuiadmin-btn-useradmin" data-type="batchdel">删除</button>
-                <button class="layui-btn layuiadmin-btn-useradmin" data-type="add">添加规则</button>
-            </div>
-
             <!--  表格数据加载 -->
-            <table id="LAY-user-manage" lay-filter="LAY-user-manage"></table>
+            <table id="LAY-baseline-rule-manage" lay-filter="LAY-baseline-rule-manage"></table>
 
-
-
-            <script type="text/html" id="table-useradmin-webuser">
-                <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="edit"><i class="layui-icon layui-icon-edit"></i>编辑</a>
-                <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del"><i class="layui-icon layui-icon-delete"></i>删除</a>
+            <script type="text/html" id="table-baseline-rule-tool">
+                <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="edit" style="background-color: #1E9FFF;">
+                    <i class="layui-icon layui-icon-edit"></i>编辑
+                </a>
+                <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del" style="background-color: #FF5722;">
+                    <i class="layui-icon layui-icon-delete"></i>删除
+                </a>
             </script>
-
+            
+            <!-- 风险等级格式化 -->
+            <script type="text/html" id="riskLevelTpl">
+                {{# console.log('risk_level值:', d.risk_level, '类型:', typeof(d.risk_level)); }}
+                {{#  if(d.risk_level === '高'){ }}
+                <span class="layui-badge layui-bg-red">高风险</span>
+                {{#  } else if(d.risk_level === '中'){ }}
+                <span class="layui-badge layui-bg-orange">中风险</span>
+                {{#  } else if(d.risk_level === '低'){ }}
+                <span class="layui-badge layui-bg-green">低风险</span>
+                {{#  } else { }}
+                <span class="layui-badge layui-bg-gray">未知({{d.risk_level}})</span>
+                {{#  } }}
+            </script>
 
             <!--  创建时间格式化处理 -->
             <script type="text/html" id="createTimeTpl">
@@ -58,7 +60,6 @@
             <script type="text/html" id="updateTimeTpl">
                 {{formatDate(d.updateTime)}}
             </script>
-
         </div>
     </div>
 </div>
@@ -93,216 +94,357 @@
 
         //加载table
         table.render({
-            elem: '#LAY-user-manage'
+            elem: '#LAY-baseline-rule-manage'
+            ,url: '/baseline/rules/settings' // 从后端获取数据
             ,method: 'post'
-            ,url:'/user/list' //后端接口
+            ,contentType: 'application/json'
             ,headers: {
-                'Authorization': localStorage.getItem('token')
+                'Authorization': localStorage.getItem('token'),
+                'Content-Type': 'application/json;charset=utf-8'
             }
-            ,width: 'auto'// 自适应宽度
-            ,cellMinWidth: 80 //全局定义常规单元格的最小宽度
+            ,width: 'auto'
+            ,cellMinWidth: 80
+            ,even: true
             ,title: '基线规则数据表'
+            ,page: {
+                layout: ['prev', 'page', 'next', 'skip', 'count', 'limit']
+                ,groups: 5
+                ,limits: [10, 15, 20, 30, 50]
+                ,limit: 10
+            }
+            ,request: {
+                pageName: 'page'
+                ,limitName: 'limit'
+            }
+            ,where: {
+                // 初始查询条件（如果有的话）
+            }
+            ,parseData: function(res) {
+                if (res.code === 401 || res.code === 403) {
+                    // 显示确认对话框
+                    layer.confirm('登录已过期，是否立即重新登录？', {
+                        icon: 7,
+                        title: '登录提示',
+                        btn: ['重新登录', '取消']
+                    }, function(index) {
+                        layer.close(index);
+                        // 如果用户确认，则跳转到登录页面
+                        top.location.href = '/page/login';
+                    });
+                    return {
+                        "code": 1,
+                        "msg": res.msg,
+                        "count": 0,
+                        "data": []
+                    };
+                }
+                return {
+                    "code": res.code === 0 ? 0 : 1,
+                    "msg": res.msg,
+                    "count": res.count,
+                    "data": res.data
+                };
+            }
             ,cols: [
                 [
-                {type: 'checkbox', fixed: 'left'}
-                ,{field:'ruleId', title:'规则ID', width: 100}
-                ,{field:'ruleName', title:'名称', width: 150}
-                ,{field:'description', title:'描述', width: 300}
-                ,{field:'category', title:'分类', width: 120}
-                ,{field:'applicableSystem', title:'适用系统', width: 120}
-                ,{field:'riskLevel', title:'风险等级', width: 100}
-                ,{fixed: 'right', title:'操作', toolbar: '#table-useradmin-webuser',width:180}
+                {type: 'checkbox', fixed: 'left', align: 'center', width: 50}
+                ,{field:'id', title:'ID', width: 80, align: 'center'}
+                ,{field:'name', title:'名称', width: 200, align: 'center'}
+                ,{field:'description', title:'描述', width: 350, align: 'center'}
+                ,{field:'settings', title:'设置', width: 200, align: 'center', templet: function(d){
+                    if (d.settings && typeof d.settings === 'object') {
+                        var settingValue = '';
+                        // 调试输出
+                        console.log('规则ID:', d.id);
+                        console.log('设置值:', d.settings);
+                        
+                        // 二元值转换函数
+                        function convertBinaryValue(value) {
+                            // 对于审计策略规则（规则ID 21-29）
+                            if (d.id >= '21' && d.id <= '29') {
+                                if (value === null || value === undefined) return '未设置';
+                                switch(value.toString()) {
+                                    case '0':
+                                        return '0（不审计）';
+                                    case '1':
+                                        return '1（仅审计成功）';
+                                    case '2':
+                                        return '2（仅审计失败）';
+                                    case '3':
+                                        return '3（审计成功和失败）';
+                                    default:
+                                        return value.toString();
+                                }
+                            }
+                            // 对于权限规则（规则ID 30-32）
+                            if (d.id >= '30' && d.id <= '32') {
+                                return value || '未设置';
+                            }
+                            // 对于其他规则
+                            if (value === 0 || value === '0') return '否';
+                            if (value === 1 || value === '1') return '是';
+                            return '未设置';
+                        }
+                        
+                        // 获取设置值的辅助函数
+                        function getSettingValue(settings, key) {
+                            if (!settings || typeof settings !== 'object') return null;
+                            return settings[key];
+                        }
+                        
+                        // 根据规则ID处理不同的设置显示
+                        switch(d.id) {
+                            case '1': // 密码最小使用期限
+                                settingValue = d.settings.minimum_password_age || '未设置';
+                                break;
+                            case '2': // 密码最大使用期限
+                                settingValue = d.settings.maximum_password_age || '未设置';
+                                break;
+                            case '3': // 密码最小长度
+                                settingValue = d.settings.minimum_password_length || '未设置';
+                                break;
+                            case '4': // 密码复杂性要求
+                                settingValue = convertBinaryValue(d.settings.password_complexity);
+                                break;
+                            case '5': // 密码历史记录大小
+                                settingValue = d.settings.password_history_size || '未设置';
+                                break;
+                            case '6': // 账户锁定阈值
+                                settingValue = d.settings.lockout_bad_count || '未设置';
+                                break;
+                            case '7': // 登录修改密码要求
+                                settingValue = convertBinaryValue(d.settings.require_logon_to_change_password);
+                                break;
+                            case '8': // 强制注销超时
+                                settingValue = convertBinaryValue(d.settings.force_logoff_when_hour_expire);
+                                break;
+                            case '9': // 管理员账户名称
+                                settingValue = d.settings.new_administrator_name || '未设置';
+                                break;
+                            case '10': // 来宾账户名称
+                                settingValue = d.settings.new_guest_name || '未设置';
+                                break;
+                            case '11': // 明文密码禁用
+                                settingValue = convertBinaryValue(d.settings.clear_text_password);
+                                break;
+                            case '12': // LSA匿名查询
+                                settingValue = convertBinaryValue(d.settings.LSA_anonymous_name_lookup);
+                                break;
+                            case '13': // 管理员账户状态
+                                settingValue = convertBinaryValue(d.settings.enable_admin_account);
+                                break;
+                            case '14': // 来宾账户状态
+                                settingValue = convertBinaryValue(d.settings.enable_guest_account);
+                                break;
+                            case '15': // LM哈希禁用
+                                settingValue = convertBinaryValue(d.settings.no_LM_hash);
+                                break;
+                            case '16': // 空密码限制
+                                settingValue = convertBinaryValue(d.settings.limit_blank_password_use);
+                                break;
+                            case '17': // 匿名访问限制
+                                settingValue = convertBinaryValue(d.settings.restrict_anonymous);
+                                break;
+                            case '18': // 显示最后用户名
+                                settingValue = convertBinaryValue(d.settings.dont_display_last_user_name);
+                                break;
+                            case '19': // 明文密码禁用
+                                settingValue = convertBinaryValue(d.settings.enable_plain_text_password);
+                                break;
+                            case '20': // 页面文件清理
+                                settingValue = convertBinaryValue(d.settings.clear_page_file_at_shutdown);
+                                break;
+                            case '21': // 系统事件审计
+                                settingValue = convertBinaryValue(getSettingValue(d.settings, 'audit_system_events'));
+                                break;
+                            case '22': // 登录事件审计
+                                settingValue = convertBinaryValue(getSettingValue(d.settings, 'audit_logon_events'));
+                                break;
+                            case '23': // 对象访问审计
+                                settingValue = convertBinaryValue(getSettingValue(d.settings, 'audit_object_access'));
+                                break;
+                            case '24': // 特权使用审计
+                                settingValue = convertBinaryValue(getSettingValue(d.settings, 'audit_privilege_use'));
+                                break;
+                            case '25': // 策略更改审计
+                                settingValue = convertBinaryValue(getSettingValue(d.settings, 'audit_policy_change'));
+                                break;
+                            case '26': // 账户管理审计
+                                settingValue = convertBinaryValue(getSettingValue(d.settings, 'audit_account_manage'));
+                                break;
+                            case '27': // 进程追踪审计
+                                settingValue = convertBinaryValue(getSettingValue(d.settings, 'audit_process_tracking'));
+                                break;
+                            case '28': // 目录服务访问审计
+                                settingValue = convertBinaryValue(getSettingValue(d.settings, 'audit_DS_access'));
+                                break;
+                            case '29': // 账户登录审计
+                                settingValue = convertBinaryValue(getSettingValue(d.settings, 'audit_account_logon'));
+                                break;
+                            case '30': // 分析单个进程权限
+                                settingValue = convertBinaryValue(getSettingValue(d.settings, 'se_profile_single_process_privilege'));
+                                break;
+                            case '31': // 远程关机权限
+                                settingValue = convertBinaryValue(getSettingValue(d.settings, 'se_remote_shutdown_privilege'));
+                                break;
+                            case '32': // 关机权限
+                                settingValue = convertBinaryValue(getSettingValue(d.settings, 'se_shutdown_privilege'));
+                                break;
+                            default:
+                                settingValue = '未设置';
+                        }
+                        return settingValue;
+                    }
+                    return '未设置';
+                }}
+                ,{title: '操作', toolbar: '#table-baseline-rule-tool', width: 400, align:'center', fixed: 'right'}
             ]]
-            ,page: {
-                curr: 1 //设定初始在第 5 页
-                ,limit: 5 //设定初始每页显示 5 条
-            },
-            limits:[5,10,15,20]
         });
 
-        //监听行工具事件: 单行删除和修改
-        table.on('tool(LAY-user-manage)', function(obj){
+        //监听行工具事件: 修改和删除
+        table.on('tool(LAY-baseline-rule-manage)', function(obj){
             var data = obj.data;
             if(obj.event === 'del'){
-                layer.confirm('真的删除吗?', function(index){
+                layer.confirm('确定删除该规则吗?', function(index){
                     $.ajax({
-                        url:"/user/delete", //请求后端接口地址
-                        type:"post", //请求方式get | post
+                        url:"/baseline/rule/delete",
+                        type:"post",
                         headers: {
-                            'Authorization': localStorage.getItem('token')
+                            'Authorization': localStorage.getItem('token'),
+                            'Content-Type': 'application/json;charset=utf-8'
                         },
-                        data:{ids:[data.id]}, //数据
-                        dataType:"json", //后端返回参数类型
-                        success:function (res){ //请求成功后回调函数res = JSONObject.toJSONString(resultMap)
-                            if(res.code == 0){//成功
-                                layer.msg(res.msg);//弹出提示
-                                table.reload('LAY-user-manage'); //数据刷新
-                                layer.close(index); //关闭弹层
-                            }else {
-                                layer.msg(res.msg,{icon: 5});//弹出提示
+                        data: JSON.stringify({rule_id: data.id}),
+                        dataType:"json",
+                        success:function (res){
+                            if(res.code === 0){
+                                layer.msg(res.msg);
+                                table.reload('LAY-baseline-rule-manage');
+                                layer.close(index);
+                            } else if(res.code === 401 || res.code === 403) {
+                                // 显示确认对话框
+                                layer.confirm('登录已过期，是否立即重新登录？', {
+                                    icon: 7,
+                                    title: '登录提示',
+                                    btn: ['重新登录', '取消']
+                                }, function(confirmIndex) {
+                                    layer.close(confirmIndex);
+                                    layer.close(index);
+                                    // 如果用户确认，则跳转到登录页面
+                                    top.location.href = '/page/login';
+                                });
+                            } else {
+                                layer.msg(res.msg,{icon: 5});
+                            }
+                        },
+                        error: function(xhr) {
+                            if(xhr.status === 401 || xhr.status === 403) {
+                                // 显示确认对话框
+                                layer.confirm('登录已过期，是否立即重新登录？', {
+                                    icon: 7,
+                                    title: '登录提示',
+                                    btn: ['重新登录', '取消']
+                                }, function(confirmIndex) {
+                                    layer.close(confirmIndex);
+                                    layer.close(index);
+                                    // 如果用户确认，则跳转到登录页面
+                                    top.location.href = '/page/login';
+                                });
+                            } else {
+                                layer.msg('请求失败',{icon: 5});
                             }
                         }
                     })
                 });
             } else if(obj.event === 'edit'){
-                layer.open({
-                    type: 2
-                    ,title: '修改用户'
-                    ,skin: 'layui-layer-molv'
-                    ,content: '/page/user/edit'
-                    ,maxmin: true
-                    ,area: ['480px', '310px']
-                    ,btn: ['确定', '取消']
-                    ,success: function (layero,index){ //弹出层加载之前执行
-                        // 获取选中行的数据
-                        // 获取弹出层的表单
-                        var body = layer.getChildFrame("body",index);
-                        var contentWindow = layero.find('iframe')[0].contentWindow;//得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
-                        // 获取编辑表单中用户名元素
-                        // 数据回显到弹出的表单中
-                        contentWindow.layui.form.val('layuiadmin-form-useradmin', {
-                            "id": data.id
-                            ,"userName": data.userName
-                            ,"userRole": data.userRole
-                            ,"userStatus": data.userStatus
-                        });
-
-                    }
-                    ,yes: function (index,layero){
-                        var iframeWindow = window['layui-layer-iframe'+ index]
-                            ,submitID = 'LAY-user-front-submit'
-                            ,submit = layero.find('iframe').contents().find('#'+ submitID);
-                        //监听提交--隐藏按钮
-                        iframeWindow.layui.form.on('submit('+ submitID +')', function(data){
-                            var field = data.field; //获取提交的字段
-                            // 通过Ajax方式将参数提交到后端--保存数据库中
-                            $.ajax({
-                                url:"/user/edit",
-                                type:"post",
-                                headers: {
-                                    'Authorization': localStorage.getItem('token')
-                                },
-                                data:JSON.stringify(field),
-                                contentType: "application/json;charset=utf-8", //提交参数类型为json格式
-                                dataType:"json",
-                                success:function (res){
-                                    if(res.code == 0){//成功
-                                        layer.msg(res.msg);//弹出提示
-                                        table.reload('LAY-user-manage'); //数据刷新
-                                        layer.close(index); //关闭弹层
-                                    }else{//系统出问题
-                                        layer.msg(res.msg,{icon: 5});//弹出提示
-                                    }
-                                }
-                            })
-                        });
-                        submit.trigger('click');
-                    }
-
-                });
-            }
-        });
-
-        //监听搜索
-        form.on('submit(LAY-sysuser-front-search)', function(data){
-            var field = data.field;
-            //执行重载
-            table.reload('LAY-user-manage', {
-                url: '/user/list',
-                method: "post",
-                headers: {
-                    'Authorization': localStorage.getItem('token')
-                },
-                where: field
-            });
-        });
-
-        //事件 批量删除，添加用户
-        var active = {
-            batchdel: function(){
-                var checkStatus = table.checkStatus('LAY-user-manage')
-                    ,checkData = checkStatus.data; //得到选中的数据
-
-                if(checkData.length == 0){
-                    return layer.msg('请选择数据');
+                // 打印数据，方便调试
+                console.log("编辑的规则数据:", data);
+                
+                // 转换数据格式，确保与后端接口兼容
+                var editData = {
+                    id: data.id,
+                    name: data.name,
+                    description: data.description,
+                    settings: data.settings
+                };
+                
+                // 获取当前token
+                var currentToken = localStorage.getItem('token');
+                if (!currentToken) {
+                    layer.msg('未登录或登录已过期，请重新登录', {icon: 2});
+                    setTimeout(function() {
+                        top.location.href = '/page/login';
+                    }, 1500);
+                    return;
                 }
-
-                // 程序走到这里，表示已经有选中要删除的数据了。
-                layer.confirm('确定删除吗？',function (){
-                    var userIds = new Array();
-                    $.each(checkData,function (index,item){
-                           userIds.push(item.id);
-                    })
-                    // 提交给后端
-                    $.ajax({
-                        url:"/user/delete",
-                        type:"post",
-                        headers: {
-                            'Authorization': localStorage.getItem('token')
-                        },
-                        data:{ids:userIds},
-                        dataType:"json",
-                        success:function (res){
-                            if(res.code == 0){//成功
-                                layer.msg(res.msg);
-                                table.reload('LAY-user-manage'); //数据刷新
-                                layer.close(index); //关闭弹层
-                            }else{
-                                layer.msg(res.msg,{icon: 5});//弹出提示
-                            }
-                        }
-                    })
-                })
-            }
-            ,add: function(){
+                
+                console.log("准备传递到iframe的数据:", editData);
+                
                 layer.open({
                     type: 2
-                    ,title: '添加用户'
+                    ,title: '修改规则'
                     ,skin: 'layui-layer-molv'
-                    ,content: '/page/user/add'
+                    ,content: '/page/baseline/rule_edit'
                     ,maxmin: true
-                    ,area: ['580px', '350px']
+                    ,area: ['500px', '400px']
                     ,btn: ['确定', '取消']
-                    ,yes: function (index,layero){
-                        var iframeWindow = window['layui-layer-iframe'+ index]
-                            ,submitID = 'LAY-user-front-submit'
-                            ,submit = layero.find('iframe').contents().find('#'+ submitID);
-                            //监听提交--隐藏按钮
-                            iframeWindow.layui.form.on('submit('+ submitID +')', function(data){
-                                var field = data.field; //获取提交的字段
-                                // 通过Ajax方式将参数提交到后端--保存数据库中
-                                $.ajax({
-                                    url:"/user/save",
-                                    type:"post",
-                                    headers: {
-                                        'Authorization': localStorage.getItem('token')
-                                    },
-                                    data:JSON.stringify(field),
-                                    contentType: "application/json;charset=utf-8", //提交参数类型为json格式
-                                    dataType:"json",
-                                    success:function (res){
-                                        if(res.code === 0){//成功
-                                            layer.msg(res.msg);//弹出提示
-                                            table.reload('LAY-user-manage'); //数据刷新
-                                            layer.close(index); //关闭弹层
-                                        }else{//系统出问题
-                                            layer.msg(res.msg,{icon: 5});//弹出提示
-                                        }
-                                    }
-                                })
-                            });
-                            submit.trigger('click');
+                    ,success: function (layero, index){
+                        var iframe = window['layui-layer-iframe' + index];
+                        
+                        // 等待iframe加载完成
+                        setTimeout(function() {
+                            if (typeof iframe.setRuleData === 'function') {
+                                // 传递token到iframe
+                                iframe.initToken && iframe.initToken(currentToken);
+                                // 传递规则数据
+                                iframe.setRuleData(editData);
+                                console.log("数据已传递到iframe");
+                            } else {
+                                console.error("iframe.setRuleData 不是一个函数");
+                                layer.msg('页面加载异常，请刷新重试', {icon: 2});
+                            }
+                        }, 500);  // 增加等待时间到500ms
                     }
-
+                    ,yes: function(index, layero) {
+                        var iframeWindow = window['layui-layer-iframe' + index];
+                        
+                        // 直接调用iframe中的提交函数
+                        if (typeof iframeWindow.submitForm === 'function') {
+                            iframeWindow.submitForm();
+                        } else {
+                            layer.msg('提交函数未找到，请刷新重试', {icon: 2});
+                        }
+                    }
                 });
+            }
+        });
+
+        // 事件处理
+        var active = {
+            refresh: function(){
+                // 显示加载提示
+                var loadIndex = layer.msg('数据刷新中...', {
+                    icon: 16,
+                    shade: 0.01,
+                    time: 0
+                });
+                
+                // 重载表格数据
+                table.reload('LAY-baseline-rule-manage', {
+                    where: {}
+                }, 'data');
+                
+                // 关闭加载提示
+                setTimeout(function(){
+                    layer.close(loadIndex);
+                    layer.msg('刷新成功', {icon: 1});
+                }, 800);
             }
         };
 
-        $('.layui-btn.layuiadmin-btn-useradmin').on('click', function(){
+        $('.layui-btn[data-type]').on('click', function(){
             var type = $(this).data('type');
             active[type] ? active[type].call(this) : '';
         });
-
     });
 </script>
 </body>
