@@ -426,6 +426,7 @@
                     delete obj.riskDesc;
                 });
                 // console.log(data);
+                ai({id:id,data:data}, "/ai/process_analysis");
             });
 
             $("#service-ai-analysis").click(function () {
@@ -441,7 +442,7 @@
                     delete obj.riskDesc;
                 });
                 // console.log(data);
-                ai(data, "/ai/port_analysis");
+                ai({id:id,data:data}, "/ai/port_analysis");
             });
 
             $("#app-ai-analysis").click(function (){
@@ -455,7 +456,7 @@
                     delete obj.risk;
                     delete obj.riskDesc;
                 });
-                ai(data,"/ai/apprisk_analysis");
+                ai({id:id,data:data},"/ai/apprisk_analysis");
             });
 
             $("#riskDetectionBtn").click(function () {

@@ -37,11 +37,19 @@ public class AIController {
         return new ResponseResult(1,result);
     }
 
+    @PostMapping("/ai/process_analysis")
+    public ResponseResult AIProcessAnalysis(@RequestBody HashMap<String, Object> data)
+    {
+        String prompt= TextFileLoader.loadTextFile("texts/prompts/process_analysis_prompt.txt");
+        String result = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(data));
+        return new ResponseResult(1,result);
+    }
+
     @PostMapping("/ai/log_analysis")
     public ResponseResult AILogAnalysis(@RequestBody Map<String, Object> logs)
     {
         String prompt= TextFileLoader.loadTextFile("texts/prompts/log_analysis_prompt.txt");
-        String result = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(logs));
+        String result = aiService.aiAssistWithoutThinking(prompt, JSON.toJSONString(logs));
         return new ResponseResult(1,result);
     }
 
@@ -49,7 +57,7 @@ public class AIController {
     public ResponseResult AIAppRiskAnalysis(@RequestBody Map<String, Object> apprisks)
     {
         String prompt = TextFileLoader.loadTextFile("texts/prompts/apprisk_analysis_prompt.txt");
-        String result = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(apprisks));
+        String result = aiService.aiAssistWithoutThinking(prompt, JSON.toJSONString(apprisks));
         return new ResponseResult(1, result);
     }
 
