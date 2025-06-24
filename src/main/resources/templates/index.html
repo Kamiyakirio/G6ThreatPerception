@@ -12,6 +12,12 @@
     <!--引入本地自定义的admin.css-->
     <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
 
+    <style>
+        [data-auth][data-url] {
+            cursor: pointer;
+        }
+    </style>
+
     <script>
         /^http(s*):\/\//.test(location.href) || alert('请先部署到 localhost 下再访问');
     </script>
@@ -105,7 +111,7 @@
                             </dd>
                             <dd>
                                 <i class="layui-icon layui-icon-auz"></i>
-                                <a data-url="/page/permission/list" data-auth="user.list">权限管理</a>
+                                <a data-url="/page/permission/index" data-auth="permission.index">权限管理</a>
                             </dd>
                         </dl>
                     </li>
