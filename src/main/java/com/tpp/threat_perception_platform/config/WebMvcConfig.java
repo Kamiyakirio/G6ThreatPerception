@@ -1,11 +1,18 @@
 package com.tpp.threat_perception_platform.config;
 
+import com.tpp.threat_perception_platform.permission.PermissionInterceptor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
+
+    @Autowired
+    private PermissionInterceptor permissionInterceptor;
+
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
         // 主页
@@ -56,6 +63,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addViewController("/page/log/list").setViewName("log/list");
         registry.addViewController("/page/log/detect").setViewName("log/detect");
 
+
         //baseline related pages
 //        registry.addViewController("/page/baseline/list").setViewName("baseline/list");
         registry.addViewController("/page/baseline/result").setViewName("baseline/result");
@@ -66,6 +74,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addViewController("/page/baseline/result").setViewName("baseline/result");
         registry.addViewController("/page/baseline/rule_edit").setViewName("baseline/rule_edit");
         registry.addViewController("/page/baseline/task_edit").setViewName("baseline/task_edit");
+
+        registry.addViewController("/page/permission/index").setViewName("permission/index");
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(permissionInterceptor).addPathPatterns("/**");
 
     }
 }

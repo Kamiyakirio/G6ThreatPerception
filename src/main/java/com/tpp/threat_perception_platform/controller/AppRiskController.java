@@ -35,7 +35,7 @@ public class AppRiskController {
             @RequestParam("macAddress") String macAddress,
             @RequestParam("page") Integer page,
             @RequestParam("limit") Integer limit) {
-        System.out.println("收到/apprisk/list请求，macAddress: " + macAddress + ", page: " + page + ", limit: " + limit);
+//        System.out.println("收到/apprisk/list请求，macAddress: " + macAddress + ", page: " + page + ", limit: " + limit);
         return appRiskService.getAppRiskResults(macAddress, page, limit);
     }
 

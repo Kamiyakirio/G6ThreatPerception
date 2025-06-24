@@ -12,6 +12,12 @@
     <!--引入本地自定义的admin.css-->
     <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
 
+    <style>
+        [data-auth][data-url] {
+            cursor: pointer;
+        }
+    </style>
+
     <script>
         /^http(s*):\/\//.test(location.href) || alert('请先部署到 localhost 下再访问');
     </script>
@@ -105,7 +111,7 @@
                             </dd>
                             <dd>
                                 <i class="layui-icon layui-icon-auz"></i>
-                                <a lay-href="/page/access/list">权限管理</a>
+                                <a data-url="/page/permission/index" data-auth="permission.index">权限管理</a>
                             </dd>
                         </dl>
                     </li>
@@ -247,14 +253,17 @@
 
 <!--引入本地的Layui.js-->
 <script type="text/javascript" src="/layui/layui.js"></script>
+<script src="/js/permission_utils.js"></script>
+<script src="/js/jquery-3.7.1.min.js"></script>
 <script type="text/javascript">
     layui.config({
         base: '/layui/layuiAdmin/' //静态资源所在路径
     }).extend({
         index: 'lib/index' //主入口模块
     }).use('index');
-    layui.use('layer', function () {
-        var layer = layui.layer;
+    layui.use(['layer','element'], function () {
+        var layer = layui.layer
+            ,element = layui.element;
         $(function () {
             // 获取登录用户名
             var login_user = localStorage.getItem("username")

@@ -97,6 +97,7 @@
         return "";
     }
 </script>
+<script src="/js/ai_utils.js"></script>
 <script type="text/javascript">
     layui.config({
         base: '/layui/layuiAdmin/' //静态资源所在路径
@@ -218,6 +219,8 @@
                     layer.msg('无AI分析结果', {icon: 5});
                 }
             }
+
+
         });
 
         //监听Tab切换
@@ -270,49 +273,18 @@
         layui.table.on('tool(logTable)', function (obj) {
             var data = obj.data;
             if (obj.event === 'aiAnalysis') {
-                if (data.aiResult) {
-                    // 直接展示数据库中的AI分析结果
-                    layer.open({
-                        type: 2,
-                        title: 'AI日志分析结果',
-                        area: ['60%', '60%'],
-                        content: '/page/ai/aiResultTmpl2',
-                        success: function (layero, index) {
-                            let contentWindow = layero.find('iframe')[0].contentWindow;
-                            contentWindow.postMessage(data.aiResult);
-                        }
-                    });
-                } else {
-                    layer.msg('正在将日志发送至AI分析，请稍候...');
-                    var loadIndex = layer.load(1);
-                    $.ajax({
-                        url: '/log/ai/analysis',
-                        method: 'post',
-                        headers: {'Authorization': localStorage.getItem('token')},
-                        contentType: 'application/json',
-                        dataType: 'json',
-                        data: JSON.stringify([data]),
-                        success: function (response) {
-                            layer.close(loadIndex);
-                            let msg = response.msg || '';
-                            layer.open({
-                                type: 2,
-                                title: 'AI日志分析结果',
-                                area: ['60%', '60%'],
-                                content: '/page/ai/aiResultTmpl2',
-                                success: function (layero, index) {
-                                    let contentWindow = layero.find('iframe')[0].contentWindow;
-                                    contentWindow.postMessage(msg);
-                                }
-                            });
-                            layui.table.reload('logTable');
-                        },
-                        error: function (xhr, status, error) {
-                            layer.close(loadIndex);
-                            layer.msg(error, {icon: 5});
-                        }
-                    });
-                }
+                $.ajax({
+                   url: "/log/list"
+                    ,method: "post"
+                    ,headers: {
+                        'Authorization': localStorage.getItem('token')
+                    }
+                    ,data:{page:1,limit:100000}
+                    ,success: function (response){
+                       console.log(response.data);
+                    }
+                });
+                //ai("/log/ai/analysis",{})
             }
         });
     });
