@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>编辑基线规则</title>
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .form-container {
+            padding: 20px 30px;
+            width: 90%;
+            margin: 0 auto;
+        }
+
+        .layui-form-label {
+            width: 120px;
+            font-size: 15px;
+            color: #333;
+            font-weight: normal;
+            padding: 9px 0;
+            text-align: left;
+        }
+
+        .layui-input-block {
+            margin-left: 140px;
+        }
+
+        .layui-form-item {
+            margin-bottom: 15px;
+        }
+
+        .rule-info {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+
+        .rule-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+<div class="layui-form form-container" lay-filter="layuiadmin-form-rule">
+    <!-- 规则信息显示区域（只读） -->
+    <div class="rule-info">
+        <p><strong>规则ID：</strong><span id="display_id"></span></p>
+        <p><strong>规则名称：</strong><span id="display_name"></span></p>
+        <p><strong>规则描述：</strong><span id="display_description"></span></p>
+    </div>
+
+    <!-- 设置值编辑区域 -->
+    <div class="layui-form-item">
+        <label class="layui-form-label">设置值</label>
+        <div class="layui-input-block" id="settings_input_container">
+            <!-- 这里的具体内容会根据规则ID动态生成 -->
+        </div>
+    </div>
+
+    <!-- 隐藏的提交按钮 -->
+    <div class="layui-form-item layui-hide">
+        <input type="hidden" name="rule_id" id="rule_id">
+        <button class="layui-btn" lay-submit lay-filter="LAY-baseline-rule-edit-submit" id="LAY-baseline-rule-edit-submit">提交</button>
+    </div>
+</div>
+
+<script src="/layui/layui.js"></script>
+<script>
+    layui.use(['form', 'layer'], function(){
+        var form = layui.form;
+        var $ = layui.jquery;
+        var currentRuleData = null;
+        var currentToken = null;
+
+        // 初始化token
+        window.initToken = function(token) {
+            if (!token) {
+                console.error("接收到的token为空");
+                return;
+            }
+            currentToken = token;
+            console.log("Token已初始化，长度:", token.length);
+        };
+
+        // 接收父页面传递的数据
+        window.setRuleData = function(data) {
+            currentRuleData = data;
+            console.log("接收到的规则数据:", data);
+
+            // 更新显示信息
+            $('#display_id').text(data.id || '');
+            $('#display_name').text(data.name || '');
+            $('#display_description').text(data.description || '');
+
+            // 设置隐藏的rule_id
+            $('#rule_id').val(data.id);
+
+            var container = $('#settings_input_container');
+            container.empty();
+
+            // 获取当前设置值
+            var currentValue = null;
+            if (data.settings && typeof data.settings === 'object') {
+                var firstKey = Object.keys(data.settings)[0];
+                currentValue = data.settings[firstKey];
+            }
+
+            var ruleId = parseInt(data.id);
+            console.log("规则ID:", ruleId, "当前设置值:", currentValue);
+
+            // 根据规则ID生成不同的输入控件
+            if (ruleId >= 21 && ruleId <= 29) {
+                // 审计策略规则使用下拉选择
+                container.append(`
+                    <select name="setting_value" lay-verify="required">
+                        <option value="">请选择</option>
+                        <option value="0" ${currentValue === '0' || currentValue === 0 ? 'selected' : ''}>不审计</option>
+                        <option value="1" ${currentValue === '1' || currentValue === 1 ? 'selected' : ''}>仅审计成功</option>
+                        <option value="2" ${currentValue === '2' || currentValue === 2 ? 'selected' : ''}>仅审计失败</option>
+                        <option value="3" ${currentValue === '3' || currentValue === 3 ? 'selected' : ''}>审计成功和失败</option>
+                    </select>
+                `);
+            } else if ([4, 7, 8, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].includes(ruleId)) {
+                // 二元值规则使用是/否选择
+                var displayValue = (currentValue === 1 || currentValue === '1') ? '是' : '否';
+                container.append(`
+                    <select name="setting_value" lay-verify="required">
+                        <option value="">请选择</option>
+                        <option value="是" ${displayValue === '是' ? 'selected' : ''}>是</option>
+                        <option value="否" ${displayValue === '否' ? 'selected' : ''}>否</option>
+                    </select>
+                `);
+            } else if (ruleId >= 30 && ruleId <= 32) {
+                // 权限规则使用文本输入，带提示
+                container.append(`
+                    <input type="text" name="setting_value" lay-verify="required"
+                           placeholder="请输入SID值（例如：*S-1-5-32-544）"
+                           value="${currentValue || ''}"
+                           autocomplete="off" class="layui-input">
+                `);
+            } else {
+                // 其他规则使用文本输入
+                var placeholder = '';
+                if (ruleId === 1 || ruleId === 2) {
+                    placeholder = '请输入天数';
+                } else if (ruleId === 3) {
+                    placeholder = '请输入密码长度';
+                } else if (ruleId === 5) {
+                    placeholder = '请输入密码历史记录数量';
+                } else if (ruleId === 6) {
+                    placeholder = '请输入锁定阈值';
+                } else if (ruleId === 9 || ruleId === 10) {
+                    placeholder = '请输入账户名称';
+                } else {
+                    placeholder = '请输入设置值';
+                }
+
+                container.append(`
+                    <input type="text" name="setting_value" lay-verify="required"
+                           placeholder="${placeholder}"
+                           value="${currentValue || ''}"
+                           autocomplete="off" class="layui-input">
+                `);
+            }
+
+            form.render();
+        };
+
+        // 提供给父窗口调用的提交函数
+        window.submitForm = function() {
+            if (!currentToken) {
+                layer.msg('未获取到有效的token，请刷新页面重试', {icon: 2});
+                return false;
+            }
+
+            if (!currentRuleData) {
+                layer.msg('数据加载错误', {icon: 2});
+                return false;
+            }
+
+            // 获取表单数据
+            var formData = form.val('layuiadmin-form-rule');
+            var ruleId = parseInt($('#rule_id').val());
+            var settingValue = formData.setting_value;
+
+            if (isNaN(ruleId)) {
+                layer.msg('规则ID无效', {icon: 2});
+                return false;
+            }
+
+            // 构建提交数据
+            var submitData = {
+                rule_id: ruleId,
+                settings: {}
+            };
+
+            // 根据规则ID确定设置字段名
+            var settingField;
+            if (ruleId >= 1 && ruleId <= 14) {
+                switch (ruleId) {
+                    case 1: settingField = "minimum_password_age"; break;
+                    case 2: settingField = "maximum_password_age"; break;
+                    case 3: settingField = "minimum_password_length"; break;
+                    case 4: settingField = "password_complexity"; break;
+                    case 5: settingField = "password_history_size"; break;
+                    case 6: settingField = "lockout_bad_count"; break;
+                    case 7: settingField = "require_logon_to_change_password"; break;
+                    case 8: settingField = "force_logoff_when_hour_expire"; break;
+                    case 9: settingField = "new_administrator_name"; break;
+                    case 10: settingField = "new_guest_name"; break;
+                    case 11: settingField = "clear_text_password"; break;
+                    case 12: settingField = "LSA_anonymous_name_lookup"; break;
+                    case 13: settingField = "enable_admin_account"; break;
+                    case 14: settingField = "enable_guest_account"; break;
+                }
+            } else if (ruleId >= 15 && ruleId <= 20) {
+                switch (ruleId) {
+                    case 15: settingField = "no_LM_hash"; break;
+                    case 16: settingField = "limit_blank_password_use"; break;
+                    case 17: settingField = "restrict_anonymous"; break;
+                    case 18: settingField = "dont_display_last_user_name"; break;
+                    case 19: settingField = "enable_plain_text_password"; break;
+                    case 20: settingField = "clear_page_file_at_shutdown"; break;
+                }
+            } else if (ruleId >= 21 && ruleId <= 29) {
+                switch (ruleId) {
+                    case 21: settingField = "audit_system_events"; break;
+                    case 22: settingField = "audit_logon_events"; break;
+                    case 23: settingField = "audit_object_access"; break;
+                    case 24: settingField = "audit_privilege_use"; break;
+                    case 25: settingField = "audit_policy_change"; break;
+                    case 26: settingField = "audit_account_manage"; break;
+                    case 27: settingField = "audit_process_tracking"; break;
+                    case 28: settingField = "audit_DS_access"; break;
+                    case 29: settingField = "audit_account_logon"; break;
+                }
+            } else if (ruleId >= 30 && ruleId <= 32) {
+                switch (ruleId) {
+                    case 30: settingField = "se_profile_single_process_privilege"; break;
+                    case 31: settingField = "se_remote_shutdown_privilege"; break;
+                    case 32: settingField = "se_shutdown_privilege"; break;
+                }
+            }
+
+            if (!settingField) {
+                layer.msg('无法确定设置字段', {icon: 2});
+                return false;
+            }
+
+            submitData.settings[settingField] = settingValue;
+
+            console.log("准备提交的数据:", submitData);
+
+            // 发送更新请求
+            $.ajax({
+                url: '/baseline/rule/update_setting',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(submitData),
+                headers: {
+                    'Authorization': currentToken,
+                    'Content-Type': 'application/json;charset=utf-8'
+                },
+                beforeSend: function() {
+                    layer.load(2);
+                },
+                success: function(res) {
+                    layer.closeAll('loading');
+                    if (res.code === 0) {
+                        layer.msg('更新成功', {icon: 1});
+                        // 通知父页面刷新表格
+                        parent.layui.table.reload('LAY-baseline-rule-manage');
+                        // 关闭弹窗
+                        var index = parent.layer.getFrameIndex(window.name);
+                        parent.layer.close(index);
+                    } else {
+                        layer.msg(res.msg || '更新失败', {icon: 2});
+                    }
+                },
+                error: function(xhr) {
+                    layer.closeAll('loading');
+                    if (xhr.status === 401 || xhr.status === 403) {
+                        layer.confirm('登录状态异常，是否刷新页面？', {
+                            icon: 7,
+                            title: '提示',
+                            btn: ['刷新页面', '取消']
+                        }, function(index) {
+                            layer.close(index);
+                            parent.location.reload();
+                        });
+                    } else {
+                        layer.msg('服务器错误', {icon: 2});
+                    }
+                }
+            });
+        };
+
+        // 监听表单提交事件
+        form.on('submit(LAY-baseline-rule-edit-submit)', function(data) {
+            window.submitForm();
+            return false;
+        });
+    });
+</script>
+
+</body>
+</html>
