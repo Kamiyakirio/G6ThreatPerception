@@ -114,6 +114,7 @@
 
             });
         }
+        var util = layui.util;
 
 
         var accountCols = [
@@ -162,7 +163,9 @@
             , {field: 'hostName', title: '主机名', minWidth: 120}
             , {field: 'macAddress', title: 'MAC地址', minWidth: 150}
             , {field: 'id', title: 'ID', minWidth: 80}
-            , {field: 'time', title: '时间', minWidth: 180}
+            ,{field:'time', title:'时间',width: 160, templet:function (d){
+                    return d.time ? util.toDateString(new Date(d.time), "yyyy-MM-dd HH:mm:ss") : "";
+                }}
         ];
 
 

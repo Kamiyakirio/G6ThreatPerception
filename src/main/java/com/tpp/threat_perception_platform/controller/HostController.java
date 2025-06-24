@@ -79,4 +79,8 @@ public class HostController {
     public ResponseResult listHosts(MyParam param) {
         return hostService.findAll(param);
     }
+
+    @GetMapping("/isAlive")
+    @ResponseBody
+    public ResponseResult isAlive(@RequestParam Integer id) {return new ResponseResult(1,hostService.isHostAlive(id).toString());}
 }

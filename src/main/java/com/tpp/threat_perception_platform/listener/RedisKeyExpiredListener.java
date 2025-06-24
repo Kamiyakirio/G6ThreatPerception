@@ -2,6 +2,7 @@ package com.tpp.threat_perception_platform.listener;
 
 import com.tpp.threat_perception_platform.dao.HostMapper;
 import com.tpp.threat_perception_platform.pojo.Host;
+import com.tpp.threat_perception_platform.websocket.StatusWebSocketHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.listener.KeyExpirationEventMessageListener;
@@ -13,6 +14,9 @@ public class RedisKeyExpiredListener extends KeyExpirationEventMessageListener {
 
     @Autowired
     private HostMapper hostMapper;
+
+    @Autowired
+    private StatusWebSocketHandler statusWebSocketHandler;
 
     public RedisKeyExpiredListener(RedisMessageListenerContainer listenerContainer) {
         super(listenerContainer);
@@ -29,6 +33,7 @@ public class RedisKeyExpiredListener extends KeyExpirationEventMessageListener {
             host.setIsAlive(0);
             hostMapper.updateByPrimaryKey(host);
             System.out.println(macAddress + " lost heartbeat!");
+            statusWebSocketHandler.broadcastMessage("主机 "+host.getHostName()+" 已下线！",0);
         }
     }
 }

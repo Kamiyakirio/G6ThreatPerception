@@ -61,9 +61,9 @@ public interface LogMapper {
      */
     Long selectLogCount(Map<String, Object> params);
 
-    Long countByEventIds(@org.apache.ibatis.annotations.Param("eventIds") java.util.List<Integer> eventIds, @org.apache.ibatis.annotations.Param("riskLevelMin") Integer riskLevelMin);
+    Long countByEventIds(@org.apache.ibatis.annotations.Param("eventIds") List<Integer> eventIds, @org.apache.ibatis.annotations.Param("riskLevelMin") Integer riskLevelMin);
 
-    List<Map<String, Object>> selectRiskDistributionByEventIds(@org.apache.ibatis.annotations.Param("eventIds") java.util.List<Integer> eventIds);
+    List<Map<String, Object>> selectRiskDistributionByEventIds(@org.apache.ibatis.annotations.Param("eventIds") List<Integer> eventIds);
 
     Long countSystemLogs();
     Long countSecurityLogs();

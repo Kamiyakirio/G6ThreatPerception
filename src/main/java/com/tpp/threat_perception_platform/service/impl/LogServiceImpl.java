@@ -2,16 +2,18 @@ package com.tpp.threat_perception_platform.service.impl;
 
 
 import com.alibaba.fastjson.JSON;
+import com.tpp.threat_perception_platform.dao.LogScanMapper;
+import com.tpp.threat_perception_platform.pojo.LogScan;
 import com.tpp.threat_perception_platform.response.ResponseResult;
 import com.tpp.threat_perception_platform.service.LogService;
 import com.tpp.threat_perception_platform.service.RabbitMQService;
 import com.tpp.threat_perception_platform.utils.RedisCache;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -28,14 +30,10 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.tpp.threat_perception_platform.dao.LogMapper;
 import com.tpp.threat_perception_platform.pojo.Log;
-import com.tpp.threat_perception_platform.response.ResponseResult;
-import com.tpp.threat_perception_platform.service.LogService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
 import com.tpp.threat_perception_platform.service.AIService;
 import com.tpp.threat_perception_platform.utils.TextFileLoader;
 
@@ -54,6 +52,8 @@ public class LogServiceImpl implements LogService {
     private LogMapper logMapper;
     @Autowired
     private AIService aiService;
+    @Autowired
+    private LogScanMapper logScanMapper;
 
     // 存储定时任务信息
     private final ConcurrentHashMap<String, Map<String, Object>> syncTasks = new ConcurrentHashMap<>();
@@ -64,7 +64,7 @@ public class LogServiceImpl implements LogService {
     private BCryptPasswordEncoder passwordEncoder;
 
 
-@Override
+    @Override
     public ResponseResult logDetect(Map<String, Object> data) {
         try {
             // 字段提取与校验
@@ -114,7 +114,7 @@ public class LogServiceImpl implements LogService {
             String sql = "SELECT COUNT(*) FROM log WHERE mac_address = ?";
             int count = jdbcTemplate.queryForObject(sql, Integer.class, macAddress);
 
-            System.out.println("Checking logs for MAC: " + macAddress + ", found " + count + " records");
+//            System.out.println("Checking logs for MAC: " + macAddress + ", found " + count + " records");
 
             return new ResponseResult(0, count > 0);
         } catch (Exception e) {
@@ -132,7 +132,7 @@ public class LogServiceImpl implements LogService {
             String sql = "SELECT timestamp FROM log WHERE mac_address = ? ORDER BY timestamp DESC LIMIT 1";
             String latestTime = jdbcTemplate.queryForObject(sql, String.class, macAddress);
 
-            System.out.println("Getting latest log time for MAC: " + macAddress + ", time: " + latestTime);
+//            System.out.println("Getting latest log time for MAC: " + macAddress + ", time: " + latestTime);
 
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("latestLogTime", latestTime);
@@ -151,7 +151,7 @@ public class LogServiceImpl implements LogService {
             String macAddress = data.get("macAddress").toString();
             Integer interval = Integer.parseInt(data.get("interval").toString());
 
-            System.out.println("Setting sync interval - HostId: " + hostId + ", MAC: " + macAddress + ", Interval: " + interval);
+//            System.out.println("Setting sync interval - HostId: " + hostId + ", MAC: " + macAddress + ", Interval: " + interval);
 
             // 获取最新日志时间
             String sql = "SELECT timestamp, host_name FROM log WHERE mac_address = ? ORDER BY timestamp DESC LIMIT 1";
@@ -247,7 +247,7 @@ public class LogServiceImpl implements LogService {
                 }
             }
         } catch (Exception e) {
-            System.out.println("Error in executeSyncTasks: " + e.getMessage());
+//            System.out.println("Error in executeSyncTasks: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -255,7 +255,7 @@ public class LogServiceImpl implements LogService {
     private void executeSyncForTask(Map<String, Object> taskInfo, String currentTime) {
         try {
             String macAddress = (String) taskInfo.get("macAddress");
-            System.out.println("Executing sync for MAC: " + macAddress);
+//            System.out.println("Executing sync for MAC: " + macAddress);
 
             // 构建消息体
             Map<String, Object> messageMap = new LinkedHashMap<>();
@@ -269,10 +269,10 @@ public class LogServiceImpl implements LogService {
 
             // 发送到队列
             String queueName = "agentQueue" + macAddress.replace(":", "");
-            System.out.println("Message content: " + JSON.toJSONString(messageMap));
-            
+//            System.out.println("Message content: " + JSON.toJSONString(messageMap));
+
             rabbitMQService.sendMessage("", queueName, JSON.toJSONString(messageMap));
-            
+
             // 更新最后同步时间
             taskInfo.put("lastSyncTime", currentTime);
         } catch (Exception e) {
@@ -324,6 +324,44 @@ public class LogServiceImpl implements LogService {
 
             // 构建分页信息
             PageInfo<Log> pageInfo = new PageInfo<>(logList);
+
+            return new ResponseResult<>(pageInfo.getTotal(), pageInfo.getList());
+        } catch (Exception e) {
+            return new ResponseResult<>(500, "获取日志列表失败: " + e.getMessage());
+        }
+
+    }
+
+    @Override
+    public ResponseResult getLogScanList(Map<String, Object> params) {
+        try {
+            // 设置分页参数
+            Integer page = Integer.parseInt(params.get("page").toString());
+            Integer limit = Integer.parseInt(params.get("limit").toString());
+            if (page != null && limit != null) {
+                PageHelper.startPage(page, limit);
+            }
+
+            // Convert riskLevel to Integer if it exists
+            if (params.containsKey("riskLevel") && params.get("riskLevel") != null && !params.get("riskLevel").toString().isEmpty()) {
+                params.put("riskLevel", Integer.parseInt(params.get("riskLevel").toString()));
+            }
+
+            // 查询日志列表
+//            List<Log> logList = logMapper.selectLogList(params);
+            String sql = "SELECT * from log_scan";
+            List<Map<String, Object>> logScanList = jdbcTemplate.queryForList(sql);
+
+            for(Map<String, Object> logScan : logScanList) {
+                sql="SELECT COUNT(*) from log where risk_level = ? and log_scan_id = ?";
+                logScan.put("lowLevelCount", jdbcTemplate.queryForObject(sql,Integer.class,1,logScan.get("id")));
+                logScan.put("mediumLevelCount", jdbcTemplate.queryForObject(sql,Integer.class,2,logScan.get("id")));
+                logScan.put("highLevelCount", jdbcTemplate.queryForObject(sql,Integer.class,3,logScan.get("id")));
+                logScan.put("noLevelCount", jdbcTemplate.queryForObject(sql,Integer.class,0,logScan.get("id")));
+            }
+
+            // 构建分页信息
+            PageInfo<Map<String, Object>> pageInfo = new PageInfo<>(logScanList);
 
             return new ResponseResult<>(pageInfo.getTotal(), pageInfo.getList());
         } catch (Exception e) {
@@ -422,14 +460,14 @@ public class LogServiceImpl implements LogService {
         try {
             // 根据参数查询日志记录
             List<Log> logs = logMapper.selectLogList(params);
-            
+
             if (logs == null || logs.isEmpty()) {
                 return new ResponseResult<>(400, "未找到符合条件的日志记录");
             }
-            
+
             // 调用AI分析
             return analyzeLogsWithAI(logs);
-            
+
         } catch (Exception e) {
             return new ResponseResult<>(500, "批量AI分析异常: " + e.getMessage());
         }

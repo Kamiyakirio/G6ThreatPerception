@@ -33,6 +33,8 @@ public interface LogService {
      */
     ResponseResult getLogList(Map<String, Object> params);
 
+    ResponseResult getLogScanList(Map<String, Object> params);
+
     /**
      * 获取日志详情
      * @param logId 日志ID

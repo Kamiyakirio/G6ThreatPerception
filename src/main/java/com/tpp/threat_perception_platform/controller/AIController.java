@@ -2,6 +2,7 @@ package com.tpp.threat_perception_platform.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.tpp.threat_perception_platform.asset.Account;
+import com.tpp.threat_perception_platform.permission.RequiresPermission;
 import com.tpp.threat_perception_platform.pojo.Log;
 import com.tpp.threat_perception_platform.response.ResponseResult;
 import com.tpp.threat_perception_platform.service.AIService;
@@ -22,7 +23,7 @@ public class AIController {
     private AIService aiService;
 
     @PostMapping("/ai/account_analysis")
-    public ResponseResult AIAccountAnalysis(@RequestBody List<Account> accounts)
+    public ResponseResult AIAccountAnalysis(@RequestBody Map<String, Object> accounts)
     {
         String prompt= TextFileLoader.loadTextFile("texts/prompts/account_analysis_prompt.txt");
         String result = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(accounts));
@@ -30,31 +31,39 @@ public class AIController {
     }
 
     @PostMapping("/ai/port_analysis")
-    public ResponseResult AIPortAnalysis(@RequestBody List<HashMap<String, Object>> data)
+    public ResponseResult AIPortAnalysis(@RequestBody HashMap<String, Object> data)
     {
         String prompt= TextFileLoader.loadTextFile("texts/prompts/port_analysis_prompt.txt");
         String result = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(data));
         return new ResponseResult(1,result);
     }
 
+    @PostMapping("/ai/process_analysis")
+    public ResponseResult AIProcessAnalysis(@RequestBody HashMap<String, Object> data)
+    {
+        String prompt= TextFileLoader.loadTextFile("texts/prompts/process_analysis_prompt.txt");
+        String result = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(data));
+        return new ResponseResult(1,result);
+    }
+
     @PostMapping("/ai/log_analysis")
-    public ResponseResult AILogAnalysis(@RequestBody List<Log> logs)
+    public ResponseResult AILogAnalysis(@RequestBody Map<String, Object> logs)
     {
         String prompt= TextFileLoader.loadTextFile("texts/prompts/log_analysis_prompt.txt");
-        String result = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(logs));
+        String result = aiService.aiAssistWithoutThinking(prompt, JSON.toJSONString(logs));
         return new ResponseResult(1,result);
     }
 
     @PostMapping("/ai/apprisk_analysis")
-    public ResponseResult AIAppRiskAnalysis(@RequestBody List<Map<String, Object>> apprisks)
+    public ResponseResult AIAppRiskAnalysis(@RequestBody Map<String, Object> apprisks)
     {
         String prompt = TextFileLoader.loadTextFile("texts/prompts/apprisk_analysis_prompt.txt");
-        String result = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(apprisks));
+        String result = aiService.aiAssistWithoutThinking(prompt, JSON.toJSONString(apprisks));
         return new ResponseResult(1, result);
     }
 
     @PostMapping("/ai/systemrisk_analysis")
-    public ResponseResult AISystemRiskAnalysis(@RequestBody List<Map<String, Object>> risks)
+    public ResponseResult AISystemRiskAnalysis(@RequestBody Map<String, Object> risks)
     {
         String prompt = TextFileLoader.loadTextFile("texts/prompts/systemrisk_analysis_prompt.txt");
         String result = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(risks));
@@ -62,7 +71,7 @@ public class AIController {
     }
 
     @PostMapping("/ai/weakpwd_analysis")
-    public ResponseResult AIWeakPwdAnalysis(@RequestBody List<Map<String, Object>> accounts)
+    public ResponseResult AIWeakPwdAnalysis(@RequestBody Map<String, Object> accounts)
     {
         String prompt = TextFileLoader.loadTextFile("texts/prompts/weakpwd_analysis_prompt.txt");
         String result = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(accounts));
@@ -70,7 +79,7 @@ public class AIController {
     }
 
     @PostMapping("/ai/vul_scan_analysis")
-    public ResponseResult AIVulScanAnalysis(@RequestBody List<Map<String, Object>> vulscanResults)
+    public ResponseResult AIVulScanAnalysis(@RequestBody Map<String, Object> vulscanResults)
     {
         String prompt = TextFileLoader.loadTextFile("texts/prompts/vul_analysis_prompt.txt");
         String result = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(vulscanResults));
@@ -78,7 +87,7 @@ public class AIController {
     }
 
     @PostMapping("/ai/hotfix_analysis")
-    public ResponseResult AIHotfixAnalysis(@RequestBody List<Map<String, Object>> hotfixResults)
+    public ResponseResult AIHotfixAnalysis(@RequestBody Map<String, Object> hotfixResults)
     {
         String prompt = TextFileLoader.loadTextFile("texts/prompts/hotfix_analysis_prompt.txt");
         String result = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(hotfixResults));

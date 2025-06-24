@@ -115,6 +115,8 @@
 </div>
 
 <script src="/layui/layui.js"></script>
+<script src="/js/jquery-3.7.1.min.js"></script>
+<script src="/js/ai_utils.js"></script>
 <script>
     layui.config({
         base: '/layui/layuiAdmin/'
@@ -153,6 +155,7 @@
                 }
             });
         }
+        var util = layui.util;
 
         // 加载已探测主机表格（包含所有指定字段）
         function loadDetectedHosts() {
@@ -165,6 +168,7 @@
                 },
                 cellMinWidth: 80,
                 title: '已探测主机数据表',
+
                 cols: [
                     [
                         {field: 'hostName', title: '主机名称', width: 120},
@@ -196,7 +200,9 @@
                                 return '<span class="layui-badge ' + levelClass + '">' + levelText + '</span>';
                             }
                         },
-                        {field: 'detectTime', title: '探测时间', width: 160},
+                        {field:'detectTime', title:'时间',width: 160, templet:function (d){
+                                return d.detectTime ? util.toDateString(new Date(d.detectTime), "yyyy-MM-dd HH:mm:ss") : "";
+                            }},
                         {fixed: 'right', title: '操作', toolbar: '#detectedHostToolbar', width: 200}
                     ]
                 ]
@@ -340,6 +346,7 @@
                                             </thead>
                                             <tbody>
                                 `;
+                                                    var sid=riskData[0].sid;
 
                                                     for (var i = 0; i < riskData.length; i++) {
                                                         var item = riskData[i];
@@ -386,44 +393,7 @@
                                                                 recommendation: tds.eq(3).text()
                                                             });
                                                         });
-                                                        layer.msg('正在将请求发送至大模型，请勿关闭页面！');
-                                                        var loadIndex = layer.load(1);
-                                                        $.ajax({
-                                                            url: '/ai/systemrisk_analysis',
-                                                            method: 'post',
-                                                            headers: {'Authorization': localStorage.getItem('token')},
-                                                            contentType: 'application/json',
-                                                            dataType: 'json',
-                                                            data: JSON.stringify(tableRows),
-                                                            success: function (response) {
-                                                                layer.close(loadIndex);
-                                                                layer.closeAll('iFrame');
-                                                                layer.open({
-                                                                    type: 2
-                                                                    //,skin: 'layui-layer-molv'
-                                                                    , maxmin: true
-                                                                    , area: ['60%', '60%']
-                                                                    , content: '/page/ai/aiResultTmpl2'
-                                                                    , success: function (layero, index) { //弹出层加载之前执行
-                                                                        // 获取弹出层的表单
-                                                                        var contentWindow = layero.find('iframe')[0].contentWindow; //得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
-                                                                        contentWindow.postMessage(response.msg)
-                                                                        aiResultLayerIndex = index;
-                                                                    }
-                                                                    , cancel: function (index, layero, that) {
-                                                                        layer.confirm("关闭窗口后将无法再次查看AI检测结果，再次点击将产生二次花费，是否确认关闭？", function (index) {
-                                                                            layer.close(aiResultLayerIndex);
-                                                                            layer.close(index);
-                                                                        })
-                                                                        return false;
-                                                                    }
-                                                                });
-                                                            },
-                                                            error: function (xhr, status, error) {
-                                                                layer.close(loadIndex);
-                                                                layer.msg(error, {icon: 5});
-                                                            }
-                                                        });
+                                                        ai({id:sid,data:tableRows},"/ai/systemrisk_analysis");
                                                     });
                                                 } else {
                                                     layer.msg(detailRes.msg || '数据加载失败', {icon: 5});
