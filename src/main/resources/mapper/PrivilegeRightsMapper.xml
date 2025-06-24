@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tpp.threat_perception_platform.dao.PrivilegeRightsMapper">
+
+    <resultMap id="BaseResultMap" type="com.tpp.threat_perception_platform.pojo.PrivilegeRights">
+            <id property="privilegeRightsId" column="privilege_rights_id" />
+            <result property="seProfileSingleProcessPrivilege" column="se_profile_single_process_privilege" />
+            <result property="seRemoteShutdownPrivilege" column="se_remote_shutdown_privilege" />
+            <result property="seShutdownPrivilege" column="se_shutdown_privilege" />
+            <result property="type" column="type" />
+            <result property="macAddress" column="mac_address" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        privilege_rights_id,se_profile_single_process_privilege,se_remote_shutdown_privilege,se_shutdown_privilege,type,mac_address
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from privilege_rights
+        where  privilege_rights_id = #{privilegeRightsId}
+    </select>
+    <select id="selectByType" resultType="com.tpp.threat_perception_platform.pojo.PrivilegeRights">
+        select
+        <include refid="Base_Column_List" />
+        from privilege_rights
+        where  type = #{type}
+    </select>
+    <select id="selectByTypeAndMac" resultType="com.tpp.threat_perception_platform.pojo.PrivilegeRights">
+        select
+        <include refid="Base_Column_List" />
+        from privilege_rights
+        where  type = #{type} and mac_address = #{macAddress}
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from privilege_rights
+        where  privilege_rights_id = #{privilegeRightsId}
+    </delete>
+    <insert id="insert" keyColumn="privilege_rights_id" keyProperty="privilegeRightsId" parameterType="com.tpp.threat_perception_platform.pojo.PrivilegeRights" useGeneratedKeys="true">
+        insert into privilege_rights
+        ( privilege_rights_id,se_profile_single_process_privilege,se_remote_shutdown_privilege,se_shutdown_privilege,type,mac_address)
+        values (#{privilegeRightsId},#{seProfileSingleProcessPrivilege},#{seRemoteShutdownPrivilege},#{seShutdownPrivilege},#{type},#{macAddress})
+    </insert>
+    <insert id="insertSelective" keyColumn="privilege_rights_id" keyProperty="privilegeRightsId" parameterType="com.tpp.threat_perception_platform.pojo.PrivilegeRights" useGeneratedKeys="true">
+        insert into privilege_rights
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="privilegeRightsId != null">privilege_rights_id,</if>
+                <if test="seProfileSingleProcessPrivilege != null">se_profile_single_process_privilege,</if>
+                <if test="seRemoteShutdownPrivilege != null">se_remote_shutdown_privilege,</if>
+                <if test="seShutdownPrivilege != null">se_shutdown_privilege,</if>
+                <if test="type != null">type,</if>
+                <if test="macAddress != null">mac_address,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="privilegeRightsId != null">#{privilegeRightsId},</if>
+                <if test="seProfileSingleProcessPrivilege != null">#{seProfileSingleProcessPrivilege},</if>
+                <if test="seRemoteShutdownPrivilege != null">#{seRemoteShutdownPrivilege},</if>
+                <if test="seShutdownPrivilege != null">#{seShutdownPrivilege},</if>
+                <if test="type != null">#{type},</if>
+                <if test="macAddress != null">#{macAddress},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.tpp.threat_perception_platform.pojo.PrivilegeRights">
+        update privilege_rights
+        <set>
+                <if test="seProfileSingleProcessPrivilege != null">
+                    se_profile_single_process_privilege = #{seProfileSingleProcessPrivilege},
+                </if>
+                <if test="seRemoteShutdownPrivilege != null">
+                    se_remote_shutdown_privilege = #{seRemoteShutdownPrivilege},
+                </if>
+                <if test="seShutdownPrivilege != null">
+                    se_shutdown_privilege = #{seShutdownPrivilege},
+                </if>
+                <if test="type != null">
+                    type = #{type},
+                </if>
+                <if test="macAddress != null">
+                    mac_address = #{macAddress},
+                </if>
+        </set>
+        where   privilege_rights_id = #{privilegeRightsId}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.tpp.threat_perception_platform.pojo.PrivilegeRights">
+        update privilege_rights
+        set
+            se_profile_single_process_privilege =  #{seProfileSingleProcessPrivilege},
+            se_remote_shutdown_privilege =  #{seRemoteShutdownPrivilege},
+            se_shutdown_privilege =  #{seShutdownPrivilege},
+            type =  #{type},
+            mac_address =  #{macAddress}
+        where   privilege_rights_id = #{privilegeRightsId}
+    </update>
+</mapper>

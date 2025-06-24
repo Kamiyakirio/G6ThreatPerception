@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tpp.threat_perception_platform.dao.EventAuditMapper">
+
+    <resultMap id="BaseResultMap" type="com.tpp.threat_perception_platform.pojo.EventAudit">
+            <id property="eventAuditId" column="event_audit_id" />
+            <result property="auditSystemEvents" column="audit_system_events" />
+            <result property="auditLogonEvents" column="audit_logon_events" />
+            <result property="auditObjectAccess" column="audit_object_access" />
+            <result property="auditPrivilegeUse" column="audit_privilege_use" />
+            <result property="auditPolicyChange" column="audit_policy_change" />
+            <result property="auditAccountManage" column="audit_account_manage" />
+            <result property="auditProcessTracking" column="audit_process_tracking" />
+            <result property="auditDsAccess" column="audit_DS_access" />
+            <result property="auditAccountLogon" column="audit_account_logon" />
+            <result property="type" column="type" />
+            <result property="macAddress" column="mac_address" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        event_audit_id,audit_system_events,audit_logon_events,audit_object_access,audit_privilege_use,audit_policy_change,
+        audit_account_manage,audit_process_tracking,audit_DS_access,audit_account_logon,type,
+        mac_address
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from event_audit
+        where  event_audit_id = #{eventAuditId}
+    </select>
+    <select id="selectByType" resultType="com.tpp.threat_perception_platform.pojo.EventAudit">
+
+        select
+        <include refid="Base_Column_List" />
+            from event_audit
+        where type = #{type}
+    </select>
+    <select id="selectByTypeAndMac" resultType="com.tpp.threat_perception_platform.pojo.EventAudit">
+        select
+        <include refid="Base_Column_List" />
+            from event_audit
+        where type = #{type}
+        AND mac_address = #{macAddress}
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from event_audit
+        where  event_audit_id = #{eventAuditId}
+    </delete>
+    <insert id="insert" keyColumn="event_audit_id" keyProperty="eventAuditId" parameterType="com.tpp.threat_perception_platform.pojo.EventAudit" useGeneratedKeys="true">
+        insert into event_audit
+        ( event_audit_id,audit_system_events,audit_logon_events,audit_object_access,audit_privilege_use,audit_policy_change,
+        audit_account_manage,audit_process_tracking,audit_DS_access,audit_account_logon,type,
+        mac_address)
+        values (#{eventAuditId},#{auditSystemEvents},#{auditLogonEvents},#{auditObjectAccess},#{auditPrivilegeUse},#{auditPolicyChange},
+        #{auditAccountManage},#{auditProcessTracking},#{auditDsAccess},#{auditAccountLogon},#{type},
+        #{macAddress})
+    </insert>
+    <insert id="insertSelective" keyColumn="event_audit_id" keyProperty="eventAuditId" parameterType="com.tpp.threat_perception_platform.pojo.EventAudit" useGeneratedKeys="true">
+        insert into event_audit
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="eventAuditId != null">event_audit_id,</if>
+                <if test="auditSystemEvents != null">audit_system_events,</if>
+                <if test="auditLogonEvents != null">audit_logon_events,</if>
+                <if test="auditObjectAccess != null">audit_object_access,</if>
+                <if test="auditPrivilegeUse != null">audit_privilege_use,</if>
+                <if test="auditPolicyChange != null">audit_policy_change,</if>
+                <if test="auditAccountManage != null">audit_account_manage,</if>
+                <if test="auditProcessTracking != null">audit_process_tracking,</if>
+                <if test="auditDsAccess != null">audit_DS_access,</if>
+                <if test="auditAccountLogon != null">audit_account_logon,</if>
+                <if test="type != null">type,</if>
+                <if test="macAddress != null">mac_address,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="eventAuditId != null">#{eventAuditId},</if>
+                <if test="auditSystemEvents != null">#{auditSystemEvents},</if>
+                <if test="auditLogonEvents != null">#{auditLogonEvents},</if>
+                <if test="auditObjectAccess != null">#{auditObjectAccess},</if>
+                <if test="auditPrivilegeUse != null">#{auditPrivilegeUse},</if>
+                <if test="auditPolicyChange != null">#{auditPolicyChange},</if>
+                <if test="auditAccountManage != null">#{auditAccountManage},</if>
+                <if test="auditProcessTracking != null">#{auditProcessTracking},</if>
+                <if test="auditDsAccess != null">#{auditDsAccess},</if>
+                <if test="auditAccountLogon != null">#{auditAccountLogon},</if>
+                <if test="type != null">#{type},</if>
+                <if test="macAddress != null">#{macAddress},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.tpp.threat_perception_platform.pojo.EventAudit">
+        update event_audit
+        <set>
+                <if test="auditSystemEvents != null">
+                    audit_system_events = #{auditSystemEvents},
+                </if>
+                <if test="auditLogonEvents != null">
+                    audit_logon_events = #{auditLogonEvents},
+                </if>
+                <if test="auditObjectAccess != null">
+                    audit_object_access = #{auditObjectAccess},
+                </if>
+                <if test="auditPrivilegeUse != null">
+                    audit_privilege_use = #{auditPrivilegeUse},
+                </if>
+                <if test="auditPolicyChange != null">
+                    audit_policy_change = #{auditPolicyChange},
+                </if>
+                <if test="auditAccountManage != null">
+                    audit_account_manage = #{auditAccountManage},
+                </if>
+                <if test="auditProcessTracking != null">
+                    audit_process_tracking = #{auditProcessTracking},
+                </if>
+                <if test="auditDsAccess != null">
+                    audit_DS_access = #{auditDsAccess},
+                </if>
+                <if test="auditAccountLogon != null">
+                    audit_account_logon = #{auditAccountLogon},
+                </if>
+                <if test="type != null">
+                    type = #{type},
+                </if>
+                <if test="macAddress != null">
+                    mac_address = #{macAddress},
+                </if>
+        </set>
+        where   event_audit_id = #{eventAuditId}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.tpp.threat_perception_platform.pojo.EventAudit">
+        update event_audit
+        set
+            audit_system_events =  #{auditSystemEvents},
+            audit_logon_events =  #{auditLogonEvents},
+            audit_object_access =  #{auditObjectAccess},
+            audit_privilege_use =  #{auditPrivilegeUse},
+            audit_policy_change =  #{auditPolicyChange},
+            audit_account_manage =  #{auditAccountManage},
+            audit_process_tracking =  #{auditProcessTracking},
+            audit_DS_access =  #{auditDsAccess},
+            audit_account_logon =  #{auditAccountLogon},
+            type =  #{type},
+            mac_address =  #{macAddress}
+        where   event_audit_id = #{eventAuditId}
+    </update>
+</mapper>
