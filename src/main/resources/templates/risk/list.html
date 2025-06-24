@@ -87,6 +87,7 @@
             , form = layui.form
             , layer = layui.layer
             , table = layui.table;
+        var util = layui.util;
 
         //加载table
         table.render({
@@ -115,7 +116,9 @@
                     }
                     , width: 100
                 }
-                    , {field: 'updateTime', title: '更改时间', width: 160}
+                    ,{field:'updateTime', title:'时间',width: 160, templet:function (d){
+                            return d.updateTime ? util.toDateString(new Date(d.updateTime), "yyyy-MM-dd HH:mm:ss") : "";
+                        }}
                     , {fixed: 'right', title: '操作', toolbar: '#table-useradmin-webuser', width: 260}
                 ]]
             , page: {

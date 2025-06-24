@@ -63,17 +63,24 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addViewController("/page/log/list").setViewName("log/list");
         registry.addViewController("/page/log/detect").setViewName("log/detect");
 
-        // 基线
+
+        //baseline related pages
+//        registry.addViewController("/page/baseline/list").setViewName("baseline/list");
+        registry.addViewController("/page/baseline/result").setViewName("baseline/result");
+//        registry.addViewController("/page/baseline/logList").setViewName("baseline/logList");
+        registry.addViewController("/page/baseline/detail").setViewName("baseline/detail");
         registry.addViewController("/page/baseline/rule").setViewName("baseline/rule");
         registry.addViewController("/page/baseline/task").setViewName("baseline/task");
         registry.addViewController("/page/baseline/result").setViewName("baseline/result");
         registry.addViewController("/page/baseline/rule_edit").setViewName("baseline/rule_edit");
         registry.addViewController("/page/baseline/task_edit").setViewName("baseline/task_edit");
 
+        registry.addViewController("/page/permission/index").setViewName("permission/index");
     }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(permissionInterceptor).addPathPatterns("/**");
+
     }
 }

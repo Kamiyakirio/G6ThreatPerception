@@ -1,289 +1,317 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>编辑基线检测任务</title>
-    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
-    <style>
-        body {
-            padding: 0;
-            margin: 0;
-            overflow: hidden; /* 防止出现滚动条 */
-        }
-        
-        .form-container {
-            padding: 20px 30px;
-            width: 90%;
-            margin: 0 auto;
-            overflow: hidden; /* 防止内容溢出 */
-        }
-        
-        /* 添加与图片一致的样式 */
-        .layui-form-label {
-            width: 90px;
-            font-size: 15px;
-            color: #333;
-            font-weight: normal;
-            padding: 9px 0;
-            text-align: left;
-        }
-        
-        .layui-input-block {
-            margin-left: 110px;
-        }
-        
-        .layui-input, .layui-select {
-            height: 38px;
-            line-height: 38px;
-            font-size: 14px;
-        }
-        
-        .layui-form-mid.layui-word-aux {
-            color: #999;
-            font-size: 13px;
-            padding: 5px 0 !important;
-        }
-        
-        .layui-btn {
-            background-color: #26a69a;
-        }
-        
-        .layui-btn-primary {
-            background-color: #fff;
-            border-color: #e6e6e6;
-            color: #666;
-        }
-        
-        .layui-form-item {
-            margin-bottom: 15px; /* 减小间距，防止出现滚动 */
-        }
-        
-        /* 提示文字居中 */
-        .notice-text {
-            text-align: center;
-            color: #999;
-            font-size: 13px;
-            margin-top: 5px; /* 减小上边距 */
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>编辑基线检测任务</title>
+  <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+      overflow: hidden; /* 防止出现滚动条 */
+    }
+
+    .form-container {
+      padding: 20px 30px;
+      width: 90%;
+      margin: 0 auto;
+      overflow: hidden; /* 防止内容溢出 */
+    }
+
+    /* 添加与图片一致的样式 */
+    .layui-form-label {
+      width: 90px;
+      font-size: 15px;
+      color: #333;
+      font-weight: normal;
+      padding: 9px 0;
+      text-align: left;
+    }
+
+    .layui-input-block {
+      margin-left: 110px;
+    }
+
+    .layui-input, .layui-select {
+      height: 38px;
+      line-height: 38px;
+      font-size: 14px;
+    }
+
+    .layui-form-mid.layui-word-aux {
+      color: #999;
+      font-size: 13px;
+      padding: 5px 0 !important;
+    }
+
+    .layui-btn {
+      background-color: #26a69a;
+    }
+
+    .layui-btn-primary {
+      background-color: #fff;
+      border-color: #e6e6e6;
+      color: #666;
+    }
+
+    .layui-form-item {
+      margin-bottom: 15px; /* 减小间距，防止出现滚动 */
+    }
+
+    /* 提示文字居中 */
+    .notice-text {
+      text-align: center;
+      color: #999;
+      font-size: 13px;
+      margin-top: 5px; /* 减小上边距 */
+    }
+  </style>
 </head>
 <body>
 <div class="layui-form form-container" lay-filter="layuiadmin-form-useradmin">
-    <!-- 隐藏的任务ID字段 -->
-    <input type="hidden" name="id" id="id">
-    
-    <div class="layui-form-item">
-        <label class="layui-form-label">任务名称</label>
-        <div class="layui-input-block">
-            <input type="text" name="taskName" id="taskName" required lay-verify="required" 
-                   placeholder="请输入任务名称" autocomplete="off" class="layui-input">
-        </div>
+  <!-- 隐藏的任务ID字段 -->
+  <input type="hidden" name="id" id="id">
+
+  <div class="layui-form-item">
+    <label class="layui-form-label">任务名称</label>
+    <div class="layui-input-block">
+      <input type="text" name="taskName" id="taskName" required lay-verify="required"
+             placeholder="请输入任务名称" autocomplete="off" class="layui-input">
     </div>
-    
-    <div class="layui-form-item">
-        <label class="layui-form-label">任务时间</label>
-        <div class="layui-input-block">
-            <input type="text" name="taskTime" id="taskTime" required lay-verify="required" 
-                   placeholder="请选择任务时间" autocomplete="off" class="layui-input">
-        </div>
+  </div>
+
+  <div class="layui-form-item">
+    <label class="layui-form-label">任务时间</label>
+    <div class="layui-input-block">
+      <input type="text" name="taskTime" id="taskTime" required lay-verify="required"
+             placeholder="请选择任务时间" autocomplete="off" class="layui-input">
     </div>
-    
-    <div class="layui-form-item">
-        <label class="layui-form-label">任务状态</label>
-        <div class="layui-input-block">
-            <select name="taskStatus" id="taskStatus" lay-verify="required">
-                <option value="0">未执行</option>
-                <option value="1">已执行</option>
-            </select>
-        </div>
+  </div>
+
+  <div class="layui-form-item">
+    <label class="layui-form-label">任务状态</label>
+    <div class="layui-input-block">
+      <select name="taskStatus" id="taskStatus" lay-verify="required">
+        <option value="0">未执行</option>
+        <option value="1">已执行</option>
+      </select>
     </div>
-    
-    <div class="layui-form-item">
-        <label class="layui-form-label">任务主机</label>
-        <div class="layui-input-block">
-            <select name="macAddress" id="macAddress" lay-verify="required" lay-filter="macAddress">
-                <option value="">请选择主机</option>
-            </select>
-        </div>
+  </div>
+
+  <div class="layui-form-item">
+    <label class="layui-form-label">任务主机</label>
+    <div class="layui-input-block">
+      <select name="macAddress" id="macAddress" lay-verify="required" lay-filter="macAddress">
+        <option value="">请选择主机</option>
+      </select>
     </div>
-    
-    <!-- 提示文字居中显示 -->
-    <div class="notice-text">
-        注意：离线主机将无法立即执行基线检测任务
-    </div>
-    
-    <!-- 隐藏的提交按钮，供弹窗调用 -->
-    <div class="layui-form-item layui-hide">
-        <button type="button" lay-submit lay-filter="LAY-baseline-edit-submit" id="LAY-baseline-edit-submit" class="layui-btn">提交</button>
-    </div>
+  </div>
+
+  <!-- 提示文字居中显示 -->
+  <div class="notice-text">
+    注意：离线主机将无法立即执行基线检测任务
+  </div>
+
+  <!-- 隐藏的提交按钮，供弹窗调用 -->
+  <div class="layui-form-item layui-hide">
+    <button type="button" lay-submit lay-filter="LAY-baseline-edit-submit" id="LAY-baseline-edit-submit" class="layui-btn">提交</button>
+  </div>
 </div>
 
 <script src="/layui/layui.js"></script>
 <script>
-    layui.use(['form', 'laydate'], function(){
-        var form = layui.form
+  layui.use(['form', 'laydate'], function(){
+    var form = layui.form
             , laydate = layui.laydate
             , $ = layui.jquery;
-        
-        // 日期时间选择器
-        laydate.render({
-            elem: '#taskTime',
-            type: 'datetime'
-        });
-        
-        // 加载所有主机数据
-        function loadHosts() {
-            $.ajax({
-                url: '/host/listAll',
-                type: 'GET',
-                headers: {
-                    'Authorization': localStorage.getItem('token')
-                },
-                success: function(res) {
-                    if(res.code === 0 && res.data) {
-                        var hosts = res.data;
-                        var html = '<option value="">请选择主机</option>';
-                        
-                        hosts.forEach(function(host) {
-                            // 为不在线主机添加特殊标记和样式
-                            var isOffline = host.isAlive !== 1;
-                            var offlineStyle = isOffline ? 'style="color:#999;font-style:italic;"' : '';
-                            var offlineFlag = isOffline ? ' [离线]' : '';
-                            var dataHostname = 'data-hostname="' + host.hostName + '"';
-                            
-                            html += '<option value="' + host.macAddress + '" ' + dataHostname + ' ' + offlineStyle + '>' + 
-                                   host.hostName + ' (' + host.macAddress + ')' + offlineFlag + '</option>';
-                        });
-                        
-                        $('#macAddress').html(html);
-                        form.render('select'); // 重新渲染select
-                        
-                        // 如果是编辑模式，设置选中的主机
-                        if(parent.layui.data && parent.layui.data.macAddress) {
-                            $('#macAddress').val(parent.layui.data.macAddress);
-                            form.render('select');
-                        }
-                    }
-                }
-            });
-        }
-        
-        // 表单数据回显
-        function initFormData() {
-            console.log('开始初始化表单数据');
-            
-            // 从sessionStorage获取数据
-            var taskDataStr = sessionStorage.getItem('editTaskData');
-            console.log('从sessionStorage获取的数据:', taskDataStr);
-            
-            if (taskDataStr) {
-                try {
-                    var data = JSON.parse(taskDataStr);
-                    console.log('解析后的任务数据:', data);
-                    
-                    // 设置表单数据
-                    $('#id').val(data.id);
-                    $('#taskName').val(data.taskName);
-                    
-                    // 格式化日期
-                    if(data.taskTime) {
-                        var taskTime = new Date(data.taskTime);
-                        var year = taskTime.getFullYear();
-                        var month = String(taskTime.getMonth() + 1).padStart(2, '0');
-                        var day = String(taskTime.getDate()).padStart(2, '0');
-                        var hours = String(taskTime.getHours()).padStart(2, '0');
-                        var minutes = String(taskTime.getMinutes()).padStart(2, '0');
-                        var seconds = String(taskTime.getSeconds()).padStart(2, '0');
-                        
-                        $('#taskTime').val(year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds);
-                    }
-                    
-                    // 设置任务状态
-                    $('#taskStatus').val(data.taskStatus);
-                    
-                    // 设置主机（等待主机列表加载完成后设置）
-                    if(data.macAddress) {
-                        setTimeout(function() {
-                            $('#macAddress').val(data.macAddress);
-                            form.render('select');
-                        }, 500);
-                    }
-                    
-                    // 重新渲染表单
-                    form.render();
-                    console.log('表单数据设置完成');
-                    
-                    // 清除sessionStorage中的数据
-                    sessionStorage.removeItem('editTaskData');
-                } catch (e) {
-                    console.error('解析任务数据出错:', e);
-                    layer.msg('加载任务数据失败', {icon: 2});
-                }
-            } else {
-                console.log('未找到要编辑的任务数据');
-            }
-        }
-        
-        // 监听主机选择
-        form.on('select(macAddress)', function(data) {
-            var isOffline = $(data.elem).find("option:selected").attr('style') && 
-                            $(data.elem).find("option:selected").attr('style').indexOf('color:#999') !== -1;
-            
-            if(isOffline) {
-                layer.confirm('您选择的主机当前处于离线状态，无法立即执行基线检测任务。您仍要使用此主机吗？', {
-                    btn: ['继续使用','取消'],
-                    icon: 0
-                }, function(index){
-                    layer.close(index);
-                }, function(){
-                    // 重置选择
-                    $('#macAddress').val('');
-                    form.render('select');
-                });
-            }
-        });
-        
-        // 监听表单提交
-        form.on('submit(LAY-baseline-edit-submit)', function(data) {
-            var field = data.field;
-            var selectedOption = $('#macAddress option:selected');
-            var hostName = selectedOption.attr('data-hostname');
-            
-            // 添加主机名到表单数据
-            field.hostName = hostName;
-            
-            // 发送到后台
-            $.ajax({
-                url: '/baseline/update',
-                type: 'POST',
-                headers: {
-                    'Authorization': localStorage.getItem('token'),
-                    'Content-Type': 'application/json;charset=utf-8'
-                },
-                data: JSON.stringify(field),
-                success: function(res) {
-                    if(res.code === 0) {
-                        // 成功后关闭窗口并刷新父窗口表格
-                        var index = parent.layer.getFrameIndex(window.name);
-                        parent.layer.close(index);
-                        parent.layui.table.reload('LAY-user-manage');
-                        parent.layer.msg('修改成功');
-                    } else {
-                        parent.layer.msg(res.msg || '修改失败');
-                    }
-                },
-                error: function(xhr) {
-                    parent.layer.msg('请求失败：' + xhr.statusText);
-                }
-            });
-            
-            return false;
-        });
-        
-        // 页面加载时初始化数据
-        loadHosts();
-        initFormData();
+
+    // 日期时间选择器
+    laydate.render({
+      elem: '#taskTime',
+      type: 'datetime',
+      format: 'yyyy-MM-dd HH:mm:ss',
+      value: new Date(),
+      done: function(value, date) {
+        // 确保时间值正确设置
+        $('#taskTime').val(value);
+      }
     });
+
+    // 加载所有主机数据
+    function loadHosts() {
+      $.ajax({
+        url: '/host/listAll',
+        type: 'GET',
+        headers: {
+          'Authorization': localStorage.getItem('token')
+        },
+        success: function(res) {
+          if(res.code === 0 && res.data) {
+            var hosts = res.data;
+            var html = '<option value="">请选择主机</option>';
+
+            hosts.forEach(function(host) {
+              // 为不在线主机添加特殊标记和样式
+              var isOffline = host.isAlive !== 1;
+              var offlineStyle = isOffline ? 'style="color:#999;font-style:italic;"' : '';
+              var offlineFlag = isOffline ? ' [离线]' : '';
+              var dataHostname = 'data-hostname="' + host.hostName + '"';
+
+              html += '<option value="' + host.macAddress + '" ' + dataHostname + ' ' + offlineStyle + '>' +
+                      host.hostName + ' (' + host.macAddress + ')' + offlineFlag + '</option>';
+            });
+
+            $('#macAddress').html(html);
+            form.render('select'); // 重新渲染select
+
+            // 如果是编辑模式，设置选中的主机
+            if(parent.layui.data && parent.layui.data.macAddress) {
+              $('#macAddress').val(parent.layui.data.macAddress);
+              form.render('select');
+            }
+          }
+        }
+      });
+    }
+
+    // 格式化日期时间
+    function formatDateTime(dateStr) {
+      if (!dateStr) return '';
+      var date = new Date(dateStr);
+      
+      // 添加本地时区偏移
+      var timezoneOffset = date.getTimezoneOffset() * 60000;
+      date = new Date(date.getTime() - timezoneOffset);
+      
+      return date.toISOString().slice(0, 19).replace('T', ' ');
+    }
+
+    // 表单数据回显
+    function initFormData() {
+      console.log('开始初始化表单数据');
+
+      // 从sessionStorage获取数据
+      var taskDataStr = sessionStorage.getItem('editTaskData');
+      console.log('从sessionStorage获取的数据:', taskDataStr);
+
+      if (taskDataStr) {
+        try {
+          var data = JSON.parse(taskDataStr);
+          console.log('解析后的任务数据:', data);
+
+          // 设置表单数据
+          $('#id').val(data.id);
+          $('#taskName').val(data.taskName);
+
+          // 格式化日期时间
+          if(data.taskTime) {
+            $('#taskTime').val(formatDateTime(data.taskTime));
+          }
+
+          // 设置任务状态
+          $('#taskStatus').val(data.taskStatus);
+
+          // 设置主机（等待主机列表加载完成后设置）
+          if(data.macAddress) {
+            setTimeout(function() {
+              $('#macAddress').val(data.macAddress);
+              form.render('select');
+            }, 500);
+          }
+
+          // 重新渲染表单
+          form.render();
+          console.log('表单数据设置完成');
+
+          // 清除sessionStorage中的数据
+          sessionStorage.removeItem('editTaskData');
+        } catch (e) {
+          console.error('解析任务数据出错:', e);
+          layer.msg('加载任务数据失败', {icon: 2});
+        }
+      } else {
+        console.log('未找到要编辑的任务数据');
+      }
+    }
+
+    // 监听主机选择
+    form.on('select(macAddress)', function(data) {
+      var isOffline = $(data.elem).find("option:selected").attr('style') &&
+              $(data.elem).find("option:selected").attr('style').indexOf('color:#999') !== -1;
+
+      if(isOffline) {
+        layer.confirm('您选择的主机当前处于离线状态，无法立即执行基线检测任务。您仍要使用此主机吗？', {
+          btn: ['继续使用','取消'],
+          icon: 0
+        }, function(index){
+          layer.close(index);
+        }, function(){
+          // 重置选择
+          $('#macAddress').val('');
+          form.render('select');
+        });
+      }
+    });
+
+    // 监听表单提交
+    form.on('submit(LAY-baseline-edit-submit)', function(data) {
+      var field = data.field;
+      var selectedOption = $('#macAddress option:selected');
+      var hostName = selectedOption.attr('data-hostname');
+
+      // 添加主机名到表单数据
+      field.hostName = hostName;
+
+      // 转换日期格式，考虑时区
+      if (field.taskTime) {
+        var localDate = new Date(field.taskTime);
+        // 转换为UTC时间
+        field.taskTime = localDate.toISOString();
+      }
+
+      // 确保数值类型正确
+      if (field.id) {
+        field.id = parseInt(field.id);
+      }
+      if (field.taskStatus) {
+        field.taskStatus = parseInt(field.taskStatus);
+      }
+
+      console.log('提交的数据:', field);
+
+      // 发送到后台
+      $.ajax({
+        url: '/baseline/update',
+        type: 'POST',
+        headers: {
+          'Authorization': localStorage.getItem('token'),
+          'Content-Type': 'application/json;charset=utf-8'
+        },
+        data: JSON.stringify(field),
+        success: function(res) {
+          if(res.code === 0) {
+            // 成功后关闭窗口并刷新父窗口表格
+            var index = parent.layer.getFrameIndex(window.name);
+            parent.layer.close(index);
+            parent.layui.table.reload('LAY-user-manage');
+            parent.layer.msg('修改成功');
+          } else {
+            parent.layer.msg(res.msg || '修改失败');
+          }
+        },
+        error: function(xhr) {
+          console.error('请求失败:', xhr);
+          parent.layer.msg('请求失败：' + (xhr.responseJSON ? xhr.responseJSON.message : xhr.statusText));
+        }
+      });
+
+      return false;
+    });
+
+    // 页面加载时初始化数据
+    loadHosts();
+    initFormData();
+  });
 </script>
 </body>
-</html> 
+</html>

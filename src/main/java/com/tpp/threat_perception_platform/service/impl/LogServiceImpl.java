@@ -114,7 +114,7 @@ public class LogServiceImpl implements LogService {
             String sql = "SELECT COUNT(*) FROM log WHERE mac_address = ?";
             int count = jdbcTemplate.queryForObject(sql, Integer.class, macAddress);
 
-            System.out.println("Checking logs for MAC: " + macAddress + ", found " + count + " records");
+//            System.out.println("Checking logs for MAC: " + macAddress + ", found " + count + " records");
 
             return new ResponseResult(0, count > 0);
         } catch (Exception e) {
@@ -132,7 +132,7 @@ public class LogServiceImpl implements LogService {
             String sql = "SELECT timestamp FROM log WHERE mac_address = ? ORDER BY timestamp DESC LIMIT 1";
             String latestTime = jdbcTemplate.queryForObject(sql, String.class, macAddress);
 
-            System.out.println("Getting latest log time for MAC: " + macAddress + ", time: " + latestTime);
+//            System.out.println("Getting latest log time for MAC: " + macAddress + ", time: " + latestTime);
 
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("latestLogTime", latestTime);
@@ -151,7 +151,7 @@ public class LogServiceImpl implements LogService {
             String macAddress = data.get("macAddress").toString();
             Integer interval = Integer.parseInt(data.get("interval").toString());
 
-            System.out.println("Setting sync interval - HostId: " + hostId + ", MAC: " + macAddress + ", Interval: " + interval);
+//            System.out.println("Setting sync interval - HostId: " + hostId + ", MAC: " + macAddress + ", Interval: " + interval);
 
             // 获取最新日志时间
             String sql = "SELECT timestamp, host_name FROM log WHERE mac_address = ? ORDER BY timestamp DESC LIMIT 1";
@@ -247,7 +247,7 @@ public class LogServiceImpl implements LogService {
                 }
             }
         } catch (Exception e) {
-            System.out.println("Error in executeSyncTasks: " + e.getMessage());
+//            System.out.println("Error in executeSyncTasks: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -255,7 +255,7 @@ public class LogServiceImpl implements LogService {
     private void executeSyncForTask(Map<String, Object> taskInfo, String currentTime) {
         try {
             String macAddress = (String) taskInfo.get("macAddress");
-            System.out.println("Executing sync for MAC: " + macAddress);
+//            System.out.println("Executing sync for MAC: " + macAddress);
 
             // 构建消息体
             Map<String, Object> messageMap = new LinkedHashMap<>();
@@ -269,7 +269,7 @@ public class LogServiceImpl implements LogService {
 
             // 发送到队列
             String queueName = "agentQueue" + macAddress.replace(":", "");
-            System.out.println("Message content: " + JSON.toJSONString(messageMap));
+//            System.out.println("Message content: " + JSON.toJSONString(messageMap));
 
             rabbitMQService.sendMessage("", queueName, JSON.toJSONString(messageMap));
 

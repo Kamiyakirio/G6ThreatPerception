@@ -10,13 +10,13 @@
             margin: 0;
             overflow: hidden;
         }
-        
+
         .form-container {
             padding: 20px 30px;
             width: 90%;
             margin: 0 auto;
         }
-        
+
         .layui-form-label {
             width: 120px;
             font-size: 15px;
@@ -25,22 +25,22 @@
             padding: 9px 0;
             text-align: left;
         }
-        
+
         .layui-input-block {
             margin-left: 140px;
         }
-        
+
         .layui-form-item {
             margin-bottom: 15px;
         }
-        
+
         .rule-info {
             margin-bottom: 20px;
             padding: 10px;
             background-color: #f8f8f8;
             border-radius: 4px;
         }
-        
+
         .rule-info p {
             margin: 5px 0;
             color: #666;
@@ -56,7 +56,7 @@
         <p><strong>规则名称：</strong><span id="display_name"></span></p>
         <p><strong>规则描述：</strong><span id="display_description"></span></p>
     </div>
-    
+
     <!-- 设置值编辑区域 -->
     <div class="layui-form-item">
         <label class="layui-form-label">设置值</label>
@@ -64,7 +64,7 @@
             <!-- 这里的具体内容会根据规则ID动态生成 -->
         </div>
     </div>
-    
+
     <!-- 隐藏的提交按钮 -->
     <div class="layui-form-item layui-hide">
         <input type="hidden" name="rule_id" id="rule_id">
@@ -79,7 +79,7 @@
         var $ = layui.jquery;
         var currentRuleData = null;
         var currentToken = null;
-        
+
         // 初始化token
         window.initToken = function(token) {
             if (!token) {
@@ -89,33 +89,33 @@
             currentToken = token;
             console.log("Token已初始化，长度:", token.length);
         };
-        
+
         // 接收父页面传递的数据
         window.setRuleData = function(data) {
             currentRuleData = data;
             console.log("接收到的规则数据:", data);
-            
+
             // 更新显示信息
             $('#display_id').text(data.id || '');
             $('#display_name').text(data.name || '');
             $('#display_description').text(data.description || '');
-            
+
             // 设置隐藏的rule_id
             $('#rule_id').val(data.id);
-            
+
             var container = $('#settings_input_container');
             container.empty();
-            
+
             // 获取当前设置值
             var currentValue = null;
             if (data.settings && typeof data.settings === 'object') {
                 var firstKey = Object.keys(data.settings)[0];
                 currentValue = data.settings[firstKey];
             }
-            
+
             var ruleId = parseInt(data.id);
             console.log("规则ID:", ruleId, "当前设置值:", currentValue);
-            
+
             // 根据规则ID生成不同的输入控件
             if (ruleId >= 21 && ruleId <= 29) {
                 // 审计策略规则使用下拉选择
@@ -141,8 +141,8 @@
             } else if (ruleId >= 30 && ruleId <= 32) {
                 // 权限规则使用文本输入，带提示
                 container.append(`
-                    <input type="text" name="setting_value" lay-verify="required" 
-                           placeholder="请输入SID值（例如：*S-1-5-32-544）" 
+                    <input type="text" name="setting_value" lay-verify="required"
+                           placeholder="请输入SID值（例如：*S-1-5-32-544）"
                            value="${currentValue || ''}"
                            autocomplete="off" class="layui-input">
                 `);
@@ -162,40 +162,40 @@
                 } else {
                     placeholder = '请输入设置值';
                 }
-                
+
                 container.append(`
-                    <input type="text" name="setting_value" lay-verify="required" 
-                           placeholder="${placeholder}" 
+                    <input type="text" name="setting_value" lay-verify="required"
+                           placeholder="${placeholder}"
                            value="${currentValue || ''}"
                            autocomplete="off" class="layui-input">
                 `);
             }
-            
+
             form.render();
         };
-        
+
         // 提供给父窗口调用的提交函数
         window.submitForm = function() {
             if (!currentToken) {
                 layer.msg('未获取到有效的token，请刷新页面重试', {icon: 2});
                 return false;
             }
-            
+
             if (!currentRuleData) {
                 layer.msg('数据加载错误', {icon: 2});
                 return false;
             }
-            
+
             // 获取表单数据
             var formData = form.val('layuiadmin-form-rule');
             var ruleId = parseInt($('#rule_id').val());
             var settingValue = formData.setting_value;
-            
+
             if (isNaN(ruleId)) {
                 layer.msg('规则ID无效', {icon: 2});
                 return false;
             }
-            
+
             // 构建提交数据
             var submitData = {
                 rule_id: ruleId,
@@ -249,16 +249,16 @@
                     case 32: settingField = "se_shutdown_privilege"; break;
                 }
             }
-            
+
             if (!settingField) {
                 layer.msg('无法确定设置字段', {icon: 2});
                 return false;
             }
-            
+
             submitData.settings[settingField] = settingValue;
-            
+
             console.log("准备提交的数据:", submitData);
-            
+
             // 发送更新请求
             $.ajax({
                 url: '/baseline/rule/update_setting',
@@ -302,7 +302,7 @@
                 }
             });
         };
-        
+
         // 监听表单提交事件
         form.on('submit(LAY-baseline-rule-edit-submit)', function(data) {
             window.submitForm();

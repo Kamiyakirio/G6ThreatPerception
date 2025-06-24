@@ -5,16 +5,15 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.tpp.threat_perception_platform.dao.HostMapper;
 import com.tpp.threat_perception_platform.param.MyParam;
-import com.tpp.threat_perception_platform.param.SystemDetectParam;
 import com.tpp.threat_perception_platform.pojo.Host;
 import com.tpp.threat_perception_platform.response.ResponseResult;
 import com.tpp.threat_perception_platform.service.HostService;
 import com.tpp.threat_perception_platform.service.RabbitMQService;
 import com.tpp.threat_perception_platform.utils.RedisCache;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -29,6 +28,9 @@ public class HostServiceImpl implements HostService {
 
     @Autowired
     private RedisCache redisCache;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Override
     public int saveHost(Host host) {
@@ -66,7 +68,7 @@ public class HostServiceImpl implements HostService {
     @Override
     public List<Host> listAll() {
         List<Host> hosts = hostMapper.findAll(new MyParam()); // 调用 findAll 方法，不带分页参数
-        System.out.println("HostServiceImpl.listAll() - Hosts retrieved: " + (hosts != null ? hosts.size() : "null"));
+//        System.out.println("HostServiceImpl.listAll() - Hosts retrieved: " + (hosts != null ? hosts.size() : "null"));
         if (hosts != null) {
             for (Host host : hosts) {
                 System.out.println("Host: " + host.getHostName() + " - " + host.getMacAddress());
@@ -148,7 +150,13 @@ public class HostServiceImpl implements HostService {
         return result;
     }
 
+    @Override
+    public Integer isHostAlive(Integer id){
+        return jdbcTemplate.queryForObject("SELECT is_alive FROM host WHERE id = ?", Integer.class, id);
+    }
 
-
-
+    @Override
+    public Integer isHostAlive(String macAddress){
+        return jdbcTemplate.queryForObject("SELECT is_alive FROM host WHERE mac_address = ?",Integer.class,macAddress);
+    }
 }

@@ -75,4 +75,5 @@ public class BaselineTask {
     public void setUpdateTime(Date updateTime) {
         this.updateTime = updateTime;
     }
-} 
+
+}

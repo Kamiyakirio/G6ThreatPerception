@@ -80,7 +80,6 @@
     </div>
 
     <div style="padding: 10px 15px; display: flex;">
-        <button class="layui-btn" data-type="batchdel" style="background-color: #009688; margin-right: 10px;">删除</button>
         <button class="layui-btn" data-type="add" style="background-color: #009688;">添加</button>
     </div>
 
@@ -146,7 +145,21 @@
                     {type: 'checkbox', fixed: 'left', align:'center', width: 50}
                     , {field: 'id', title: 'ID', width: 60, align:'center'}
                     , {field: 'taskName', title: '任务名', width: 200, align:'center'}
-                    , {field: 'taskTime', title: '任务时间', width: 400, align:'center'}
+                    , {field: 'taskTime', title: '任务时间', width: 400, align:'center', templet: function(d){
+                        if(d.taskTime) {
+                            var taskTime = new Date(d.taskTime);
+                            return taskTime.toLocaleString('zh-CN', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: false
+                            }).replace(/\//g, '-');
+                        }
+                        return '';
+                    }}
                     , {field: 'taskStatus', title: '任务状态', width: 100, align:'center', templet: function(d){
                         if(d.taskStatus === 0) {
                             return '<span class="layui-badge layui-bg-orange">未执行</span>';
@@ -171,7 +184,7 @@
             elem: '#startTime',
             type: 'datetime'
         });
-        
+
         laydate.render({
             elem: '#endTime',
             type: 'datetime'
@@ -187,7 +200,7 @@
             if (data.field.endTime) {
                 queryData.endTime = data.field.endTime;
             }
-            
+
             //执行重载
             table.reload('LAY-user-manage', {
                 where: queryData
@@ -201,10 +214,10 @@
             if (obj.event === 'edit') {
                 // 先打印要编辑的数据，方便调试
                 console.log('要编辑的任务数据:', data);
-                
+
                 // 将当前选中的数据存储到sessionStorage
                 sessionStorage.setItem('editTaskData', JSON.stringify(data));
-                
+
                 layer.open({
                     type: 2
                     , title: '编辑任务'
@@ -218,14 +231,14 @@
                     , success: function(layero, index) {
                         var iframe = layero.find('iframe')[0];
                         var iframeWindow = window['layui-layer-iframe' + index];
-                        
+
                         // 确保iframe加载完成后再初始化数据
                         $(iframe).on('load', function() {
                             if (iframeWindow.initFormData) {
                                 iframeWindow.initFormData();
                             }
                         });
-                        
+
                         // 移除iframe滚动条
                         $(iframe).css('overflow', 'hidden');
                     }
@@ -242,7 +255,7 @@
                     // 准备队列名称，使用agentQueue+macAddress的格式
                     var queueName = "agentQueue" + data.macAddress.replace(/:/g, "");
                     console.log("发送到队列: " + queueName);
-                    
+
                 $.ajax({
                         url: "/baseline/deploy",
                     type: "post",
@@ -396,7 +409,7 @@
         // 主机列表数据
         var hostsList = [];
         var allHostsList = [];
-        
+
         // 加载主机列表
         function loadHostsList() {
             $.ajax({
@@ -410,12 +423,12 @@
                         // 保存所有主机数据
                         allHostsList = res.data || [];
                         console.log('获取到主机数量:', allHostsList.length);
-                        
+
                         // 筛选出在线的主机(isAlive=1)
                         hostsList = allHostsList.filter(function(host) {
                             return host.isAlive === 1;
                         });
-                        
+
                         console.log('在线主机数量:', hostsList.length);
                     } else {
                         console.error('获取主机列表失败:', res);
@@ -435,12 +448,12 @@
                 layer.msg('请选择要删除的任务', {icon: 2});
                 return;
             }
-            
+
             layer.confirm('确定删除选中的' + data.length + '个任务吗？', function(index) {
                 var ids = data.map(function(item) {
                     return item.id;
                 });
-                
+
                 $.ajax({
                     url: '/baseline/batch_delete',
                     type: 'post',
@@ -481,13 +494,13 @@
                     }
                 }
             });
-            
+
             // 检查是否有主机
             if (allHostsList.length === 0) {
                 layer.msg('系统中没有注册的主机，请先添加主机', {icon: 2});
                 return;
             }
-            
+
             // 构建主机下拉选项（包含所有主机，不只是在线的）
             var hostOptionsHtml = '';
             allHostsList.forEach(function(host) {
@@ -496,12 +509,12 @@
                 var offlineStyle = isOffline ? 'style="color:#999;font-style:italic;"' : '';
                 var offlineFlag = isOffline ? ' [离线]' : '';
                 var dataStatus = isOffline ? 'data-offline="true"' : 'data-offline="false"';
-                
-                hostOptionsHtml += '<option value="' + host.macAddress + '" data-hostname="' + host.hostName + '" ' + 
-                                   dataStatus + ' ' + offlineStyle + '>' + 
+
+                hostOptionsHtml += '<option value="' + host.macAddress + '" data-hostname="' + host.hostName + '" ' +
+                                   dataStatus + ' ' + offlineStyle + '>' +
                                    host.hostName + ' (' + host.macAddress + ')' + offlineFlag + '</option>';
             });
-            
+
             layer.open({
                 type: 1
                 , title: '添加基线检测任务'
@@ -553,14 +566,14 @@
                             type: 'datetime'
                         });
                     });
-                    
+
                     form.render();
-                    
+
                     // 监听主机选择
                     form.on('select(macAddress)', function(data) {
                         var selectedOption = $('#macAddress option:selected');
                         var isOffline = selectedOption.attr('data-offline') === 'true';
-                        
+
                         // 如果选择了离线主机，弹出警告
                         if(isOffline) {
                             layer.confirm('您选择的主机当前处于离线状态，无法立即执行基线检测任务。您仍要创建此任务吗？', {
@@ -575,16 +588,16 @@
                             });
                         }
                     });
-                    
+
                     // 监听表单提交
                     form.on('submit(addTask)', function(formData) {
                         var selectedOption = $('#macAddress option:selected');
                         var hostName = selectedOption.attr('data-hostname');
                         var isOffline = selectedOption.attr('data-offline') === 'true';
-                        
+
                         // 格式化日期时间
                         var taskTimeStr = formData.field.taskTime;
-                        
+
                         var params = {
                             taskName: formData.field.taskName,
                             taskTime: taskTimeStr,
@@ -592,9 +605,9 @@
                             hostName: hostName,
                             taskStatus: 0  // 默认未执行
                         };
-                        
+
                         console.log('提交的任务数据:', params);
-                        
+
                         // 如果选择了离线主机，再次确认
                         if(isOffline) {
                             layer.confirm('您选择的主机当前处于离线状态，该任务将在主机上线后才能执行。确定要继续吗？', {
@@ -608,10 +621,10 @@
                             // 直接提交
                             submitTask(params, index);
                         }
-                        
+
                         return false;
                     });
-                    
+
                     // 提交任务函数
                     function submitTask(params, layerIndex) {
                         $.ajax({

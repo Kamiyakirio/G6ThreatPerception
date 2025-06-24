@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tpp.threat_perception_platform.dao.SystemAccessMapper">
+
+    <resultMap id="BaseResultMap" type="com.tpp.threat_perception_platform.pojo.SystemAccess">
+            <id property="systemAccessId" column="system_access_id" />
+            <result property="minimumPasswordAge" column="minimum_password_age" />
+            <result property="maximumPasswordAge" column="maximum_password_age" />
+            <result property="minimumPasswordLength" column="minimum_password_length" />
+            <result property="passwordComplexity" column="password_complexity" />
+            <result property="passwordHistorySize" column="password_history_size" />
+            <result property="lockoutBadCount" column="lockout_bad_count" />
+            <result property="requireLogonToChangePassword" column="require_logon_to_change_password" />
+            <result property="forceLogoffWhenHourExpire" column="force_logoff_when_hour_expire" />
+            <result property="newAdministratorName" column="new_administrator_name" />
+            <result property="newGuestName" column="new_guest_name" />
+            <result property="clearTextPassword" column="clear_text_password" />
+            <result property="lsaAnonymousNameLookup" column="LSA_anonymous_name_lookup" />
+            <result property="enableAdminAccount" column="enable_admin_account" />
+            <result property="enableGuestAccount" column="enable_guest_account" />
+            <result property="type" column="type" />
+            <result property="macAddress" column="mac_address" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        system_access_id,minimum_password_age,maximum_password_age,minimum_password_length,password_complexity,password_history_size,
+        lockout_bad_count,require_logon_to_change_password,force_logoff_when_hour_expire,new_administrator_name,new_guest_name,
+        clear_text_password,LSA_anonymous_name_lookup,enable_admin_account,enable_guest_account,type,
+        mac_address
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from system_access
+        where  system_access_id = #{systemAccessId}
+    </select>
+    <select id="selectByType" resultType="com.tpp.threat_perception_platform.pojo.SystemAccess">
+        select
+        <include refid="Base_Column_List" />
+        from system_access
+        where  type = #{type}
+    </select>
+    <select id="selectByTypeAndMac" resultType="com.tpp.threat_perception_platform.pojo.SystemAccess">
+        select
+        <include refid="Base_Column_List" />
+        from system_access
+        where  type = #{type} and mac_address = #{macAddress}
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from system_access
+        where  system_access_id = #{systemAccessId}
+    </delete>
+    <insert id="insert" keyColumn="system_access_id" keyProperty="systemAccessId" parameterType="com.tpp.threat_perception_platform.pojo.SystemAccess" useGeneratedKeys="true">
+        insert into system_access
+        ( system_access_id,minimum_password_age,maximum_password_age,minimum_password_length,password_complexity,password_history_size,
+        lockout_bad_count,require_logon_to_change_password,force_logoff_when_hour_expire,new_administrator_name,new_guest_name,
+        clear_text_password,LSA_anonymous_name_lookup,enable_admin_account,enable_guest_account,type,
+        mac_address)
+        values (#{systemAccessId},#{minimumPasswordAge},#{maximumPasswordAge},#{minimumPasswordLength},#{passwordComplexity},#{passwordHistorySize},
+        #{lockoutBadCount},#{requireLogonToChangePassword},#{forceLogoffWhenHourExpire},#{newAdministratorName},#{newGuestName},
+        #{clearTextPassword},#{lsaAnonymousNameLookup},#{enableAdminAccount},#{enableGuestAccount},#{type},
+        #{macAddress})
+    </insert>
+    <insert id="insertSelective" keyColumn="system_access_id" keyProperty="systemAccessId" parameterType="com.tpp.threat_perception_platform.pojo.SystemAccess" useGeneratedKeys="true">
+        insert into system_access
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="systemAccessId != null">system_access_id,</if>
+                <if test="minimumPasswordAge != null">minimum_password_age,</if>
+                <if test="maximumPasswordAge != null">maximum_password_age,</if>
+                <if test="minimumPasswordLength != null">minimum_password_length,</if>
+                <if test="passwordComplexity != null">password_complexity,</if>
+                <if test="passwordHistorySize != null">password_history_size,</if>
+                <if test="lockoutBadCount != null">lockout_bad_count,</if>
+                <if test="requireLogonToChangePassword != null">require_logon_to_change_password,</if>
+                <if test="forceLogoffWhenHourExpire != null">force_logoff_when_hour_expire,</if>
+                <if test="newAdministratorName != null">new_administrator_name,</if>
+                <if test="newGuestName != null">new_guest_name,</if>
+                <if test="clearTextPassword != null">clear_text_password,</if>
+                <if test="lsaAnonymousNameLookup != null">LSA_anonymous_name_lookup,</if>
+                <if test="enableAdminAccount != null">enable_admin_account,</if>
+                <if test="enableGuestAccount != null">enable_guest_account,</if>
+                <if test="type != null">type,</if>
+                <if test="macAddress != null">mac_address,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="systemAccessId != null">#{systemAccessId},</if>
+                <if test="minimumPasswordAge != null">#{minimumPasswordAge},</if>
+                <if test="maximumPasswordAge != null">#{maximumPasswordAge},</if>
+                <if test="minimumPasswordLength != null">#{minimumPasswordLength},</if>
+                <if test="passwordComplexity != null">#{passwordComplexity},</if>
+                <if test="passwordHistorySize != null">#{passwordHistorySize},</if>
+                <if test="lockoutBadCount != null">#{lockoutBadCount},</if>
+                <if test="requireLogonToChangePassword != null">#{requireLogonToChangePassword},</if>
+                <if test="forceLogoffWhenHourExpire != null">#{forceLogoffWhenHourExpire},</if>
+                <if test="newAdministratorName != null">#{newAdministratorName},</if>
+                <if test="newGuestName != null">#{newGuestName},</if>
+                <if test="clearTextPassword != null">#{clearTextPassword},</if>
+                <if test="lsaAnonymousNameLookup != null">#{lsaAnonymousNameLookup},</if>
+                <if test="enableAdminAccount != null">#{enableAdminAccount},</if>
+                <if test="enableGuestAccount != null">#{enableGuestAccount},</if>
+                <if test="type != null">#{type},</if>
+                <if test="macAddress != null">#{macAddress},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.tpp.threat_perception_platform.pojo.SystemAccess">
+        update system_access
+        <set>
+                <if test="minimumPasswordAge != null">
+                    minimum_password_age = #{minimumPasswordAge},
+                </if>
+                <if test="maximumPasswordAge != null">
+                    maximum_password_age = #{maximumPasswordAge},
+                </if>
+                <if test="minimumPasswordLength != null">
+                    minimum_password_length = #{minimumPasswordLength},
+                </if>
+                <if test="passwordComplexity != null">
+                    password_complexity = #{passwordComplexity},
+                </if>
+                <if test="passwordHistorySize != null">
+                    password_history_size = #{passwordHistorySize},
+                </if>
+                <if test="lockoutBadCount != null">
+                    lockout_bad_count = #{lockoutBadCount},
+                </if>
+                <if test="requireLogonToChangePassword != null">
+                    require_logon_to_change_password = #{requireLogonToChangePassword},
+                </if>
+                <if test="forceLogoffWhenHourExpire != null">
+                    force_logoff_when_hour_expire = #{forceLogoffWhenHourExpire},
+                </if>
+                <if test="newAdministratorName != null">
+                    new_administrator_name = #{newAdministratorName},
+                </if>
+                <if test="newGuestName != null">
+                    new_guest_name = #{newGuestName},
+                </if>
+                <if test="clearTextPassword != null">
+                    clear_text_password = #{clearTextPassword},
+                </if>
+                <if test="lsaAnonymousNameLookup != null">
+                    LSA_anonymous_name_lookup = #{lsaAnonymousNameLookup},
+                </if>
+                <if test="enableAdminAccount != null">
+                    enable_admin_account = #{enableAdminAccount},
+                </if>
+                <if test="enableGuestAccount != null">
+                    enable_guest_account = #{enableGuestAccount},
+                </if>
+                <if test="type != null">
+                    type = #{type},
+                </if>
+                <if test="macAddress != null">
+                    mac_address = #{macAddress},
+                </if>
+        </set>
+        where   system_access_id = #{systemAccessId}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.tpp.threat_perception_platform.pojo.SystemAccess">
+        update system_access
+        set
+            minimum_password_age =  #{minimumPasswordAge},
+            maximum_password_age =  #{maximumPasswordAge},
+            minimum_password_length =  #{minimumPasswordLength},
+            password_complexity =  #{passwordComplexity},
+            password_history_size =  #{passwordHistorySize},
+            lockout_bad_count =  #{lockoutBadCount},
+            require_logon_to_change_password =  #{requireLogonToChangePassword},
+            force_logoff_when_hour_expire =  #{forceLogoffWhenHourExpire},
+            new_administrator_name =  #{newAdministratorName},
+            new_guest_name =  #{newGuestName},
+            clear_text_password =  #{clearTextPassword},
+            LSA_anonymous_name_lookup =  #{lsaAnonymousNameLookup},
+            enable_admin_account =  #{enableAdminAccount},
+            enable_guest_account =  #{enableGuestAccount},
+            type =  #{type},
+            mac_address =  #{macAddress}
+        where   system_access_id = #{systemAccessId}
+    </update>
+</mapper>
