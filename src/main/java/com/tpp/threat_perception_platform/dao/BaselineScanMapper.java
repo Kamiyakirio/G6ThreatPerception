@@ -37,14 +37,12 @@ public interface BaselineScanMapper {
 
     // 分页查询
     List<BaselineScan> selectPageList(@Param("macAddress") String macAddress,
-                                    @Param("hostName") String hostName,
                                     @Param("taskTime") String taskTime,
                                     @Param("offset") Integer offset,
                                     @Param("limit") Integer limit);
 
     // 查询总数
     Integer selectTotalCount(@Param("macAddress") String macAddress,
-                           @Param("hostName") String hostName,
                            @Param("taskTime") String taskTime);
 
   }

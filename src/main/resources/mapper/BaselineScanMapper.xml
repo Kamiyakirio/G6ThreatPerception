@@ -35,7 +35,7 @@
         from baseline_scan
         <where>
             <if test="macAddress != null and macAddress != ''">
-                AND (mac_address LIKE CONCAT('%', #{macAddress}, '%') OR host_name LIKE CONCAT('%', #{hostName}, '%'))
+                AND mac_address = #{macAddress}
             </if>
             <if test="taskTime != null and taskTime != ''">
                 AND DATE(start_time) = #{taskTime}
@@ -50,7 +50,7 @@
         from baseline_scan
         <where>
             <if test="macAddress != null and macAddress != ''">
-                AND (mac_address LIKE CONCAT('%', #{macAddress}, '%') OR host_name LIKE CONCAT('%', #{hostName}, '%'))
+                AND mac_address = #{macAddress}
             </if>
             <if test="taskTime != null and taskTime != ''">
                 AND DATE(start_time) = #{taskTime}
