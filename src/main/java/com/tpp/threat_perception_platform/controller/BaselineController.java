@@ -729,19 +729,19 @@ public class BaselineController {
             int limit = params != null && params.containsKey("limit") ? Integer.parseInt(params.get("limit").toString()) : 15;
             
             // 首先获取system_access表中的设置
-            String sql1 = "SELECT * FROM system_access ORDER BY system_access_id DESC LIMIT 1";
+            String sql1 = "SELECT * FROM system_access WHERE type = 'rule' ORDER BY system_access_id DESC LIMIT 1";
             Map<String, Object> settings = jdbcTemplate.queryForMap(sql1);
             
             // 获取system_security_option表中的设置
-            String sql2 = "SELECT * FROM system_security_option ORDER BY system_security_option_id DESC LIMIT 1";
+            String sql2 = "SELECT * FROM system_security_option WHERE type = 'rule' ORDER BY system_security_option_id DESC LIMIT 1";
             Map<String, Object> securitySettings = jdbcTemplate.queryForMap(sql2);
             
             // 获取event_audit表中的设置
-            String sql3 = "SELECT * FROM event_audit ORDER BY event_audit_id DESC LIMIT 1";
+            String sql3 = "SELECT * FROM event_audit WHERE type = 'rule' ORDER BY event_audit_id DESC LIMIT 1";
             Map<String, Object> auditSettings = jdbcTemplate.queryForMap(sql3);
             
             // 获取privilege_rights表中的设置
-            String sql4 = "SELECT * FROM privilege_rights ORDER BY privilege_rights_id DESC LIMIT 1";
+            String sql4 = "SELECT * FROM privilege_rights WHERE type = 'rule' ORDER BY privilege_rights_id DESC LIMIT 1";
             Map<String, Object> privilegeSettings = jdbcTemplate.queryForMap(sql4);
             
             // 构建规则列表
@@ -966,21 +966,7 @@ public class BaselineController {
             }
 
             // 构建更新SQL
-            String sql = String.format("UPDATE %s SET %s = ? WHERE 1=1", tableName, fieldName);
-            switch (tableType) {
-                case 1:
-                    sql += " ORDER BY system_access_id DESC LIMIT 1";
-                    break;
-                case 2:
-                    sql += " ORDER BY system_security_option_id DESC LIMIT 1";
-                    break;
-                case 3:
-                    sql += " ORDER BY event_audit_id DESC LIMIT 1";
-                    break;
-                case 4:
-                    sql += " ORDER BY privilege_rights_id DESC LIMIT 1";
-                    break;
-            }
+            String sql = String.format("UPDATE %s SET %s = ? WHERE type = 'rule'", tableName, fieldName);
 
             System.out.println("执行的SQL: " + sql);
             System.out.println("参数值: " + fieldValue);
