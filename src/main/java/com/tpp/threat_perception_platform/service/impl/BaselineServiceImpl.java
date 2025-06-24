@@ -144,7 +144,7 @@ public class BaselineServiceImpl implements BaselineService {
     @Override
     public ResponseResult<Map<String, Object>> getStatistics() {
         try {
-            Map<String, Object> statistics = new HashMap<>();
+        Map<String, Object> statistics = new HashMap<>();
             
             // 1. 获取基线检测总数（从baseline_scan表）
             Integer totalCount = baselineScanMapper.selectTotalCount(null, null);
@@ -175,7 +175,7 @@ public class BaselineServiceImpl implements BaselineService {
                     "(SELECT COUNT(*) FROM system_security_option WHERE type = 'result' AND (" +
                     "no_lm_hash != (SELECT no_lm_hash FROM system_security_option WHERE type = 'rule' LIMIT 1) OR " +
                     "limit_blank_password_use != (SELECT limit_blank_password_use FROM system_security_option WHERE type = 'rule' LIMIT 1)))";
-            
+
             Integer riskCount = jdbcTemplate.queryForObject(riskSql, Integer.class);
             statistics.put("riskCount", riskCount != null ? riskCount : 0);
 
@@ -614,8 +614,8 @@ public class BaselineServiceImpl implements BaselineService {
 
         // 如果没有任何可比较的字段，返回false
         if (totalFields == 0) {
-            return false;
-        }
+                return false;
+            }
 
         // 如果匹配率超过80%，则认为是合格的
         return (double) matchedFields / totalFields >= 0.8;
@@ -704,8 +704,8 @@ public class BaselineServiceImpl implements BaselineService {
 
         // 如果没有任何可比较的字段，返回false
         if (totalFields == 0) {
-            return false;
-        }
+                return false;
+            }
 
         // 如果匹配率超过80%，则认为是合格的
         return (double) matchedFields / totalFields >= 0.8;
@@ -746,8 +746,8 @@ public class BaselineServiceImpl implements BaselineService {
 
         // 如果没有任何可比较的字段，返回false
         if (totalFields == 0) {
-            return false;
-        }
+                return false;
+            }
 
         // 如果匹配率超过80%，则认为是合格的
         return (double) matchedFields / totalFields >= 0.8;
@@ -839,8 +839,8 @@ public class BaselineServiceImpl implements BaselineService {
 
         // 如果没有任何可比较的字段，返回false
         if (totalFields == 0) {
-            return false;
-        }
+                return false;
+            }
 
         // 如果匹配率超过80%，则认为是合格的
         return (double) matchedFields / totalFields >= 0.8;
@@ -851,30 +851,48 @@ public class BaselineServiceImpl implements BaselineService {
         JSONObject baselineData = (JSONObject) data.get("baselineData");
 
         try {
+            // 更新baseline_scan表中的start_time
+            BaselineScan scan = new BaselineScan();
+            scan.setMacAddress(macAddress);
+            scan.setStartTime(new Date());
+            scan.setHostName((String) data.get("hostName"));
+
+            // 检查是否存在相同MAC地址的记录
+            List<BaselineScan> existingScans = baselineScanMapper.selectByMacAddress(macAddress);
+            if (!existingScans.isEmpty()) {
+                // 存在记录，更新start_time
+                BaselineScan existingScan = existingScans.get(0);
+                scan.setId(existingScan.getId());
+                baselineScanMapper.updateByPrimaryKey(scan);
+            } else {
+                // 不存在记录，插入新记录
+                baselineScanMapper.insert(scan);
+            }
+
             // 1. 处理并保存 System Access 数据
-            if (baselineData.containsKey("system access")) {
-                processSystemAccess(macAddress, baselineData.getJSONObject("system access"));
+            if (baselineData.containsKey("system_access")) {
+                processSystemAccess(macAddress, baselineData.getJSONObject("system_access"));
             }
 
             // 2. 处理并保存 Event Audit 数据
-            if (baselineData.containsKey("event audit")) {
-                processEventAudit(macAddress, baselineData.getJSONObject("event audit"));
+            if (baselineData.containsKey("event_audit")) {
+                processEventAudit(macAddress, baselineData.getJSONObject("event_audit"));
             }
 
             // 3. 处理并保存 Privilege Rights 数据
-            if (baselineData.containsKey("privilege rights")) {
-                processPrivilegeRights(macAddress, baselineData.getJSONObject("privilege rights"));
+            if (baselineData.containsKey("privilege_rights")) {
+                processPrivilegeRights(macAddress, baselineData.getJSONObject("privilege_rights"));
             }
 
             // 4. 处理并保存 System Security Option 数据
-            if (baselineData.containsKey("system security option")) {
-                processSystemSecurityOption(macAddress, baselineData.getJSONObject("system security option"));
+            if (baselineData.containsKey("system_security_option")) {
+                processSystemSecurityOption(macAddress, baselineData.getJSONObject("system_security_option"));
             }
 
             // 5. 进行基线检查
             checkBaseline(Collections.singletonMap("macAddress", macAddress));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("处理基线数据失败: {}", e.getMessage(), e);
             throw new RuntimeException("处理基线数据失败: " + e.getMessage());
         }
     }
@@ -888,10 +906,20 @@ public class BaselineServiceImpl implements BaselineService {
             // 添加数据验证
             validateAndSetSystemAccessFields(systemAccess, sysAccessJson);
 
-            // 保存到数据库
+            // 查询是否存在相同MAC地址的记录
+            List<SystemAccess> existingRecords = systemAccessMapper.selectByTypeAndMac("result", macAddress);
+            
+            if (!existingRecords.isEmpty()) {
+                // 存在记录，执行更新
+                SystemAccess existingRecord = existingRecords.get(0);
+                systemAccess.setSystemAccessId(existingRecord.getSystemAccessId());
+                systemAccessMapper.updateByPrimaryKeySelective(systemAccess);
+            } else {
+                // 不存在记录，执行插入
             systemAccessMapper.insertSelective(systemAccess);
+            }
         } catch (Exception e) {
-            System.err.println("处理系统访问数据失败: " + e.getMessage());
+            log.error("处理系统访问数据失败: {}", e.getMessage(), e);
             throw e;
         }
     }
@@ -1014,10 +1042,20 @@ public class BaselineServiceImpl implements BaselineService {
             // 添加数据验证
             validateAndSetEventAuditFields(eventAudit, eventAuditJson);
 
-            // 保存到数据库
+            // 查询是否存在相同MAC地址的记录
+            List<EventAudit> existingRecords = eventAuditMapper.selectByTypeAndMac("result", macAddress);
+            
+            if (!existingRecords.isEmpty()) {
+                // 存在记录，执行更新
+                EventAudit existingRecord = existingRecords.get(0);
+                eventAudit.setEventAuditId(existingRecord.getEventAuditId());
+                eventAuditMapper.updateByPrimaryKeySelective(eventAudit);
+            } else {
+                // 不存在记录，执行插入
             eventAuditMapper.insertSelective(eventAudit);
+            }
         } catch (Exception e) {
-            System.err.println("处理事件审计数据失败: " + e.getMessage());
+            log.error("处理事件审计数据失败: {}", e.getMessage(), e);
             throw e;
         }
     }
@@ -1070,10 +1108,20 @@ public class BaselineServiceImpl implements BaselineService {
             // 添加数据验证
             validateAndSetPrivilegeRightsFields(privilegeRights, privilegeRightsJson);
 
-            // 保存到数据库
+            // 查询是否存在相同MAC地址的记录
+            List<PrivilegeRights> existingRecords = privilegeRightsMapper.selectByTypeAndMac("result", macAddress);
+            
+            if (!existingRecords.isEmpty()) {
+                // 存在记录，执行更新
+                PrivilegeRights existingRecord = existingRecords.get(0);
+                privilegeRights.setPrivilegeRightsId(existingRecord.getPrivilegeRightsId());
+                privilegeRightsMapper.updateByPrimaryKeySelective(privilegeRights);
+            } else {
+                // 不存在记录，执行插入
             privilegeRightsMapper.insertSelective(privilegeRights);
+            }
         } catch (Exception e) {
-            System.err.println("处理权限数据失败: " + e.getMessage());
+            log.error("处理权限数据失败: {}", e.getMessage(), e);
             throw e;
         }
     }
@@ -1119,10 +1167,20 @@ public class BaselineServiceImpl implements BaselineService {
             // 添加数据验证
             validateAndSetSystemSecurityOptionFields(securityOption, secOptJson);
 
-            // 保存到数据库
+            // 查询是否存在相同MAC地址的记录
+            List<SystemSecurityOption> existingRecords = systemSecurityOptionMapper.selectByTypeAndMac("result", macAddress);
+            
+            if (!existingRecords.isEmpty()) {
+                // 存在记录，执行更新
+                SystemSecurityOption existingRecord = existingRecords.get(0);
+                securityOption.setSystemSecurityOptionId(existingRecord.getSystemSecurityOptionId());
+                systemSecurityOptionMapper.updateByPrimaryKeySelective(securityOption);
+            } else {
+                // 不存在记录，执行插入
             systemSecurityOptionMapper.insertSelective(securityOption);
+            }
         } catch (Exception e) {
-            System.err.println("处理系统安全选项数据失败: " + e.getMessage());
+            log.error("处理系统安全选项数据失败: {}", e.getMessage(), e);
             throw e;
         }
     }
