@@ -54,6 +54,76 @@ public class BaselineController {
     private final ConcurrentHashMap<String, Map<String, Object>> syncTasks = new ConcurrentHashMap<>();
 
     /**
+     * 定时检查未执行的任务
+     * 每分钟执行一次
+     */
+    @Scheduled(fixedRate = 60000)
+    public void checkUnexecutedTasks() {
+        try {
+            // 查询所有未执行且已到执行时间的任务
+            String sql = "SELECT * FROM baseline_task WHERE task_status = 0 AND task_time <= NOW()";
+            List<Map<String, Object>> tasks = jdbcTemplate.queryForList(sql);
+            
+            for (Map<String, Object> task : tasks) {
+                try {
+                    String macAddress = task.get("mac_address").toString();
+                    
+                    // 检查主机是否在线
+                    if (redisCache.getCacheObject("Heartbeat from " + macAddress) == null) {
+                        System.out.println("主机离线，无法执行任务：" + task.get("id") + ", MAC: " + macAddress);
+                        continue;
+                    }
+                    
+                    // 构建消息内容
+                    Map<String, Object> messageMap = new LinkedHashMap<>();
+                    messageMap.put("hostName", task.get("host_name"));
+                    messageMap.put("macAddress", macAddress);
+                    messageMap.put("id", task.get("id"));
+
+                    // 处理任务时间
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    String taskTimeStr;
+                    Object taskTimeObj = task.get("task_time");
+                    
+                    if (taskTimeObj instanceof java.sql.Timestamp) {
+                        taskTimeStr = sdf.format(new Date(((java.sql.Timestamp) taskTimeObj).getTime()));
+                    } else if (taskTimeObj instanceof java.util.Date) {
+                        taskTimeStr = sdf.format(taskTimeObj);
+                    } else if (taskTimeObj instanceof String) {
+                        taskTimeStr = (String) taskTimeObj;
+                    } else {
+                        // 如果是其他类型，尝试转换为字符串
+                        taskTimeStr = taskTimeObj.toString();
+                    }
+                    
+                    messageMap.put("taskTime", taskTimeStr);
+                    messageMap.put("type", "baseline");
+                    messageMap.put("baselineTask", true);
+                    
+                    // 发送到队列
+                    String queueName = "agentQueue" + macAddress.replace(":", "");
+                    System.out.println("自动执行任务，发送到队列: " + queueName);
+                    System.out.println("消息内容: " + JSON.toJSONString(messageMap));
+                    
+                    rabbitMQService.sendMessage("", queueName, JSON.toJSONString(messageMap));
+                    
+                    // 更新任务状态为已执行
+                    String updateSql = "UPDATE baseline_task SET task_status = 1, update_time = NOW() WHERE id = ?";
+                    jdbcTemplate.update(updateSql, task.get("id"));
+                    
+                    System.out.println("成功执行任务：" + task.get("id"));
+                } catch (Exception e) {
+                    System.out.println("执行任务失败：" + task.get("id") + ", 错误：" + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("检查未执行任务时出错：" + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * 获取任务列表
      */
     @PostMapping("/tasks")
