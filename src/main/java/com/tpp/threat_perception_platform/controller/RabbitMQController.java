@@ -11,6 +11,8 @@ import com.tpp.threat_perception_platform.asset.Service;
 import com.tpp.threat_perception_platform.dao.*;
 import com.tpp.threat_perception_platform.pojo.*;
 import com.tpp.threat_perception_platform.service.AIService;
+import com.tpp.threat_perception_platform.service.BaselineService;
+import com.tpp.threat_perception_platform.service.RabbitMQService;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +40,13 @@ public class RabbitMQController {
     @Autowired private AIService aiService;
     @Autowired private LogScanMapper logScanMapper;
     @Autowired private JdbcTemplate jdbcTemplate;
+    @Autowired private SystemAccessMapper systemAccessMapper;
+    @Autowired private EventAuditMapper eventAuditMapper;
+    @Autowired private PrivilegeRightsMapper privilegeRightsMapper;
+    @Autowired private SystemSecurityOptionMapper systemSecurityOptionMapper;
+    @Autowired private BaselineScanMapper baselineScanMapper;
+    @Autowired private BaselineService baselineService;
+    @Autowired private RabbitMQService rabbitMQService;
 
     // 辅助方法：清理和解析AI返回的JSON
     private JSONObject parseAIResult(String aiResult) throws Exception {
@@ -538,6 +547,90 @@ public class RabbitMQController {
             e.printStackTrace();
             System.err.println("处理日志探测结果失败: " + e.getMessage());
             channel.basicAck(deliveryTag, false);
+        }
+    }
+
+    @RabbitListener(queues = "baseline_detect_result")
+    public void receiveBaselineDetectResult(String messageBody, Message message, Channel channel) throws IOException {
+        long deliveryTag = message.getMessageProperties().getDeliveryTag();
+        try {
+            JSONObject fullData = JSON.parseObject(new String(message.getBody(), StandardCharsets.UTF_8));
+            JSONArray dataList = fullData.getJSONArray("data");
+            JSONObject info = fullData.getJSONObject("info");
+            
+            String macAddress = info.getString("macAddress");
+            String hostName = info.getString("hostName");
+            
+            // 检查是否是修复消息
+            if (dataList != null && dataList.size() > 0) {
+                JSONObject firstData = dataList.getJSONObject(0);
+                if ("baseline_repair".equals(firstData.getString("type")) && "success".equals(firstData.getString("data"))) {
+                    String id = info.getString("id");
+                    
+                    // 等待5秒后执行重新检测
+                    Thread.sleep(5000);
+                    
+                    // 构建检测消息
+                    Map<String, Object> detectData = new HashMap<>();
+                    detectData.put("hostName", hostName);
+                    detectData.put("macAddress", macAddress);
+                    detectData.put("id", id);
+                    detectData.put("type", "baseline");
+                    detectData.put("baselineTask", true);
+                    
+                    // 发送检测命令到对应的agent队列
+                    String queueName = "agentQueue" + macAddress.replace(":", "");
+                    System.out.println("发送重新检测命令到队列: " + queueName);
+                    System.out.println("检测命令内容: " + JSON.toJSONString(detectData));
+                    rabbitMQService.sendMessage("", queueName, JSON.toJSONString(detectData));
+                    
+                    channel.basicAck(deliveryTag, false);
+                    return;
+                }
+            }
+
+            // 处理基线检测结果（包括普通检测和重新检测的结果）
+            boolean hasBaselineData = false;
+            for (int i = 0; i < dataList.size(); i++) {
+                JSONObject dataItem = dataList.getJSONObject(i);
+                if ("baseline".equalsIgnoreCase(dataItem.getString("type"))) {
+                    hasBaselineData = true;
+                    JSONObject baselineData = dataItem.getJSONObject("data");
+                    
+                    // 调用BaselineService处理数据
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("macAddress", macAddress);
+                    data.put("baselineData", baselineData);
+                    baselineService.processBaselineData(data);
+                }
+            }
+
+            // 只有在收到基线数据时才更新扫描记录
+            if (hasBaselineData) {
+                // 查找是否存在该MAC地址的最新记录
+                BaselineScan existingScan = baselineScanMapper.selectLatestByMacAddress(macAddress);
+                if (existingScan != null) {
+                    // 存在记录，更新时间
+                    existingScan.setStartTime(new Date());
+                    baselineScanMapper.updateByPrimaryKey(existingScan);
+                    System.out.println("更新基线扫描记录时间，ID: " + existingScan.getId() + ", MAC: " + macAddress);
+                } else {
+                    // 不存在记录，创建新记录
+                    BaselineScan baselineScan = new BaselineScan();
+                    baselineScan.setMacAddress(macAddress);
+                    baselineScan.setHostName(hostName);
+                    baselineScan.setStartTime(new Date());
+                    baselineScanMapper.insertSelective(baselineScan);
+                    System.out.println("创建新的基线扫描记录，MAC: " + macAddress);
+                }
+            }
+
+            System.out.println("基线检测结果处理成功，主机: " + macAddress);
+            channel.basicAck(deliveryTag, false);
+        } catch (Exception e) {
+            System.err.println("处理基线检测结果失败: " + e.getMessage());
+            e.printStackTrace();
+            channel.basicAck(deliveryTag, false); // 避免消息重入队列
         }
     }
 }

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tpp.threat_perception_platform.dao.BaselineScanMapper">
+
+    <resultMap id="BaseResultMap" type="com.tpp.threat_perception_platform.pojo.BaselineScan">
+        <id property="id" column="id" />
+        <result property="macAddress" column="mac_address" />
+        <result property="startTime" column="start_time" />
+        <result property="hostName" column="host_name" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, mac_address, start_time, host_name
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from baseline_scan
+        where id = #{id}
+    </select>
+
+    <select id="selectByMacAddress" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from baseline_scan
+        where mac_address = #{macAddress}
+    </select>
+
+    <select id="selectPageList" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from baseline_scan
+        <where>
+            <if test="macAddress != null and macAddress != ''">
+                AND (mac_address LIKE CONCAT('%', #{macAddress}, '%') OR host_name LIKE CONCAT('%', #{hostName}, '%'))
+            </if>
+            <if test="taskTime != null and taskTime != ''">
+                AND DATE(start_time) = #{taskTime}
+            </if>
+        </where>
+        order by start_time desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="selectTotalCount" resultType="java.lang.Integer">
+        select count(*)
+        from baseline_scan
+        <where>
+            <if test="macAddress != null and macAddress != ''">
+                AND (mac_address LIKE CONCAT('%', #{macAddress}, '%') OR host_name LIKE CONCAT('%', #{hostName}, '%'))
+            </if>
+            <if test="taskTime != null and taskTime != ''">
+                AND DATE(start_time) = #{taskTime}
+            </if>
+        </where>
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from baseline_scan
+        where id = #{id}
+    </delete>
+
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.tpp.threat_perception_platform.pojo.BaselineScan" useGeneratedKeys="true">
+        insert into baseline_scan
+        (mac_address, start_time, host_name)
+        values (#{macAddress}, #{startTime}, #{hostName})
+    </insert>
+
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.tpp.threat_perception_platform.pojo.BaselineScan" useGeneratedKeys="true">
+        insert into baseline_scan
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="macAddress != null">mac_address,</if>
+            <if test="startTime != null">start_time,</if>
+            <if test="hostName != null">host_name,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="macAddress != null">#{macAddress},</if>
+            <if test="startTime != null">#{startTime},</if>
+            <if test="hostName != null">#{hostName},</if>
+        </trim>
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.tpp.threat_perception_platform.pojo.BaselineScan">
+        update baseline_scan
+        <set>
+            <if test="macAddress != null">mac_address = #{macAddress},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="hostName != null">host_name = #{hostName},</if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <update id="updateByPrimaryKey" parameterType="com.tpp.threat_perception_platform.pojo.BaselineScan">
+        update baseline_scan
+        set mac_address = #{macAddress},
+            start_time = #{startTime},
+            host_name = #{hostName}
+        where id = #{id}
+    </update>
+</mapper>

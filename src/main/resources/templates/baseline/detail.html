@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>基线检测详情</title>
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
+    <style>
+        .layui-card {
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+        .layui-card-header {
+            font-weight: bold;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .status-normal {
+            color: #009688;
+            font-weight: bold;
+        }
+        .status-error {
+            color: #FF5722;
+            font-weight: bold;
+        }
+        .layui-table-cell {
+            height: auto;
+            line-height: 28px;
+            padding: 6px 15px;
+            position: relative;
+            box-sizing: border-box;
+        }
+        .layui-badge {
+            height: 20px;
+            line-height: 20px;
+            padding: 0 6px;
+            border-radius: 2px;
+        }
+        .layui-tab-title {
+            border-bottom: 2px solid #1E9FFF;
+        }
+        .layui-tab-brief>.layui-tab-title .layui-this {
+            color: #1E9FFF;
+        }
+        .layui-tab-brief>.layui-tab-more li.layui-this:after, 
+        .layui-tab-brief>.layui-tab-title .layui-this:after {
+            border-bottom: 2px solid #1E9FFF;
+        }
+    </style>
+</head>
+<body>
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <!-- 基本信息卡片 -->
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">基本信息</div>
+                <div class="layui-card-body">
+                    <div class="layui-form">
+                        <div class="layui-form-item">
+                            <div class="layui-inline">
+                                <label class="layui-form-label">MAC地址：</label>
+                                <div class="layui-input-inline">
+                                    <input type="text" id="macAddress" class="layui-input" readonly>
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <label class="layui-form-label">主机名：</label>
+                                <div class="layui-input-inline">
+                                    <input type="text" id="hostName" class="layui-input" readonly>
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <label class="layui-form-label">检测时间：</label>
+                                <div class="layui-input-inline">
+                                    <input type="text" id="detectTime" class="layui-input" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 检测结果Tab -->
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">检测结果</div>
+                <div class="layui-card-body">
+                    <div class="layui-tab layui-tab-brief" lay-filter="baseline-tabs">
+                        <ul class="layui-tab-title">
+                            <li class="layui-this">系统访问配置</li>
+                            <li>事件审计配置</li>
+                            <li>权限配置</li>
+                            <li>系统安全选项</li>
+                        </ul>
+                        <div class="layui-tab-content">
+                            <div class="layui-tab-item layui-show">
+                                <table id="systemAccessTable" lay-filter="systemAccessTable"></table>
+                            </div>
+                            <div class="layui-tab-item">
+                                <table id="eventAuditTable" lay-filter="eventAuditTable"></table>
+                            </div>
+                            <div class="layui-tab-item">
+                                <table id="privilegeRightsTable" lay-filter="privilegeRightsTable"></table>
+                            </div>
+                            <div class="layui-tab-item">
+                                <table id="systemSecurityOptionTable" lay-filter="systemSecurityOptionTable"></table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/layui/layui.js"></script>
+<script>
+layui.use(['table', 'form', 'util', 'element'], function(){
+    var table = layui.table;
+    var $ = layui.jquery;
+    var util = layui.util;
+    var element = layui.element;
+    
+    // 获取URL中的MAC地址参数
+    function getQueryVariable(variable) {
+        var query = window.location.search.substring(1);
+        var vars = query.split("&");
+        for (var i=0; i<vars.length; i++) {
+            var pair = vars[i].split("=");
+            if(pair[0] == variable) {
+                return decodeURIComponent(pair[1]);
+            }
+        }
+        return false;
+    }
+    
+    var macAddress = getQueryVariable('macAddress');
+    if (!macAddress) {
+        layer.msg('无法获取MAC地址参数', {icon: 2});
+        return;
+    }
+
+    // 加载基本信息
+    $.ajax({
+        url: '/api/baseline/list',
+        method: 'POST',
+        headers: {
+            'Authorization': localStorage.getItem('token'),
+            'Content-Type': 'application/json;charset=utf-8'
+        },
+        data: JSON.stringify({
+            macAddress: macAddress
+        }),
+        success: function(res) {
+            if (res.code === 0 && res.data && res.data.records && res.data.records.length > 0) {
+                var data = res.data.records[0];
+                $('#macAddress').val(data.macAddress);
+                $('#hostName').val(data.hostName);
+                $('#detectTime').val(data.startTime ? util.toDateString(new Date(data.startTime), "yyyy-MM-dd HH:mm:ss") : '');
+            }
+        }
+    });
+
+    // 状态模板
+    function statusTpl(status) {
+        if (status === 1) {
+            return '<span class="layui-badge layui-bg-green">合格</span>';
+        } else {
+            return '<span class="layui-badge layui-bg-red">异常</span>';
+        }
+    }
+
+    // 通用表格配置
+    function renderTable(elem, type) {
+        table.render({
+            elem: '#' + elem
+            ,url: '/api/baseline/detail'
+            ,method: 'get'
+            ,headers: {
+                'Authorization': localStorage.getItem('token')
+            }
+            ,where: {
+                macAddress: macAddress
+            }
+            ,parseData: function(res) {
+                if (res.code === 0 && res.data) {
+                    var filteredData = res.data.filter(function(item) {
+                        return item.type === type;
+                    });
+                    return {
+                        "code": 0,
+                        "msg": "",
+                        "count": filteredData.length,
+                        "data": filteredData
+                    };
+                }
+                return {
+                    "code": -1,
+                    "msg": res.msg || "加载失败",
+                    "count": 0,
+                    "data": []
+                };
+            }
+            ,cols: [[
+                {field: 'name', title: '配置项', width: 200}
+                ,{field: 'standardValue', title: '标准值', width: 150}
+                ,{field: 'actualValue', title: '当前值', width: 150}
+                ,{field: 'status', title: '状态', width: 100, align: 'center', templet: function(d){
+                    return statusTpl(d.status);
+                }}
+                ,{field: 'description', title: '说明', minWidth: 200}
+            ]]
+            ,page: false
+            ,done: function(res) {
+                if (res.code !== 0) {
+                    layer.msg(res.msg || '加载数据失败', {icon: 2});
+                }
+            }
+        });
+    }
+
+    // 渲染四个表格
+    renderTable('systemAccessTable', 'system_access');
+    renderTable('eventAuditTable', 'event_audit');
+    renderTable('privilegeRightsTable', 'privilege_rights');
+    renderTable('systemSecurityOptionTable', 'system_security_option');
+
+    // 监听tab切换
+    element.on('tab(baseline-tabs)', function(data){
+        // 切换tab时重新渲染表格
+        var tables = ['systemAccessTable', 'eventAuditTable', 'privilegeRightsTable', 'systemSecurityOptionTable'];
+        var types = ['system_access', 'event_audit', 'privilege_rights', 'system_security_option'];
+        table.reload(tables[data.index], {
+            where: {
+                macAddress: macAddress
+            }
+        });
+    });
+});
+</script>
+</body>
+</html> 
