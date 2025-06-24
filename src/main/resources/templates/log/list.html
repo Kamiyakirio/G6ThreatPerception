@@ -215,7 +215,9 @@
                     }
                     , width: 100
                 }
-                    , {field: 'updateTime', title: '更改时间', width: 300, align: 'left'}
+                    ,{field:'updateTime', title:'时间',width: 160, templet:function (d){
+                            return d.updateTime ? util.toDateString(new Date(d.updateTime), "yyyy-MM-dd HH:mm:ss") : "";
+                        }},
                     , {title: '操作', toolbar: '#table-useradmin-webuser', width: 260, align: 'left'}
                 ]]
             , page: {

@@ -155,6 +155,7 @@
                 }
             });
         }
+        var util = layui.util;
 
         // 加载已探测主机表格（包含所有指定字段）
         function loadDetectedHosts() {
@@ -167,6 +168,7 @@
                 },
                 cellMinWidth: 80,
                 title: '已探测主机数据表',
+
                 cols: [
                     [
                         {field: 'hostName', title: '主机名称', width: 120},
@@ -198,7 +200,9 @@
                                 return '<span class="layui-badge ' + levelClass + '">' + levelText + '</span>';
                             }
                         },
-                        {field: 'detectTime', title: '探测时间', width: 160},
+                        {field:'detectTime', title:'时间',width: 160, templet:function (d){
+                                return d.detectTime ? util.toDateString(new Date(d.detectTime), "yyyy-MM-dd HH:mm:ss") : "";
+                            }},
                         {fixed: 'right', title: '操作', toolbar: '#detectedHostToolbar', width: 200}
                     ]
                 ]
