@@ -31,11 +31,15 @@
 
     <select id="selectPageList" resultMap="BaseResultMap">
         select
-        <include refid="Base_Column_List" />
+        id,
+        mac_address,
+        start_time,
+        host_name
         from baseline_scan
         <where>
             <if test="macAddress != null and macAddress != ''">
-                AND mac_address = #{macAddress}
+                AND (mac_address LIKE CONCAT('%', #{macAddress}, '%')
+                OR host_name LIKE CONCAT('%', #{macAddress}, '%'))
             </if>
             <if test="taskTime != null and taskTime != ''">
                 AND DATE(start_time) = #{taskTime}
@@ -50,7 +54,8 @@
         from baseline_scan
         <where>
             <if test="macAddress != null and macAddress != ''">
-                AND mac_address = #{macAddress}
+                AND (mac_address LIKE CONCAT('%', #{macAddress}, '%')
+                OR host_name LIKE CONCAT('%', #{macAddress}, '%'))
             </if>
             <if test="taskTime != null and taskTime != ''">
                 AND DATE(start_time) = #{taskTime}

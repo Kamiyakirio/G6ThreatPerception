@@ -353,23 +353,8 @@
                         return mac.match(/.{2}/g).join(':');
                     }}
                     , {field: 'hostName', title: '主机名称', width: 150}
-                    , {field: 'startTime', title: '创建时间', width: 180, templet: function(d) {
-                        if (!d.startTime) return '';
-                        try {
-                            // 检查是否已经是格式化的日期字符串
-                            if (typeof d.startTime === 'string' && d.startTime.includes('-')) {
-                                return d.startTime;
-                            }
-                            // 尝试转换时间戳
-                            var date = new Date(d.startTime);
-                            if (isNaN(date.getTime())) {
-                                return d.startTime;
-                            }
-                            return util.toDateString(date, "yyyy-MM-dd HH:mm:ss");
-                        } catch (e) {
-                            console.error('Date formatting error:', e);
-                            return d.startTime;
-                        }
+                    , {field: 'startTime', title: '执行时间', width: 180, templet: function(d) {
+                        return formatDate(d.startTime);
                     }}
                     , {title: '操作', toolbar: '#table-useradmin-webuser', width: 360}
                 ]
@@ -498,7 +483,7 @@
                                                 title: '修复成功'
                                             }, function(index) {
                                                 layer.close(index);
-                                                table.reload('LAY-user-manage');
+                                        table.reload('LAY-user-manage');
                                             });
                                         }, 5000);
 
