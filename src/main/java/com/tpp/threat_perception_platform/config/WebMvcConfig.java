@@ -1,11 +1,18 @@
 package com.tpp.threat_perception_platform.config;
 
+import com.tpp.threat_perception_platform.permission.PermissionInterceptor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
+
+    @Autowired
+    private PermissionInterceptor permissionInterceptor;
+
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
         // 主页
@@ -49,11 +56,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addViewController("/page/log/detect").setViewName("log/detect");
         registry.addViewController("/page/log/loginStatistics").setViewName("log/loginStatistics");
 //        registry.addViewController("/page/log/login").setViewName("log/login");
+        registry.addViewController("/page/log/logList").setViewName("log/logList");
 
         registry.addViewController("/page/ai/aiResultTmpl1").setViewName("ai/aiResultTmpl1");
         registry.addViewController("/page/ai/aiResultTmpl2").setViewName("ai/aiResultTmpl2");
         registry.addViewController("/page/log/list").setViewName("log/list");
         registry.addViewController("/page/log/detect").setViewName("log/detect");
+
 
         // 基线
         registry.addViewController("/page/baseline/rule").setViewName("baseline/rule");
@@ -62,5 +71,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addViewController("/page/baseline/rule_edit").setViewName("baseline/rule_edit");
         registry.addViewController("/page/baseline/task_edit").setViewName("baseline/task_edit");
 
+        registry.addViewController("/page/permission/index").setViewName("permission/index");
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(permissionInterceptor).addPathPatterns("/**");
     }
 }

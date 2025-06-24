@@ -75,7 +75,7 @@ public class PwdServiceImpl implements PwdService {
     @Override
     public int getWeakPasswordCount() {
         int count = accountMapper.countWeakPasswords();
-        logger.info("当前账户总数: {}", count);
+//        logger.info("当前账户总数: {}", count);
         return count;
     }
 }

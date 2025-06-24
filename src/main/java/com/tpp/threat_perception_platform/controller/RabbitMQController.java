@@ -9,26 +9,19 @@ import com.tpp.threat_perception_platform.asset.App;
 import com.tpp.threat_perception_platform.asset.Process;
 import com.tpp.threat_perception_platform.asset.Service;
 import com.tpp.threat_perception_platform.dao.*;
-import com.tpp.threat_perception_platform.pojo.AppRiskResult;
-import com.tpp.threat_perception_platform.pojo.Host;
-import com.tpp.threat_perception_platform.pojo.Log;
-import com.tpp.threat_perception_platform.pojo.Risk;
-import com.tpp.threat_perception_platform.pojo.VulScan;
+import com.tpp.threat_perception_platform.pojo.*;
 import com.tpp.threat_perception_platform.service.AIService;
-import com.tpp.threat_perception_platform.utils.TextFileLoader;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Component
 public class RabbitMQController {
@@ -43,6 +36,8 @@ public class RabbitMQController {
     @Autowired private AppRiskResultMapper appRiskResultMapper;
     @Autowired private LogMapper logMapper;
     @Autowired private AIService aiService;
+    @Autowired private LogScanMapper logScanMapper;
+    @Autowired private JdbcTemplate jdbcTemplate;
 
     // 辅助方法：清理和解析AI返回的JSON
     private JSONObject parseAIResult(String aiResult) throws Exception {
@@ -109,7 +104,7 @@ public class RabbitMQController {
         long tag = message.getMessageProperties().getDeliveryTag();
         try {
             String messageBody = new String(message.getBody());
-            System.out.println("收到主机信息消息: " + messageBody);
+//            System.out.println("收到主机信息消息: " + messageBody);
 
             Host host = new Host();
             HashMap<String, Object> dataDict = JSON.parseObject(messageBody, HashMap.class);
@@ -134,9 +129,9 @@ public class RabbitMQController {
             }
 
             channel.basicAck(tag, false);
-            System.out.println("主机信息处理成功");
+//            System.out.println("主机信息处理成功");
         } catch (Exception e) {
-            System.out.println("处理主机信息失败: " + e.getMessage());
+//            System.out.println("处理主机信息失败: " + e.getMessage());
             e.printStackTrace();
             channel.basicNack(tag, false, true);
         }
@@ -383,6 +378,12 @@ public class RabbitMQController {
             String hostName = info.getString("hostName");
             Integer infoId = info.getInteger("id");
             String timeStr = info.getString("time");
+
+            String beginTimeStr=info.getString("startTime");
+            String endTimeStr=info.getString("endTime");
+            Date beginTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(beginTimeStr);
+            Date endTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(endTimeStr);
+
             Date time = null;
             try {
                 time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(timeStr);
@@ -393,6 +394,19 @@ public class RabbitMQController {
             // 收集所有日志用于AI分析
             List<Log> logsToAnalyze = new ArrayList<>();
             List<Log> savedLogs = new ArrayList<>();
+
+            LogScan logScan = new LogScan();
+            logScan.setMacAddress(macAddress);
+            logScan.setHostName(hostName);
+            logScan.setStartTime(beginTime);
+            logScan.setEndTime(endTime);
+            String logScanUUID=UUID.randomUUID().toString();
+            logScan.setUuid(logScanUUID);
+
+            logScanMapper.insertSelective(logScan);
+            String sql="SELECT * from log_scan WHERE uuid = ?";
+            logScan=jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(LogScan.class),logScanUUID);
+            Integer logScanId=logScan.getId();
 
             for (int i = 0; i < dataList.size(); i++) {
                 JSONObject dataItem = dataList.getJSONObject(i);
@@ -451,6 +465,8 @@ public class RabbitMQController {
                             log.setEventData(JSON.toJSONString(eventData));
                         }
 
+                        log.setLogScanId(logScanId);
+
                         // 避免重复插入
                         Log existingLog = logMapper.selectByMacAddressAndEventIdAndTimestampAndChannel(
                             log.getMacAddress(), log.getEventId(), log.getTimestamp(), log.getChannel());
@@ -463,57 +479,6 @@ public class RabbitMQController {
                             System.out.println("相同的日志记录已存在，跳过保存");
                         }
                     }
-                }
-            }
-
-            // 2. 对收集到的日志进行AI分析
-            if (!logsToAnalyze.isEmpty()) {
-                try {
-                    String prompt = TextFileLoader.loadTextFile("texts/prompts/log_analysis_prompt.txt");
-                    String aiAnalysisResult = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(logsToAnalyze));
-                    
-                    if (aiAnalysisResult != null) {
-                        try {
-                            // 使用辅助方法解析AI分析结果
-                            JSONObject aiResult = parseAIResult(aiAnalysisResult);
-                            JSONArray detailedAnalysis = aiResult.getJSONArray("detailed_analysis");
-                            
-                            // 更新每条日志的AI分析结果和风险等级
-                            for (int i = 0; i < savedLogs.size() && i < detailedAnalysis.size(); i++) {
-                                Log log = savedLogs.get(i);
-                                JSONObject analysis = detailedAnalysis.getJSONObject(i);
-                                
-                                // 获取AI评估的风险等级
-                                Integer aiRiskLevel = analysis.getInteger("ai_risk_level");
-                                if (aiRiskLevel != null) {
-                                    // 取agent和AI评分的较高值作为最终风险等级
-                                    Integer finalRiskLevel = Math.max(log.getRiskLevel(), aiRiskLevel);
-                                    log.setRiskLevel(finalRiskLevel);
-                                }
-                                
-                                // 只存储该条日志的分析内容
-                                log.setAiResult(analysis.toJSONString());
-                                
-                                // 更新数据库
-                                logMapper.updateByPrimaryKeySelective(log);
-                            }
-                            
-                            System.out.println("AI分析完成，已更新" + savedLogs.size() + "条日志记录");
-                        } catch (Exception jsonException) {
-                            System.err.println("AI分析结果JSON解析失败: " + jsonException.getMessage());
-                            System.err.println("原始AI分析结果: " + aiAnalysisResult);
-                            
-                            // 即使JSON解析失败，也要保存AI分析结果
-                            for (Log log : savedLogs) {
-                                log.setAiResult(aiAnalysisResult);
-                                logMapper.updateByPrimaryKeySelective(log);
-                            }
-                            System.out.println("已保存AI分析结果（未解析风险等级）");
-                        }
-                    }
-                } catch (Exception e) {
-                    System.err.println("AI分析失败: " + e.getMessage());
-                    e.printStackTrace();
                 }
             }
 

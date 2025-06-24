@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.List;
@@ -71,7 +70,7 @@ public class LogDetectController {
      */
     @ResponseBody
     @RequestMapping(value = "/log/list", method = RequestMethod.POST)
-    public ResponseResult getLogList(@RequestParam Map<String, Object> params) {
+    public ResponseResult getLogScanList(@RequestParam Map<String, Object> params) {
         String logType = (String) params.get("logType");
         if ("login".equals(logType)) {
             params.put("eventIds", java.util.Arrays.asList(4624, 4625, 4634, 4647));
@@ -79,6 +78,17 @@ public class LogDetectController {
             params.put("eventIds", java.util.Arrays.asList(4720, 4722, 4723, 4724, 4726, 4728, 4738));
         }
         return logService.getLogList(params);
+    }
+
+    @PostMapping("/log/scanlist")
+    public ResponseResult getLogList(@RequestParam Map<String, Object> params) {
+        String logType = (String) params.get("logType");
+        if ("login".equals(logType)) {
+            params.put("eventIds", java.util.Arrays.asList(4624, 4625, 4634, 4647));
+        } else if ("account".equals(logType)) {
+            params.put("eventIds", java.util.Arrays.asList(4720, 4722, 4723, 4724, 4726, 4728, 4738));
+        }
+        return logService.getLogScanList(params);
     }
 
     /**

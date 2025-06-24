@@ -39,7 +39,7 @@ public class VulScanController {
     @GetMapping("/vul/statistics")
     public Map<String, Object> getStatistics() {
         int count = vulScanService.getVulCount();
-        logger.info("当前漏洞检测总数: {}", count);
+//        logger.info("当前漏洞检测总数: {}", count);
         
         Map<String, Object> result = new HashMap<>();
         result.put("code", 0);

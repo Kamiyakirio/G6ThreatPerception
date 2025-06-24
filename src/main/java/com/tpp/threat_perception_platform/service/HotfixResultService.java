@@ -91,7 +91,7 @@ public class HotfixResultService {
      */
     public int getHotfixCount() {
         int count = hotfixResultMapper.countDistinctKbIds();
-        logger.info("当前补丁检测总数（按主机和补丁号去重）: {}", count);
+//        logger.info("当前补丁检测总数（按主机和补丁号去重）: {}", count);
         return count;
     }
 } 

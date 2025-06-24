@@ -131,6 +131,8 @@
 </div>
 
 <script src="/layui/layui.js"></script>
+<script src="/js/jquery-3.7.1.min.js"></script>
+<script src="/js/ai_utils.js"></script>
 <script>
     layui.config({
         base: '/layui/layuiAdmin/' //静态资源所在路径
@@ -209,6 +211,7 @@
         }
 
         initialize();
+        var util = layui.util;
 
 
         var accountCols = [
@@ -257,7 +260,9 @@
             , {field: 'hostName', title: '主机名', minWidth: 120}
             , {field: 'macAddress', title: 'MAC地址', minWidth: 150}
             , {field: 'id', title: 'ID', minWidth: 80}
-            , {field: 'time', title: '时间', minWidth: 180}
+            ,{field:'time', title:'时间',width: 160, templet:function (d){
+                    return d.time ? util.toDateString(new Date(d.time), "yyyy-MM-dd HH:mm:ss") : "";
+                }}
         ];
 
         var serviceCols = [
@@ -288,7 +293,9 @@
             {field: 'extrainfo', title: '额外信息', minWidth: 200},
             {field: 'hostName', title: '主机名', minWidth: 120},
             {field: 'macAddress', title: 'MAC地址', minWidth: 150},
-            {field: 'time', title: '时间', minWidth: 180}
+            {field:'time', title:'时间',width: 160, templet:function (d){
+                    return d.time ? util.toDateString(new Date(d.time), "yyyy-MM-dd HH:mm:ss") : "";
+                }}
         ];
 
         var processCols = [
@@ -319,7 +326,9 @@
             , {field: 'hostName', title: '主机名', minWidth: 120}
             , {field: 'macAddress', title: 'MAC地址', minWidth: 150}
             , {field: 'id', title: 'ID', minWidth: 80}
-            , {field: 'time', title: '时间', minWidth: 180}
+            ,{field:'time', title:'时间',width: 160, templet:function (d){
+                    return d.time ? util.toDateString(new Date(d.time), "yyyy-MM-dd HH:mm:ss") : "";
+                }}
         ];
 
         var appCols = [
@@ -347,7 +356,9 @@
             , {field: 'hostName', title: '主机名', minWidth: 120}
             , {field: 'macAddress', title: 'MAC地址', minWidth: 150}
             , {field: 'id', title: 'ID', minWidth: 80}
-            , {field: 'time', title: '时间', minWidth: 180}
+            ,{field:'time', title:'时间',width: 160, templet:function (d){
+                    return d.time ? util.toDateString(new Date(d.time), "yyyy-MM-dd HH:mm:ss") : "";
+                }}
         ];
 
         window.addEventListener('message', function (event) {
@@ -374,49 +385,6 @@
             var othis = data.othis; // 获得 select 元素被替换后的 jQuery 对象
         });
 
-        var ai = function (data, url) {
-            layer.msg("正在将请求发送至大模型，请勿关闭页面！");
-            var loadIndex = layer.load(1);
-            var aiResultLayerIndex = 999999;
-            $.ajax({
-                url: url,
-                method: "post",
-                headers: {
-                    'Authorization': localStorage.getItem('token')
-                },
-                contentType: "application/json",
-                dataType: "json",
-                data: JSON.stringify(data),
-                success: function (response) {
-                    layer.close(loadIndex);
-                    layer.closeAll('iFrame');
-                    layer.open({
-                        type: 2
-                        //,skin: 'layui-layer-molv'
-                        , maxmin: true
-                        , area: ['60%', '60%']
-                        , content: '/page/ai/aiResultTmpl2'
-                        , success: function (layero, index) { //弹出层加载之前执行
-                            // 获取弹出层的表单
-                            var contentWindow = layero.find('iframe')[0].contentWindow; //得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
-                            contentWindow.postMessage(response.msg)
-                            aiResultLayerIndex = index;
-                        }
-                        , cancel: function (index, layero, that) {
-                            layer.confirm("关闭窗口后将无法再次查看AI检测结果，再次点击将产生二次花费，是否确认关闭？", function (index) {
-                                layer.close(aiResultLayerIndex);
-                                layer.close(index);
-                            })
-                            return false;
-                        }
-                    });
-                }
-                , error: function (xhr, status, error) {
-                    layer.close(loadIndex);
-                    layer.msg(error, {icon: 5});
-                }
-            });
-        };
 
         var rfhr = function () {
             savedHosts.forEach(obj => {
@@ -442,6 +410,7 @@
                 // 在这里编写点击事件的逻辑
                 // console.log(table.getData("accountTable"))
                 var data = table.getData('accountTable');
+                var id=data[0].id;
                 data.forEach(obj => {
                     delete obj.hostName;
                     delete obj.macAddress;
@@ -450,13 +419,14 @@
                     delete obj.risk;
                     delete obj.riskDesc;
                 });
-                ai(data, "/ai/account_analysis");
+                ai({id:id,data:data}, "/ai/account_analysis");
 
             });
 
             $("#process-ai-analysis").click(function () {
                 // console.log(table.getData("processTable"));
                 var data = table.getData('processTable');
+                var id=data[0].id;
                 data.forEach(obj => {
                     delete obj.hostName;
                     delete obj.macAddress;
@@ -465,12 +435,13 @@
                     delete obj.riskDesc;
                 });
                 // console.log(data);
-
+                ai({id:id,data:data}, "/ai/process_analysis");
             });
 
             $("#service-ai-analysis").click(function () {
                 // console.log(table.getData("processTable"));
                 var data = table.getData('serviceTable');
+                var id=data[0].id;
                 data.forEach(obj => {
                     delete obj.hostName;
                     delete obj.macAddress;
@@ -480,11 +451,12 @@
                     delete obj.riskDesc;
                 });
                 // console.log(data);
-                ai(data, "/ai/port_analysis");
+                ai({id:id,data:data}, "/ai/port_analysis");
             });
 
             $("#app-ai-analysis").click(function (){
                 var data = table.getData('appTable');
+                var id=data[0].id;
                 data.forEach(obj => {
                     delete obj.hostName;
                     delete obj.macAddress;
@@ -493,7 +465,7 @@
                     delete obj.risk;
                     delete obj.riskDesc;
                 });
-                ai(data,"/ai/apprisk_analysis");
+                ai({id:id,data:data},"/ai/apprisk_analysis");
             });
 
             $("#riskDetectionBtn").click(function () {

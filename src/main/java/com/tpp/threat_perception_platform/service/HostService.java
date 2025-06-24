@@ -29,5 +29,7 @@ public interface HostService {
     public HashMap<String,Object> hostDetect(HashMap<String,Object> data);
 
 
+    Integer isHostAlive(Integer id);
 
+    Integer isHostAlive(String macAddress);
 }

@@ -63,6 +63,9 @@ public class SecurityConfig {
                     auth.requestMatchers("/fonts/**").anonymous();
                     auth.requestMatchers("/layui/**").anonymous();
                     auth.requestMatchers("/heartbeat").anonymous();
+
+                    // ✅ 加这一行，允许前端连接 WebSocket
+                    auth.requestMatchers("/ws/status").permitAll();
                     
                     // 允许访问补丁检测相关接口
                     auth.requestMatchers("/hotfix/**").permitAll();
