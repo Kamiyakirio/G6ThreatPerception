@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>权限编辑</title>
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
+</head>
+<body class="layui-container" style="padding: 20px;">
+
+<div class="layui-card">
+    <div class="layui-card-header">权限编辑</div>
+    <div class="layui-card-body">
+        <form class="layui-form" lay-filter="permissionForm">
+            <div class="layui-form-item">
+                <label class="layui-form-label">编辑对象</label>
+                <div class="layui-input-inline">
+                    <select id="editType" lay-filter="editType">
+                        <option value="" disabled selected>请选择编辑类型</option>
+                        <option value="user">编辑用户权限</option>
+                        <option value="role">编辑角色权限</option>
+                    </select>
+                </div>
+                <div class="layui-input-inline">
+                    <select id="targetSelect" lay-filter="targetSelect">
+                        <option value="" disabled selected>请选择用户或角色</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="layui-form-item" id="rolePermissionWrapper" style="display: none;">
+                <label class="layui-form-label">角色权限</label>
+                <div class="layui-input-block">
+                    <textarea id="rolePermissions" class="layui-textarea" readonly placeholder="所属角色的权限（只读）"></textarea>
+                </div>
+            </div>
+
+            <div class="layui-form-item" id="userPermissionWrapper" style="display: none;">
+                <label class="layui-form-label">用户权限</label>
+                <div class="layui-input-inline" style="width: 300px;">
+                    <select id="userPermissions" multiple size="10" class="layui-select"></select>
+                </div>
+                <div class="layui-input-inline" style="vertical-align: top;">
+                    <button class="layui-btn layui-btn-lg" type="button" id="addUserPerm">新增</button>
+                    <button class="layui-btn layui-btn-danger layui-btn-lg" type="button" id="deleteUserPerm">删除</button>
+                </div>
+            </div>
+
+            <div class="layui-form-item" id="roleOnlyPermissionWrapper" style="display: none;">
+                <label class="layui-form-label">角色权限</label>
+                <div class="layui-input-inline" style="width: 300px;">
+                    <select id="roleOnlyPermissions" multiple size="10" class="layui-select"></select>
+                </div>
+                <div class="layui-input-inline" style="vertical-align: top;">
+                    <button class="layui-btn layui-btn-lg" type="button" id="addRolePerm">新增</button>
+                    <button class="layui-btn layui-btn-danger layui-btn-lg" type="button" id="deleteRolePerm">删除</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript" src="/layui/layui.js"></script>
+<script>
+    layui.use(['form', 'layer'], function () {
+        const form = layui.form;
+        const layer = layui.layer;
+        const $ = layui.$;
+
+        function handleEditTypeChange(type) {
+            $('#targetSelect').val("");
+            form.render("select");
+            if (type === 'user') {
+                $('#rolePermissionWrapper').show();
+                $('#userPermissionWrapper').show();
+                $('#roleOnlyPermissionWrapper').hide();
+                loadUserList();
+            } else if (type === 'role') {
+                $('#rolePermissionWrapper').hide();
+                $('#userPermissionWrapper').hide();
+                $('#roleOnlyPermissionWrapper').show();
+                loadRoleList();
+            }
+        }
+
+        form.on('select(editType)', function (data) {
+            handleEditTypeChange(data.value);
+        });
+
+        form.on('select(targetSelect)', function (data) {
+            const selectedName = data.value;
+            const type = $('#editType').val();
+            if (selectedName) {
+                loadPermissions(type, selectedName);
+            }
+        });
+
+        function loadUserList() {
+            $.ajax({
+                url: "/user/list",
+                method: "POST",
+                headers: { 'Authorization': localStorage.getItem('token') },
+                data: { page: 1, limit: 10000 },
+                success: function (res) {
+                    const userSelect = $("#targetSelect");
+                    userSelect.empty();
+                    userSelect.append('<option value="" disabled selected>请选择用户</option>');
+                    if (res.code < 1000) {
+                        res.data.forEach(user => userSelect.append(`<option value="${user.userName}">${user.userName}</option>`));
+                        form.render("select");
+                    } else {
+                        layer.msg("用户列表加载失败：" + res.msg, { icon: 5 });
+                    }
+                },
+                error: function () {
+                    layer.msg("请求用户列表失败", { icon: 5 });
+                }
+            });
+        }
+
+        function loadRoleList() {
+            $.ajax({
+                url: "/role/list",
+                method: "POST",
+                headers: { 'Authorization': localStorage.getItem('token') },
+                data: { page: 1, limit: 10000 },
+                success: function (res) {
+                    const roleSelect = $("#targetSelect");
+                    roleSelect.empty();
+                    roleSelect.append('<option value="" disabled selected>请选择角色</option>');
+                    res.data.forEach(role => roleSelect.append(`<option value="${role.roleName}">${role.roleName}</option>`));
+                    form.render("select");
+                },
+                error: function () {
+                    layer.msg("请求角色列表失败", { icon: 5 });
+                }
+            });
+        }
+
+        function loadPermissions(type, name) {
+            $("#rolePermissions").val('');
+            renderSelectOptions("#userPermissions", []);
+            renderSelectOptions("#roleOnlyPermissions", []);
+
+            $.ajax({
+                url: "/permissions/get",
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ name, type }),
+                headers: { 'Authorization': localStorage.getItem('token') },
+                success: function (res) {
+                    const data = typeof res === 'string' ? JSON.parse(res) : res;
+                    const userPermList = JSON.parse(data.userPermission || '[]');
+                    const rolePermList = JSON.parse(data.rolePermission || '[]');
+                    if (type === 'user') {
+                        $("#rolePermissions").val(rolePermList.join("\n"));
+                        renderSelectOptions("#userPermissions", userPermList);
+                    } else {
+                        renderSelectOptions("#roleOnlyPermissions", rolePermList);
+                    }
+                },
+                error: function () {
+                    layer.msg("权限加载失败", { icon: 5 });
+                }
+            });
+        }
+
+        function renderSelectOptions(selectId, list) {
+            const $select = $(selectId);
+            $select.empty();
+            list.forEach(item => {
+                if (item.trim()) $select.append(`<option value="${item}">${item}</option>`);
+            });
+            form.render("select");
+        }
+
+        function savePermissions(selectId) {
+            const name = $('#targetSelect').val();
+            const type = $('#editType').val();
+            if (!name || !type) return;
+            const list = [];
+            $(`${selectId} option`).each(function () {
+                list.push($(this).val());
+            });
+            $.ajax({
+                url: "/permissions/save",
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ name: name, type: type, value: list }),
+                headers: { 'Authorization': localStorage.getItem('token') },
+                success: function (res) {
+                    layer.msg("权限已保存", { icon: 1 });
+                },
+                error: function () {
+                    layer.msg("保存权限失败", { icon: 5 });
+                }
+            });
+        }
+
+        function bindAddDelete(buttonId, selectId) {
+            $(`#${buttonId}`).on('click', function () {
+                layer.prompt({ title: '请输入权限名' }, function (value, index) {
+                    if (!value.trim()) return layer.msg("权限名不能为空", { icon: 5 });
+                    const exists = $(`${selectId} option[value='${value.trim()}']`).length > 0;
+                    if (exists) return layer.msg("权限已存在", { icon: 5 });
+                    $(selectId).append(`<option value="${value}">${value}</option>`);
+                    form.render("select");
+                    layer.close(index);
+                    savePermissions(selectId);
+                });
+            });
+        }
+
+        function bindDelete(buttonId, selectId) {
+            $(`#${buttonId}`).on('click', function () {
+                const selected = $(selectId).val();
+                if (!selected || selected.length === 0) {
+                    return layer.msg("请选择要删除的权限", { icon: 0 });
+                }
+                layer.confirm("确认删除选中的权限？", { icon: 3, title: '提示' }, function (index) {
+                    selected.forEach(value => $(`${selectId} option[value='${value}']`).remove());
+                    form.render("select");
+                    layer.close(index);
+                    savePermissions(selectId);
+                });
+            });
+        }
+
+        bindAddDelete("addUserPerm", "#userPermissions");
+        bindDelete("deleteUserPerm", "#userPermissions");
+        bindAddDelete("addRolePerm", "#roleOnlyPermissions");
+        bindDelete("deleteRolePerm", "#roleOnlyPermissions");
+
+        form.render();
+    });
+</script>
+</body>
+</html>

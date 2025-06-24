@@ -62,6 +62,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addViewController("/page/ai/aiResultTmpl2").setViewName("ai/aiResultTmpl2");
         registry.addViewController("/page/log/list").setViewName("log/list");
         registry.addViewController("/page/log/detect").setViewName("log/detect");
+
+        registry.addViewController("/page/permission/index").setViewName("permission/index");
     }
 
     @Override
