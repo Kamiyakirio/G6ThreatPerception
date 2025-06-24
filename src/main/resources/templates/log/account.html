@@ -124,6 +124,7 @@
     var element = layui.element;
     var form = layui.form;
     var table = layui.table;
+    var util = layui.util;
 
     // 初始化图表
     var riskChart = echarts.init(document.getElementById('riskChart'));
@@ -232,6 +233,7 @@
       });
     }
 
+
     var logCols = [
       {field: 'logId', title: '日志ID', minWidth: 100},
       {field: 'hostName', title: '主机名', minWidth: 150},
@@ -257,7 +259,9 @@
       },
       {field: "riskDesc", title: "风险描述", minWidth: 200},
       {field: 'channel', title: '日志类型', minWidth: 100},
-      {field: 'timestamp', title: '时间', minWidth: 180},
+      {field:'timestamp', title:'时间',width: 160, templet:function (d){
+          return d.timestamp ? util.toDateString(new Date(d.timestamp), "yyyy-MM-dd HH:mm:ss") : "";
+        }},
       {title: '操作', minWidth: 120, align: 'center', toolbar: '#logTableBar'}
     ];
 
