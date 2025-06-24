@@ -13,11 +13,31 @@
     </resultMap>
 
     <select id="findAll" resultMap="BaselineTaskMap">
-        SELECT * FROM baseline_task ORDER BY create_time DESC
+        SELECT 
+            id,
+            task_name,
+            DATE_FORMAT(CONVERT_TZ(task_time, @@session.time_zone, '+08:00'), '%Y-%m-%d %H:%i:%s') as task_time,
+            task_status,
+            host_name,
+            mac_address,
+            create_time,
+            update_time
+        FROM baseline_task 
+        ORDER BY create_time DESC
     </select>
 
     <select id="selectById" resultMap="BaselineTaskMap">
-        SELECT * FROM baseline_task WHERE id = #{id}
+        SELECT 
+            id,
+            task_name,
+            DATE_FORMAT(CONVERT_TZ(task_time, @@session.time_zone, '+08:00'), '%Y-%m-%d %H:%i:%s') as task_time,
+            task_status,
+            host_name,
+            mac_address,
+            create_time,
+            update_time
+        FROM baseline_task 
+        WHERE id = #{id}
     </select>
 
     <insert id="insert" parameterType="com.tpp.threat_perception_platform.pojo.BaselineTask">

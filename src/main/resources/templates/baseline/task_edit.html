@@ -128,7 +128,13 @@
         // 日期时间选择器
         laydate.render({
             elem: '#taskTime',
-            type: 'datetime'
+            type: 'datetime',
+            format: 'yyyy-MM-dd HH:mm:ss',
+            value: new Date(),
+            done: function(value, date) {
+                // 确保时间值正确设置
+                $('#taskTime').val(value);
+            }
         });
         
         // 加载所有主机数据
@@ -188,14 +194,16 @@
                     // 格式化日期
                     if(data.taskTime) {
                         var taskTime = new Date(data.taskTime);
-                        var year = taskTime.getFullYear();
-                        var month = String(taskTime.getMonth() + 1).padStart(2, '0');
-                        var day = String(taskTime.getDate()).padStart(2, '0');
-                        var hours = String(taskTime.getHours()).padStart(2, '0');
-                        var minutes = String(taskTime.getMinutes()).padStart(2, '0');
-                        var seconds = String(taskTime.getSeconds()).padStart(2, '0');
-                        
-                        $('#taskTime').val(year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds);
+                        // 使用toLocaleString确保时区正确
+                        $('#taskTime').val(taskTime.toLocaleString('zh-CN', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            hour12: false
+                        }).replace(/\//g, '-'));
                     }
                     
                     // 设置任务状态

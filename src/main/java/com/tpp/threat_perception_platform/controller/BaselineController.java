@@ -26,6 +26,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Collections;
+import java.util.TimeZone;
 
 @Controller // 修改为Controller以支持页面渲染
 @RequestMapping("/baseline")
@@ -926,6 +927,48 @@ public class BaselineController {
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseResult<>(1, "更新失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 更新任务
+     */
+    @PostMapping("/update")
+    @ResponseBody
+    public ResponseResult<Void> updateTask(@RequestBody Map<String, Object> data) {
+        try {
+            // 创建任务对象
+            BaselineTask task = new BaselineTask();
+            
+            // 设置任务属性
+            task.setId(Integer.parseInt(data.get("id").toString()));
+            task.setTaskName(data.get("taskName").toString());
+            task.setHostName(data.get("hostName").toString());
+            task.setMacAddress(data.get("macAddress").toString());
+            task.setTaskStatus(Integer.parseInt(data.get("taskStatus").toString()));
+            
+            // 解析时间字符串，使用系统默认时区
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            dateFormat.setTimeZone(TimeZone.getDefault());
+            try {
+                String taskTimeStr = data.get("taskTime").toString();
+                task.setTaskTime(dateFormat.parse(taskTimeStr));
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new ResponseResult<>(1, "时间格式错误：" + e.getMessage(), null);
+            }
+            
+            // 更新到数据库
+            int result = baselineTaskMapper.update(task);
+            
+            if (result > 0) {
+                return new ResponseResult<>(0, "更新任务成功", null);
+            } else {
+                return new ResponseResult<>(1, "更新任务失败", null);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult<>(500, "更新任务失败：" + e.getMessage(), null);
         }
     }
 
