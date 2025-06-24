@@ -47,6 +47,9 @@ public class SystemDetect {
      */
     private Date detectTime;
 
+
+
+
     /**
      * 探测结果id,自增主键
      */

@@ -15,10 +15,10 @@ public class AppRiskController {
 
     @PostMapping("/apprisk/trigger")
     public ResponseResult triggerAppRiskDetect(@RequestBody HashMap<String, String> data) {
-        System.out.println("收到/apprisk/trigger请求，数据: " + data);
+//        System.out.println("收到/apprisk/trigger请求，数据: " + data);
         String macAddress = data.get("macAddress");
         if (macAddress == null || macAddress.isEmpty()) {
-            System.out.println("MAC地址为空！");
+//            System.out.println("MAC地址为空！");
             return new ResponseResult(1001, "MAC地址不能为空！");
         }
         System.out.println("MAC地址: " + macAddress);

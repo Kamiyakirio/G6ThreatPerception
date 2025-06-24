@@ -1,522 +1,554 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>控制台主页</title>
-  <meta name="renderer" content="webkit">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
-  <!--引入本地layui.css-->
-  <link rel="stylesheet" href="/layui/css/layui.css" media="all">
-  <!--引入本地自定义的admin、login.css-->
-  <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
-  <!-- 引入刚刚下载的 ECharts 文件 -->
-  <script src="/js/echarts.min.js"></script>
+    <meta charset="utf-8">
+    <title>控制台主页</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <!--引入本地layui.css-->
+    <link rel="stylesheet" href="/layui/css/layui.css" media="all">
+    <!--引入本地自定义的admin、login.css-->
+    <link rel="stylesheet" href="/layui/layuiAdmin/css/admin.css" media="all">
+    <!-- 引入刚刚下载的 ECharts 文件 -->
+    <script src="/js/echarts.min.js"></script>
 </head>
 <body>
 <div class="layui-fluid">
-  <div class="layui-row layui-col-space15">
-    <!-- 左上角基础数据展示区域 -->
-    <div class="layui-col-md6" style="padding-right: 8px;">
-      <div class="layui-card" style="height: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 8px;">
-        <div class="layui-card-header">基础数据</div>
-        <div class="layui-card-body" style="padding: 15px; background: #fff;">
-          <div class="layui-row layui-col-space10">
-            <!-- 数据卡片1 -->
-            <div class="layui-col-xs6">
-              <div class="layui-card layui-bg-blue">
-                <div class="layui-card-body layui-text-center">
-                  <h3 class="layui-text-white" id="userCount">0</h3>
-                  <p class="layui-text-white layui-opacity-70">用户数量</p>
+    <div class="layui-row layui-col-space15">
+        <!-- 左上角基础数据展示区域 -->
+        <div class="layui-col-md6" style="padding-right: 8px;">
+            <div class="layui-card" style="height: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 8px;">
+                <div class="layui-card-header">基础数据</div>
+                <div class="layui-card-body" style="padding: 15px; background: #fff;">
+                    <div class="layui-row layui-col-space10">
+                        <!-- 数据卡片1 -->
+                        <div class="layui-col-xs6">
+                            <div class="layui-card layui-bg-blue">
+                                <div class="layui-card-body layui-text-center">
+                                    <h3 class="layui-text-white" id="userCount">0</h3>
+                                    <p class="layui-text-white layui-opacity-70">用户数量</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 数据卡片2 -->
+                        <div class="layui-col-xs6">
+                            <div class="layui-card layui-bg-green">
+                                <div class="layui-card-body layui-text-center">
+                                    <h3 class="layui-text-white" id="onlineHostCount">0</h3>
+                                    <p class="layui-text-white layui-opacity-70">在线主机数</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 数据卡片3 -->
+                        <div class="layui-col-xs6">
+                            <div class="layui-card layui-bg-orange">
+                                <div class="layui-card-body layui-text-center">
+                                    <h3 class="layui-text-white" id="detectedHostCount">0</h3>
+                                    <p class="layui-text-white layui-opacity-70">已探测主机数</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 数据卡片4 -->
+                        <div class="layui-col-xs6">
+                            <div class="layui-card layui-bg-red">
+                                <div class="layui-card-body layui-text-center">
+                                    <h3 class="layui-text-white" id="pendingRiskCount">0</h3>
+                                    <p class="layui-text-white layui-opacity-70">待处理风险</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
             </div>
-            <!-- 数据卡片2 -->
-            <div class="layui-col-xs6">
-              <div class="layui-card layui-bg-green">
-                <div class="layui-card-body layui-text-center">
-                  <h3 class="layui-text-white" id="onlineHostCount">0</h3>
-                  <p class="layui-text-white layui-opacity-70">在线主机数</p>
-                </div>
-              </div>
-            </div>
-            <!-- 数据卡片3 -->
-            <div class="layui-col-xs6">
-              <div class="layui-card layui-bg-orange">
-                <div class="layui-card-body layui-text-center">
-                  <h3 class="layui-text-white" id="detectedHostCount">0</h3>
-                  <p class="layui-text-white layui-opacity-70">已探测主机数</p>
-                </div>
-              </div>
-            </div>
-            <!-- 数据卡片4 -->
-            <div class="layui-col-xs6">
-              <div class="layui-card layui-bg-red">
-                <div class="layui-card-body layui-text-center">
-                  <h3 class="layui-text-white" id="pendingRiskCount">0</h3>
-                  <p class="layui-text-white layui-opacity-70">待处理风险</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
 
-      <!-- 风险数据卡片区域 -->
-      <div class="layui-col-md12" style="padding-left: 8px;">
-        <div class="layui-card" style="height: 100%;">
-          <div class="layui-card-header" style="padding: 0 15px;height: 30px;line-height: 30px;font-size: 14px;">风险数据</div>
-          <div class="layui-card-body" style="padding: 5px 15px;">
-            <div class="layui-row layui-col-space4">
-              <!-- 补丁缺失 -->
-              <div class="layui-col-xs4">
-                <div class="layui-card" style="box-shadow: 0 1px 2px rgba(0,0,0,0.1); border-radius: 4px;">
-                  <div class="layui-card-body layui-text-center" style="padding: 4px;">
-                    <h3 style="margin: 1px 0;font-size: 15px;" id="hotfixCount">0</h3>
-                    <p class="layui-opacity-70" style="margin: 1px 0;font-size: 11px;">补丁检测</p>
-                  </div>
+            <!-- 风险数据卡片区域 -->
+            <div class="layui-col-md12" style="padding-left: 8px;">
+                <div class="layui-card" style="height: 100%;">
+                    <div class="layui-card-header"
+                         style="padding: 0 15px;height: 30px;line-height: 30px;font-size: 14px;">风险数据
+                    </div>
+                    <div class="layui-card-body" style="padding: 5px 15px;">
+                        <div class="layui-row layui-col-space4">
+                            <!-- 补丁缺失 -->
+                            <div class="layui-col-xs4">
+                                <div class="layui-card"
+                                     style="box-shadow: 0 1px 2px rgba(0,0,0,0.1); border-radius: 4px;">
+                                    <div class="layui-card-body layui-text-center" style="padding: 4px;">
+                                        <h3 style="margin: 1px 0;font-size: 15px;" id="hotfixCount">0</h3>
+                                        <p class="layui-opacity-70" style="margin: 1px 0;font-size: 11px;">补丁检测</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 高危漏洞 -->
+                            <div class="layui-col-xs4">
+                                <div class="layui-card"
+                                     style="box-shadow: 0 1px 2px rgba(0,0,0,0.1); border-radius: 4px;">
+                                    <div class="layui-card-body layui-text-center" style="padding: 4px;">
+                                        <h3 style="margin: 1px 0;font-size: 15px;" id="vulCount">0</h3>
+                                        <p class="layui-opacity-70" style="margin: 1px 0;font-size: 11px;">漏洞检测</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 弱密码 -->
+                            <div class="layui-col-xs4">
+                                <div class="layui-card"
+                                     style="box-shadow: 0 1px 2px rgba(0,0,0,0.1); border-radius: 4px;">
+                                    <div class="layui-card-body layui-text-center" style="padding: 4px;">
+                                        <h3 style="margin: 1px 0;font-size: 15px;" id="weakPwdCount">0</h3>
+                                        <p class="layui-opacity-70" style="margin: 1px 0;font-size: 11px;">弱密码</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 应用风险 -->
+                            <div class="layui-col-xs4">
+                                <div class="layui-card"
+                                     style="box-shadow: 0 1px 2px rgba(0,0,0,0.1); border-radius: 4px;">
+                                    <div class="layui-card-body layui-text-center" style="padding: 4px;">
+                                        <h3 style="margin: 1px 0;font-size: 15px;" id="appRiskCount">0</h3>
+                                        <p class="layui-opacity-70" style="margin: 1px 0;font-size: 11px;">应用风险</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 系统风险 -->
+                            <div class="layui-col-xs4">
+                                <div class="layui-card"
+                                     style="box-shadow: 0 1px 2px rgba(0,0,0,0.1); border-radius: 4px;">
+                                    <div class="layui-card-body layui-text-center" style="padding: 4px;">
+                                        <h3 style="margin: 1px 0;font-size: 15px;" id="systemRiskCount">0</h3>
+                                        <p class="layui-opacity-70" style="margin: 1px 0;font-size: 11px;">系统风险</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 风险总数 -->
+                            <div class="layui-col-xs4">
+                                <div class="layui-card"
+                                     style="box-shadow: 0 1px 2px rgba(0,0,0,0.1); border-radius: 4px;">
+                                    <div class="layui-card-body layui-text-center" style="padding: 4px;">
+                                        <h3 style="margin: 1px 0;font-size: 15px;" id="totalRiskCount">0</h3>
+                                        <p class="layui-opacity-70" style="margin: 1px 0;font-size: 11px;">风险总数</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
-              <!-- 高危漏洞 -->
-              <div class="layui-col-xs4">
-                <div class="layui-card" style="box-shadow: 0 1px 2px rgba(0,0,0,0.1); border-radius: 4px;">
-                  <div class="layui-card-body layui-text-center" style="padding: 4px;">
-                    <h3 style="margin: 1px 0;font-size: 15px;" id="vulCount">0</h3>
-                    <p class="layui-opacity-70" style="margin: 1px 0;font-size: 11px;">漏洞检测</p>
-                  </div>
-                </div>
-              </div>
-              <!-- 弱密码 -->
-              <div class="layui-col-xs4">
-                <div class="layui-card" style="box-shadow: 0 1px 2px rgba(0,0,0,0.1); border-radius: 4px;">
-                  <div class="layui-card-body layui-text-center" style="padding: 4px;">
-                    <h3 style="margin: 1px 0;font-size: 15px;" id="weakPwdCount">0</h3>
-                    <p class="layui-opacity-70" style="margin: 1px 0;font-size: 11px;">弱密码</p>
-                  </div>
-                </div>
-              </div>
-              <!-- 应用风险 -->
-              <div class="layui-col-xs4">
-                <div class="layui-card" style="box-shadow: 0 1px 2px rgba(0,0,0,0.1); border-radius: 4px;">
-                  <div class="layui-card-body layui-text-center" style="padding: 4px;">
-                    <h3 style="margin: 1px 0;font-size: 15px;" id="appRiskCount">0</h3>
-                    <p class="layui-opacity-70" style="margin: 1px 0;font-size: 11px;">应用风险</p>
-                  </div>
-                </div>
-              </div>
-              <!-- 系统风险 -->
-              <div class="layui-col-xs4">
-                <div class="layui-card" style="box-shadow: 0 1px 2px rgba(0,0,0,0.1); border-radius: 4px;">
-                  <div class="layui-card-body layui-text-center" style="padding: 4px;">
-                    <h3 style="margin: 1px 0;font-size: 15px;" id="systemRiskCount">0</h3>
-                    <p class="layui-opacity-70" style="margin: 1px 0;font-size: 11px;">系统风险</p>
-                  </div>
-                </div>
-              </div>
-              <!-- 风险总数 -->
-              <div class="layui-col-xs4">
-                <div class="layui-card" style="box-shadow: 0 1px 2px rgba(0,0,0,0.1); border-radius: 4px;">
-                  <div class="layui-card-body layui-text-center" style="padding: 4px;">
-                    <h3 style="margin: 1px 0;font-size: 15px;" id="totalRiskCount">0</h3>
-                    <p class="layui-opacity-70" style="margin: 1px 0;font-size: 11px;">风险总数</p>
-                  </div>
-                </div>
-              </div>
             </div>
-          </div>
+
         </div>
-      </div>
+
+        <!-- 风险类型分布图表区域 -->
+        <div class="layui-col-md6" style="padding-right: 8px;">
+            <div class="layui-card" style="height: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 8px;">
+                <div class="layui-card-header" style="padding: 0 15px;height: 35px;line-height: 35px;">风险类型分布
+                </div>
+                <div class="layui-card-body">
+                    <div id="riskPieChart" style="width: 100%;height:320px;"></div>
+                </div>
+            </div>
+        </div>
+
 
     </div>
 
-    <!-- 风险类型分布图表区域 -->
-    <div class="layui-col-md6" style="padding-right: 8px;">
-      <div class="layui-card" style="height: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 8px;">
-        <div class="layui-card-header" style="padding: 0 15px;height: 35px;line-height: 35px;">风险类型分布</div>
-        <div class="layui-card-body">
-          <div id="riskPieChart" style="width: 100%;height:320px;"></div>
+    <!-- 资产探测与风险分布新模块 -->
+    <div class="layui-row layui-col-space15" style="margin-top: 15px;">
+        <!-- 资产探测横向柱状图 -->
+        <div class="layui-col-md6">
+            <div class="layui-card">
+                <div class="layui-card-header">资产探测统计</div>
+                <div class="layui-card-body">
+                    <div id="assetBarChart" style="width: 100%;height:320px;"></div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
 
-
-  </div>
-
-  <!-- 资产探测与风险分布新模块 -->
-  <div class="layui-row layui-col-space15" style="margin-top: 15px;">
-    <!-- 资产探测横向柱状图 -->
-    <div class="layui-col-md6">
-      <div class="layui-card">
-        <div class="layui-card-header">资产探测统计</div>
-        <div class="layui-card-body">
-          <div id="assetBarChart" style="width: 100%;height:320px;"></div>
+        <!-- 风险类型饼状图 -->
+        <div class="layui-col-md6">
+            <div class="layui-card">
+                <div class="layui-card-header">登录日志风险等级分布</div>
+                <div class="layui-card-body">
+                    <div id="riskChart" style="width: 100%;height:320px;"></div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-
-    <!-- 风险类型饼状图 -->
-    <div class="layui-col-md6">
-      <div class="layui-card">
-        <div class="layui-card-header">登录日志风险等级分布</div>
-        <div class="layui-card-body">
-          <div id="riskChart" style="width: 100%;height:320px;"></div>
-        </div>
-      </div>
-    </div>
-  </div>
 
 </div>
 <script type="text/javascript" src="/layui/layui.js"></script>
 <script type="text/javascript">
-  layui.config({
-    base: '/layui/layuiAdmin/' //静态资源所在路径
-  }).extend({
-    index: 'lib/index' //主入口模块
-  }).use(['jquery', 'element'], function($, element){
-    // 基于准备好的dom，初始化echarts实例
-    var riskChart = echarts.init(document.getElementById('riskChart'));
+    layui.config({
+        base: '/layui/layuiAdmin/' //静态资源所在路径
+    }).extend({
+        index: 'lib/index' //主入口模块
+    }).use(['jquery', 'element'], function ($, element) {
+        // 基于准备好的dom，初始化echarts实例
+        var riskChart = echarts.init(document.getElementById('riskChart'));
 
-    // 加载基础数据
-    function loadBasicData() {
-      // 获取用户数量
-      $.ajax({
-        url: '/console/basic-data',
-        type: 'GET',
-        headers: {
-          'Authorization': localStorage.getItem('token')
-        },
-        success: function(res) {
-          if (res.code === 200) {
-            // 更新用户数量
-            $('#userCount').text(res.data.userCount || 0);
-          }
-        },
-        error: function(xhr, status, error) {
-          console.error('加载基础数据失败:', error);
-        }
-      });
+        // 加载基础数据
+        function loadBasicData() {
+            // 获取用户数量
+            $.ajax({
+                url: '/console/basic-data',
+                type: 'GET',
+                headers: {
+                    'Authorization': localStorage.getItem('token')
+                },
+                success: function (res) {
+                    if (res.code === 200) {
+                        // 更新用户数量
+                        $('#userCount').text(res.data.userCount || 0);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('加载基础数据失败:', error);
+                }
+            });
 
-      // 获取主机统计数据
-      $.ajax({
-        url: '/host/list',
-        method: 'post',
-        headers: {'Authorization': localStorage.getItem('token')},
-        data: {page: 1, limit: 1}, // 只查一条，减少压力
-        success: function() {
-          // 列表请求完再查统计
-          $.ajax({
-            url: '/host/statistics',
-            method: 'get',
-            headers: {'Authorization': localStorage.getItem('token')},
-            success: function(res) {
-              if(res.code === 0 && res.data) {
-                $('#detectedHostCount').text(res.data.detectedCount || 0);
-                $('#onlineHostCount').text(res.data.onlineCount || 0);
-              }
+            // 获取主机统计数据
+            $.ajax({
+                url: '/host/list',
+                method: 'post',
+                headers: {'Authorization': localStorage.getItem('token')},
+                data: {page: 1, limit: 1}, // 只查一条，减少压力
+                success: function () {
+                    // 列表请求完再查统计
+                    $.ajax({
+                        url: '/host/statistics',
+                        method: 'get',
+                        headers: {'Authorization': localStorage.getItem('token')},
+                        success: function (res) {
+                            if (res.code === 0 && res.data) {
+                                $('#detectedHostCount').text(res.data.detectedCount || 0);
+                                $('#onlineHostCount').text(res.data.onlineCount || 0);
+                            }
+                        }
+                    });
+                }
+            });
+
+            // 获取补丁检测统计数据
+            $.ajax({
+                url: '/hotfix/statistics',
+                method: 'get',
+                headers: {'Authorization': localStorage.getItem('token')},
+                success: function (res) {
+                    if (res.code === 0) {
+                        $('#hotfixCount').text(res.data || 0);
+                        updateTotalRiskCount();
+                        updateRiskPieChart();
+                    }
+                }
+            });
+
+            // 获取漏洞检测统计数据
+            $.ajax({
+                url: '/vul/statistics',
+                method: 'get',
+                headers: {'Authorization': localStorage.getItem('token')},
+                success: function (res) {
+                    if (res.code === 0) {
+                        $('#vulCount').text(res.data || 0);
+                        updateTotalRiskCount();
+                        updateRiskPieChart();
+                    } else {
+                        console.error('获取漏洞检测数据失败:', res);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('请求漏洞检测数据失败:', error);
+                }
+            });
+
+            // 获取弱密码统计数据
+            $.ajax({
+                url: '/pwd/statistics',
+                method: 'get',
+                headers: {'Authorization': localStorage.getItem('token')},
+                success: function (res) {
+                    if (res.code === 0) {
+                        $('#weakPwdCount').text(res.data || 0);
+                        updateTotalRiskCount();
+                        updateRiskPieChart();
+                    }
+                }
+            });
+
+            // 获取应用风险统计数据
+            $.ajax({
+                url: '/apprisk/total',
+                method: 'get',
+                headers: {'Authorization': localStorage.getItem('token')},
+                success: function (res) {
+                    if (res.code === 0) {
+                        $('#appRiskCount').text(res.data || 0);
+                        updateTotalRiskCount();
+                        updateRiskPieChart();
+                    }
+                }
+            });
+
+            // 获取系统风险统计数据
+            $.ajax({
+                url: '/host/system/total',
+                method: 'get',
+                headers: {'Authorization': localStorage.getItem('token')},
+                success: function (res) {
+                    if (res.code === 0) {
+                        $('#systemRiskCount').text(res.data || 0);
+                        updateTotalRiskCount();
+                        updateRiskPieChart();
+                    }
+                }
+            });
+
+            // 计算并更新风险总数
+            function updateTotalRiskCount() {
+                var hotfixCount = parseInt($('#hotfixCount').text()) || 0;
+                var vulCount = parseInt($('#vulCount').text()) || 0;
+                var weakPwdCount = parseInt($('#weakPwdCount').text()) || 0;
+                var appRiskCount = parseInt($('#appRiskCount').text()) || 0;
+                var systemRiskCount = parseInt($('#systemRiskCount').text()) || 0;
+
+                var totalCount = hotfixCount + vulCount + weakPwdCount + appRiskCount + systemRiskCount;
+                $('#totalRiskCount').text(totalCount);
+                // 同时更新待处理风险数量
+                $('#pendingRiskCount').text(totalCount);
             }
-          });
         }
-      });
 
-      // 获取补丁检测统计数据
-      $.ajax({
-        url: '/hotfix/statistics',
-        method: 'get',
-        headers: {'Authorization': localStorage.getItem('token')},
-        success: function(res) {
-          if(res.code === 0) {
-            $('#hotfixCount').text(res.data || 0);
-            updateTotalRiskCount();
-            updateRiskPieChart();
-          }
+        // 加载统计数据
+        function loadStatistics() {
+            $.ajax({
+                url: '/log/statistics',
+                type: 'GET',
+                headers: {
+                    'Authorization': localStorage.getItem('token')
+                },
+                success: function (res) {
+                    if (res.code === 200) {
+                        // 更新图表
+                        updateRiskChart(res.data.riskDistribution || []);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('加载统计数据失败:', error);
+                    // 如果请求失败，显示默认数据
+                    updateRiskChart([]);
+                }
+            });
         }
-      });
 
-      // 获取漏洞检测统计数据
-      $.ajax({
-        url: '/vul/statistics',
-        method: 'get',
-        headers: {'Authorization': localStorage.getItem('token')},
-        success: function(res) {
-          if(res.code === 0) {
-            $('#vulCount').text(res.data || 0);
-            updateTotalRiskCount();
-            updateRiskPieChart();
-          } else {
-            console.error('获取漏洞检测数据失败:', res);
-          }
-        },
-        error: function(xhr, status, error) {
-          console.error('请求漏洞检测数据失败:', error);
-        }
-      });
-
-      // 获取弱密码统计数据
-      $.ajax({
-        url: '/pwd/statistics',
-        method: 'get',
-        headers: {'Authorization': localStorage.getItem('token')},
-        success: function(res) {
-          if(res.code === 0) {
-            $('#weakPwdCount').text(res.data || 0);
-            updateTotalRiskCount();
-            updateRiskPieChart();
-          }
-        }
-      });
-
-      // 获取应用风险统计数据
-      $.ajax({
-        url: '/apprisk/total',
-        method: 'get',
-        headers: {'Authorization': localStorage.getItem('token')},
-        success: function(res) {
-          if(res.code === 0) {
-            $('#appRiskCount').text(res.data || 0);
-            updateTotalRiskCount();
-            updateRiskPieChart();
-          }
-        }
-      });
-
-      // 获取系统风险统计数据
-      $.ajax({
-        url: '/host/system/total',
-        method: 'get',
-        headers: {'Authorization': localStorage.getItem('token')},
-        success: function(res) {
-          if(res.code === 0) {
-            $('#systemRiskCount').text(res.data || 0);
-            updateTotalRiskCount();
-            updateRiskPieChart();
-          }
-        }
-      });
-
-      // 计算并更新风险总数
-      function updateTotalRiskCount() {
-        var hotfixCount = parseInt($('#hotfixCount').text()) || 0;
-        var vulCount = parseInt($('#vulCount').text()) || 0;
-        var weakPwdCount = parseInt($('#weakPwdCount').text()) || 0;
-        var appRiskCount = parseInt($('#appRiskCount').text()) || 0;
-        var systemRiskCount = parseInt($('#systemRiskCount').text()) || 0;
-        
-        var totalCount = hotfixCount + vulCount + weakPwdCount + appRiskCount + systemRiskCount;
-        $('#totalRiskCount').text(totalCount);
-        // 同时更新待处理风险数量
-        $('#pendingRiskCount').text(totalCount);
-      }
-    }
-
-    // 加载统计数据
-    function loadStatistics() {
-      $.ajax({
-        url: '/log/statistics',
-        type: 'GET',
-        headers: {
-          'Authorization': localStorage.getItem('token')
-        },
-        success: function (res) {
-          if (res.code === 200) {
-            // 更新图表
-            updateRiskChart(res.data.riskDistribution || []);
-          }
-        },
-        error: function (xhr, status, error) {
-          console.error('加载统计数据失败:', error);
-          // 如果请求失败，显示默认数据
-          updateRiskChart([]);
-        }
-      });
-    }
-
-    // 初始化资产探测横向柱状图
-    function initAssetBarChart() {
-      var assetBarChart = echarts.init(document.getElementById('assetBarChart'));
-      var option = {
-        title: { text: '资产探测类型分布', left: 'center' },
-        tooltip: { trigger: 'axis' },
-        xAxis: { type: 'value' },
-        yAxis: { type: 'category', data: ['账号','服务','进程','软件'], axisLabel: { fontSize: 12 } },
-        series: [{
-          type: 'bar',
-          data: [0, 0, 0, 0],
-          itemStyle: { color: '#409eff' },
-          label: { show: true, position: 'right' }
-        }]
-      };
-      assetBarChart.setOption(option);
-      
-      // 保存图表实例到全局变量
-      window.assetBarChart = assetBarChart;
-      
-      // 获取资产探测统计数据
-      $.ajax({
-        url: '/assets/statistics',
-        method: 'get',
-        headers: {'Authorization': localStorage.getItem('token')},
-        success: function(res) {
-          if(res.code === 0) {
-            var data = res.data;
-            var newOption = {
-              series: [{
-                data: [
-                  data.accountCount || 0,
-                  data.serviceCount || 0,
-                  data.processCount || 0,
-                  data.appCount || 0
-                ]
-              }]
+        // 初始化资产探测横向柱状图
+        function initAssetBarChart() {
+            var assetBarChart = echarts.init(document.getElementById('assetBarChart'));
+            var option = {
+                title: {text: '资产探测类型分布', left: 'center'},
+                tooltip: {trigger: 'axis'},
+                xAxis: {type: 'value'},
+                yAxis: {type: 'category', data: ['账号', '服务', '进程', '软件'], axisLabel: {fontSize: 12}},
+                series: [{
+                    type: 'bar',
+                    data: [0, 0, 0, 0],
+                    itemStyle: {color: '#409eff'},
+                    label: {show: true, position: 'right'}
+                }]
             };
-            window.assetBarChart.setOption(newOption);
-          }
+            assetBarChart.setOption(option);
+
+            // 保存图表实例到全局变量
+            window.assetBarChart = assetBarChart;
+
+            // 获取资产探测统计数据
+            $.ajax({
+                url: '/assets/statistics',
+                method: 'get',
+                headers: {'Authorization': localStorage.getItem('token')},
+                success: function (res) {
+                    if (res.code === 0) {
+                        var data = res.data;
+                        var newOption = {
+                            series: [{
+                                data: [
+                                    data.accountCount || 0,
+                                    data.serviceCount || 0,
+                                    data.processCount || 0,
+                                    data.appCount || 0
+                                ]
+                            }]
+                        };
+                        window.assetBarChart.setOption(newOption);
+                    }
+                }
+            });
+
+            $(window).resize(function () {
+                assetBarChart.resize();
+            });
         }
-      });
 
-      $(window).resize(function() { assetBarChart.resize(); });
-    }
+        // 初始化风险类型饼状图
+        function initRiskPieChart() {
+            var riskPieChart = echarts.init(document.getElementById('riskPieChart'));
+            var option = {
+                title: {text: '风险类型占比', left: 'center'},
+                tooltip: {trigger: 'item', formatter: '{a} <br/>{b}: {c} ({d}%)'},
+                legend: {orient: 'vertical', right: 10, top: 20},
+                series: [{
+                    name: '风险数量',
+                    type: 'pie',
+                    radius: '70%',
+                    center: ['50%', '60%'],
+                    data: [
+                        {value: 0, name: '补丁检测'},
+                        {value: 0, name: '漏洞检测'},
+                        {value: 0, name: '弱密码'},
+                        {value: 0, name: '应用风险'},
+                        {value: 0, name: '系统风险'}
+                    ],
+                    itemStyle: {emphasis: {shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)'}}
+                }]
+            };
+            riskPieChart.setOption(option);
 
-    // 初始化风险类型饼状图
-    function initRiskPieChart() {
-      var riskPieChart = echarts.init(document.getElementById('riskPieChart'));
-      var option = {
-        title: { text: '风险类型占比', left: 'center' },
-        tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} ({d}%)' },
-        legend: { orient: 'vertical', right: 10, top: 20 },
-        series: [{
-          name: '风险数量',
-          type: 'pie',
-          radius: '70%',
-          center: ['50%', '60%'],
-          data: [
-            {value: 0, name: '补丁检测'},
-            {value: 0, name: '漏洞检测'},
-            {value: 0, name: '弱密码'},
-            {value: 0, name: '应用风险'},
-            {value: 0, name: '系统风险'}
-          ],
-          itemStyle: { emphasis: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
-        }]
-      };
-      riskPieChart.setOption(option);
-      
-      // 保存图表实例到全局变量
-      window.riskPieChart = riskPieChart;
-      
-      $(window).resize(function() { riskPieChart.resize(); });
-    }
+            // 保存图表实例到全局变量
+            window.riskPieChart = riskPieChart;
 
-    // 更新风险类型饼图数据
-    function updateRiskPieChart() {
-      var hotfixCount = parseInt($('#hotfixCount').text()) || 0;
-      var vulCount = parseInt($('#vulCount').text()) || 0;
-      var weakPwdCount = parseInt($('#weakPwdCount').text()) || 0;
-      var appRiskCount = parseInt($('#appRiskCount').text()) || 0;
-      var systemRiskCount = parseInt($('#systemRiskCount').text()) || 0;
+            $(window).resize(function () {
+                riskPieChart.resize();
+            });
+        }
 
-      var option = {
-        series: [{
-          data: [
-            {value: hotfixCount, name: '补丁检测'},
-            {value: vulCount, name: '漏洞检测'},
-            {value: weakPwdCount, name: '弱密码'},
-            {value: appRiskCount, name: '应用风险'},
-            {value: systemRiskCount, name: '系统风险'}
-          ]
-        }]
-      };
-      
-      if(window.riskPieChart) {
-        window.riskPieChart.setOption(option);
-      }
-    }
+        // 更新风险类型饼图数据
+        function updateRiskPieChart() {
+            var hotfixCount = parseInt($('#hotfixCount').text()) || 0;
+            var vulCount = parseInt($('#vulCount').text()) || 0;
+            var weakPwdCount = parseInt($('#weakPwdCount').text()) || 0;
+            var appRiskCount = parseInt($('#appRiskCount').text()) || 0;
+            var systemRiskCount = parseInt($('#systemRiskCount').text()) || 0;
 
-    // 更新风险图表
-    function updateRiskChart(data) {
-      // 处理数据格式，确保有4个等级的数据
-      var chartData = [0, 0, 0, 0]; // 无风险、低风险、中风险、高风险
-      if (data && data.length > 0) {
-        data.forEach(function(item) {
-          var riskLevel = parseInt(item.risk_level);
-          var count = parseInt(item.count);
-          if (riskLevel >= 0 && riskLevel < 4) {
-            chartData[riskLevel] = count;
-          }
-        });
-      }
-      var option = {
-        title: {
-          text: '登录日志风险等级分布',
-          left: 'center',
-          textStyle: {
-            fontSize: 16,
-            fontWeight: 'bold'
-          }
-        },
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'shadow'
-          },
-          formatter: function(params) {
-            return params[0].name + '<br/>' +
-                    params[0].seriesName + ': ' + params[0].value + ' 条';
-          }
-        },
-        grid: {
-          left: '3%',
-          right: '4%',
-          bottom: '3%',
-          containLabel: true
-        },
-        xAxis: {
-          type: 'category',
-          data: ['无风险', '低风险', '中风险', '高风险'],
-          axisLabel: {
-            fontSize: 12
-          }
-        },
-        yAxis: {
-          type: 'value',
-          name: '数量',
-          axisLabel: {
-            fontSize: 12
-          }
-        },
-        series: [{
-          name: '日志数量',
-          type: 'bar',
-          data: chartData,
-          itemStyle: {
-            color: function(params) {
-              var colors = ['#52c41a', '#faad14', '#fa8c16', '#f5222d'];
-              return colors[params.dataIndex];
+            var option = {
+                series: [{
+                    data: [
+                        {value: hotfixCount, name: '补丁检测'},
+                        {value: vulCount, name: '漏洞检测'},
+                        {value: weakPwdCount, name: '弱密码'},
+                        {value: appRiskCount, name: '应用风险'},
+                        {value: systemRiskCount, name: '系统风险'}
+                    ]
+                }]
+            };
+
+            if (window.riskPieChart) {
+                window.riskPieChart.setOption(option);
             }
-          },
-          label: {
-            show: true,
-            position: 'top',
-            fontSize: 12
-          }
-        }]
-      };
-      riskChart.setOption(option);
-    }
-    // 页面加载完成后执行
-    $(document).ready(function() {
-      loadBasicData();
-      initAssetBarChart();
-      initRiskPieChart(); 
-      loadStatistics();
-      // 每5秒刷新一次数据
-      setInterval(loadBasicData, 5000);
-      // 窗口大小改变时重绘图表
-      $(window).resize(function() {
-        riskChart.resize();
-      });
+        }
+
+        // 更新风险图表
+        function updateRiskChart(data) {
+            // 处理数据格式，确保有4个等级的数据
+            var chartData = [0, 0, 0, 0]; // 无风险、低风险、中风险、高风险
+            if (data && data.length > 0) {
+                data.forEach(function (item) {
+                    var riskLevel = parseInt(item.risk_level);
+                    var count = parseInt(item.count);
+                    if (riskLevel >= 0 && riskLevel < 4) {
+                        chartData[riskLevel] = count;
+                    }
+                });
+            }
+            var option = {
+                title: {
+                    text: '登录日志风险等级分布',
+                    left: 'center',
+                    textStyle: {
+                        fontSize: 16,
+                        fontWeight: 'bold'
+                    }
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    },
+                    formatter: function (params) {
+                        return params[0].name + '<br/>' +
+                            params[0].seriesName + ': ' + params[0].value + ' 条';
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['无风险', '低风险', '中风险', '高风险'],
+                    axisLabel: {
+                        fontSize: 12
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '数量',
+                    axisLabel: {
+                        fontSize: 12
+                    }
+                },
+                series: [{
+                    name: '日志数量',
+                    type: 'bar',
+                    data: chartData,
+                    itemStyle: {
+                        color: function (params) {
+                            var colors = ['#52c41a', '#faad14', '#fa8c16', '#f5222d'];
+                            return colors[params.dataIndex];
+                        }
+                    },
+                    label: {
+                        show: true,
+                        position: 'top',
+                        fontSize: 12
+                    }
+                }]
+            };
+            riskChart.setOption(option);
+        }
+
+        function createWebSocketAndMsg() {
+            const socket = new WebSocket('ws://localhost:8080/ws/status');
+
+            socket.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+                if (data.type === 'message') {
+                    var iconType=data.iconType;
+                    var message=data.message;
+                    window.parent.layer.msg(message,{icon: iconType});
+                }
+            };
+        }
+
+
+        // 页面加载完成后执行
+        $(document).ready(function () {
+            loadBasicData();
+            initAssetBarChart();
+            initRiskPieChart();
+            loadStatistics();
+
+            createWebSocketAndMsg();
+
+            // 每5秒刷新一次数据
+            setInterval(loadBasicData, 5000);
+            // 窗口大小改变时重绘图表
+            $(window).resize(function () {
+                riskChart.resize();
+            });
+        });
     });
-  });
 </script>
 </body>
 </html>
