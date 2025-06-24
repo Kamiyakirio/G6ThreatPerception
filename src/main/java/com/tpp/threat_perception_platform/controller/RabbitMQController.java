@@ -104,7 +104,7 @@ public class RabbitMQController {
         long tag = message.getMessageProperties().getDeliveryTag();
         try {
             String messageBody = new String(message.getBody());
-            System.out.println("收到主机信息消息: " + messageBody);
+//            System.out.println("收到主机信息消息: " + messageBody);
 
             Host host = new Host();
             HashMap<String, Object> dataDict = JSON.parseObject(messageBody, HashMap.class);
@@ -129,9 +129,9 @@ public class RabbitMQController {
             }
 
             channel.basicAck(tag, false);
-            System.out.println("主机信息处理成功");
+//            System.out.println("主机信息处理成功");
         } catch (Exception e) {
-            System.out.println("处理主机信息失败: " + e.getMessage());
+//            System.out.println("处理主机信息失败: " + e.getMessage());
             e.printStackTrace();
             channel.basicNack(tag, false, true);
         }
