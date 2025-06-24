@@ -2,7 +2,7 @@ import datetime
 import html
 import json
 import os
-from Evtx import PyEvtxParser
+from evtx import PyEvtxParser
 import re
 from xml.dom import minidom
 from difflib import SequenceMatcher
@@ -30,12 +30,12 @@ risk_rules = {
         4724: {"desc": "尝试重置账户密码", "level": 2},  # 尝试重置密码
     },
     "low_risk_events": {
-        4624: {"desc": "用户成功登录", "level": 1},  # 成功登录（默认低风险）
-        4634: {"desc": "用户注销", "level": 1},  # 用户注销
-        4647: {"desc": "用户启动了自己的账户注销", "level": 1},  # 主动注销
         4738: {"desc": "用户账户已更改", "level": 1},  # 用户账户更改
     },
-    "system_events": {
+    "no_risk_events": {
+        4624: {"desc": "用户成功登录", "level": 0},  # 成功登录
+        4634: {"desc": "用户注销", "level": 0},  # 用户注销
+        4647: {"desc": "用户启动了自己的账户注销", "level": 0},  # 主动注销
         1074: {"desc": "系统已关闭", "level": 0},
         6005: {"desc": "事件日志服务已启动", "level": 0},
         6006: {"desc": "事件日志服务已停止", "level": 0},
@@ -137,6 +137,7 @@ def get_log_info(event_path, **kwargs):
 
 def log_detect(start_time, end_time):
     """
+    收集指定时间范围内的所有日志事件
     :return: 包含所有日志的字典
     """
     print(f"时间范围: {start_time} - {end_time}")
@@ -164,10 +165,11 @@ def log_detect(start_time, end_time):
                     start_time=start_time,
                     end_time=end_time,
                 )
-                if event_id in risk_rules["low_risk_events"] or event_id:
+                # 只对低风险事件进行去重
+                if event_id in risk_rules["low_risk_events"]:
                     event_list = deduplicate_low_risk(event_list)
-                for event in event_list:
-                    all_logs.append(event)
+                # 将所有事件添加到结果列表中
+                all_logs.extend(event_list)
                 print(f"  找到{len(event_list)}条记录")
             except Exception as e:
                 print(f"  查询事件ID {event_id}时出错: {str(e)}")
@@ -189,7 +191,7 @@ def deduplicate_low_risk(event_list, threshold=0.3, keep_probability=0.25):
     去除约 70% 的重复数据，保留 30% 的重复数据。
 
     :param event_list: 日志列表
-    :param threshold: 相似度阈值，低于该值认为是“不重复”
+    :param threshold: 相似度阈值，低于该值认为是"不重复"
     :param keep_probability: 保留重复项的概率（用于模拟保留 30% 的重复数据）
     :return: 去重后的日志列表
     """
@@ -227,6 +229,8 @@ def analyze_risk_grade(all_logs):
     for event in all_logs:
         risk_details = []
         event_id = event.get("event_id")
+        
+        # 判断事件类型和基础风险等级
         if event_id in risk_rules["low_risk_events"]:
             base_risk = risk_rules["low_risk_events"][event_id]["level"]
             risk_desc_base = risk_rules["low_risk_events"][event_id]["desc"]
@@ -236,9 +240,12 @@ def analyze_risk_grade(all_logs):
         elif event_id in risk_rules["high_risk_events"]:
             base_risk = risk_rules["high_risk_events"][event_id]["level"]
             risk_desc_base = risk_rules["high_risk_events"][event_id]["desc"]
+        elif event_id in risk_rules["no_risk_events"]:
+            base_risk = risk_rules["no_risk_events"][event_id]["level"]
+            risk_desc_base = risk_rules["no_risk_events"][event_id]["desc"]
         else:
             base_risk = 0
-            risk_desc_base = "暂无风险"
+            risk_desc_base = "无风险"
         risk_details.append(risk_desc_base)
         timestamp = event.get("timestamp", "")
         username = event.get("TargetUserName") or event.get("SubjectUserName", "")
@@ -246,18 +253,15 @@ def analyze_risk_grade(all_logs):
 
         # 初始化风险级别
         risk_level = base_risk
+        
         # 特殊处理：用户登录成功事件(4624)
         if event_id == 4624:
             # 如果是危险用户名，则提升为高风险
-            if username and username.lower() in [
-                name.lower() for name in risk_rules["dangerous_usernames"]
-            ]:
+            if username and username.lower() in [name.lower() for name in risk_rules["dangerous_usernames"]]:
                 risk_level = 3
                 risk_details.append(f"使用危险用户名登录: {username}")
         # 检查是否是危险用户名（除登录成功事件外的其他事件）
-        elif username and username.lower() in [
-            name.lower() for name in risk_rules["dangerous_usernames"]
-        ]:
+        elif username and username.lower() in [name.lower() for name in risk_rules["dangerous_usernames"]]:
             risk_level = max(risk_level, 3)  # 危险用户名提升为高风险
             risk_details.append(f"使用危险用户名: {username}")
 
@@ -270,11 +274,9 @@ def analyze_risk_grade(all_logs):
                     risk_details.append(f"在非正常时段登录: {event_time.hour}:00")
             except ValueError:
                 pass
+
         # 构建分析结果
-        # 将risk_details转为字符串，去除风险详情中的[和]
-        risk_details = (
-            str(risk_details).replace("[", "").replace("]", "").replace("'", "")
-        )
+        risk_details = str(risk_details).replace("[", "").replace("]", "").replace("'", "")
         result_entry = {
             "event_id": event_id,
             "risk_level": risk_level,

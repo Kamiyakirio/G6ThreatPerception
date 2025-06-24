@@ -5,6 +5,8 @@ import threading
 import os
 import logging
 
+from baseline.baseline_repair import apply_account_policies, baseline_repair
+from baseline.log_handler import baseline_detect
 from log_detect.log_detect import log_detect
 from mq.rabbit_producer import RabbitProducer
 from mq.rabbit_consumer import RabbitConsumer
@@ -103,6 +105,12 @@ def create_asset_detect_message_callback(mac_address):
             elif detect_type == "log":
                 detect_result = log_detect(data)
                 queue_name = "log_detect_result"
+            elif detect_type == "baseline":
+                detect_result = baseline_detect(data)
+                queue_name = "baseline_detect_result"
+            elif detect_type == "baseline_repair":
+                detect_result = baseline_repair(data)
+                queue_name = "baseline_detect_result"
             else:
                 print(f"[!] 未知检测类型: {detect_type}")
                 return
