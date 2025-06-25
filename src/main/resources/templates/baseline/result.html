@@ -589,7 +589,6 @@
                                        '<th>配置项</th>' +
                                        '<th>规则值</th>' +
                                        '<th>当前值</th>' +
-                                       '<th>风险等级</th>' +
                                        '<th>状态</th>' +
                                        '<th>说明</th>' +
                                        '</tr></thead>';
@@ -597,10 +596,6 @@
 
                                 data.forEach(function(item, index) {
                                     if (!item) return;
-
-                                    var riskLevel = item.status === 1 ?
-                                        '<span class="layui-badge layui-bg-green">低风险</span>' :
-                                        '<span class="layui-badge layui-bg-orange">高风险</span>';
 
                                     var status = item.status === 1 ?
                                         '<span class="layui-badge layui-bg-green">合格</span>' :
@@ -611,7 +606,6 @@
                                     html += '<td>' + (item.name || '-') + '</td>';
                                     html += '<td>' + (item.standardValue || '-') + '</td>';
                                     html += '<td>' + (item.actualValue || '-') + '</td>';
-                                    html += '<td>' + riskLevel + '</td>';
                                     html += '<td>' + status + '</td>';
                                     html += '<td>' + (item.description || '-') + '</td>';
                                     html += '</tr>';

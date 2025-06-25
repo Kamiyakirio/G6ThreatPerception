@@ -193,7 +193,7 @@ public class BaselineServiceImpl implements BaselineService {
         try {
             log.info("Getting baseline details for MAC address: {}", macAddress);
         
-        // 1. 系统访问配置比较
+            // 1. 系统访问配置比较
             List<SystemAccess> ruleAccess = systemAccessMapper.selectByType("rule");
             List<SystemAccess> resultAccess = systemAccessMapper.selectByTypeAndMac("result", macAddress);
             log.debug("System Access - Rules: {}, Results: {}", ruleAccess.size(), resultAccess.size());
@@ -204,88 +204,88 @@ public class BaselineServiceImpl implements BaselineService {
                     log.debug("Processing system access results");
                     SystemAccess result = resultAccess.get(0);
             
-            // 密码最短留存期
-            addBaselineItem(results, "密码最短留存期", 
+                    // 密码最短留存期
+                    addBaselineItem(results, "密码最短留存期", 
                         String.valueOf(rule.getMinimumPasswordAge()),
                         String.valueOf(result.getMinimumPasswordAge()),
-                        result.getMinimumPasswordAge() <= rule.getMinimumPasswordAge(),
-                        "值小于规则值即合格", "system_access");
+                        isPasswordAgeValid(rule.getMinimumPasswordAge(), result.getMinimumPasswordAge(), true),
+                        "值必须小于等于规则值", "system_access");
             
-            // 密码最长留存期
-            addBaselineItem(results, "密码最长留存期",
+                    // 密码最长留存期
+                    addBaselineItem(results, "密码最长留存期",
                         String.valueOf(rule.getMaximumPasswordAge()),
                         String.valueOf(result.getMaximumPasswordAge()),
-                        result.getMaximumPasswordAge() <= rule.getMaximumPasswordAge(),
-                        "值小于规则值即合格", "system_access");
+                        isPasswordAgeValid(rule.getMaximumPasswordAge(), result.getMaximumPasswordAge(), false),
+                        "值必须大于等于规则值", "system_access");
             
-            // 密码最小长度
-            addBaselineItem(results, "密码最小长度",
+                    // 密码最小长度
+                    addBaselineItem(results, "密码最小长度",
                         String.valueOf(rule.getMinimumPasswordLength()),
                         String.valueOf(result.getMinimumPasswordLength()),
-                        result.getMinimumPasswordLength() >= rule.getMinimumPasswordLength(),
-                        "值大于规则值即合格", "system_access");
+                        isPasswordLengthValid(rule.getMinimumPasswordLength(), result.getMinimumPasswordLength()),
+                        "值必须大于等于规则值", "system_access");
             
-            // 密码复杂度要求
-            addBaselineItem(results, "密码复杂度要求",
+                    // 密码复杂度要求
+                    addBaselineItem(results, "密码复杂度要求",
                         String.valueOf(rule.getPasswordComplexity()),
                         String.valueOf(result.getPasswordComplexity()),
-                        result.getPasswordComplexity().equals(rule.getPasswordComplexity()),
+                        isBinaryOptionValid(rule.getPasswordComplexity(), result.getPasswordComplexity()),
                         "值必须与规则值相同", "system_access");
 
                     // 密码历史长度
                     addBaselineItem(results, "密码历史长度",
                         String.valueOf(rule.getPasswordHistorySize()),
                         String.valueOf(result.getPasswordHistorySize()),
-                        result.getPasswordHistorySize() >= rule.getPasswordHistorySize(),
-                        "值大于规则值即合格", "system_access");
+                        isPasswordHistoryValid(rule.getPasswordHistorySize(), result.getPasswordHistorySize()),
+                        "值必须大于等于规则值", "system_access");
 
                     // 账户锁定阈值
                     addBaselineItem(results, "账户锁定阈值",
                         String.valueOf(rule.getLockoutBadCount()),
                         String.valueOf(result.getLockoutBadCount()),
-                        result.getLockoutBadCount() <= rule.getLockoutBadCount() && result.getLockoutBadCount() > 0,
-                        "值必须大于0且小于规则值", "system_access");
+                        isLockoutThresholdValid(rule.getLockoutBadCount(), result.getLockoutBadCount()),
+                        "值必须大于0且小于等于规则值", "system_access");
 
                     // 必须登录才能更改密码
                     addBaselineItem(results, "必须登录才能更改密码",
                         String.valueOf(rule.getRequireLogonToChangePassword()),
                         String.valueOf(result.getRequireLogonToChangePassword()),
-                        result.getRequireLogonToChangePassword().equals(rule.getRequireLogonToChangePassword()),
+                        isBinaryOptionValid(rule.getRequireLogonToChangePassword(), result.getRequireLogonToChangePassword()),
                         "值必须与规则值相同", "system_access");
 
                     // 强制用户在时间到期时注销
                     addBaselineItem(results, "强制用户在时间到期时注销",
                         String.valueOf(rule.getForceLogoffWhenHourExpire()),
                         String.valueOf(result.getForceLogoffWhenHourExpire()),
-                        result.getForceLogoffWhenHourExpire().equals(rule.getForceLogoffWhenHourExpire()),
+                        isBinaryOptionValid(rule.getForceLogoffWhenHourExpire(), result.getForceLogoffWhenHourExpire()),
                         "值必须与规则值相同", "system_access");
 
                     // 管理员账户状态
                     addBaselineItem(results, "管理员账户状态",
                         String.valueOf(rule.getEnableAdminAccount()),
                         String.valueOf(result.getEnableAdminAccount()),
-                        result.getEnableAdminAccount().equals(rule.getEnableAdminAccount()),
+                        isBinaryOptionValid(rule.getEnableAdminAccount(), result.getEnableAdminAccount()),
                         "值必须与规则值相同", "system_access");
 
                     // 访客账户状态
                     addBaselineItem(results, "访客账户状态",
                         String.valueOf(rule.getEnableGuestAccount()),
                         String.valueOf(result.getEnableGuestAccount()),
-                        result.getEnableGuestAccount().equals(rule.getEnableGuestAccount()),
+                        isBinaryOptionValid(rule.getEnableGuestAccount(), result.getEnableGuestAccount()),
                         "值必须与规则值相同", "system_access");
 
                     // 明文密码
                     addBaselineItem(results, "明文密码",
                         String.valueOf(rule.getClearTextPassword()),
                         String.valueOf(result.getClearTextPassword()),
-                        result.getClearTextPassword().equals(rule.getClearTextPassword()),
+                        isBinaryOptionValid(rule.getClearTextPassword(), result.getClearTextPassword()),
                         "值必须与规则值相同", "system_access");
 
                     // LSA匿名名称查找
                     addBaselineItem(results, "LSA匿名名称查找",
                         String.valueOf(rule.getLsaAnonymousNameLookup()),
                         String.valueOf(result.getLsaAnonymousNameLookup()),
-                        result.getLsaAnonymousNameLookup().equals(rule.getLsaAnonymousNameLookup()),
+                        isBinaryOptionValid(rule.getLsaAnonymousNameLookup(), result.getLsaAnonymousNameLookup()),
                         "值必须与规则值相同", "system_access");
                 } else {
                     log.debug("No system access results found, adding placeholder");
@@ -295,9 +295,9 @@ public class BaselineServiceImpl implements BaselineService {
                         false,
                         "需要进行系统访问配置检测", "system_access");
                 }
-        }
+            }
 
-        // 2. 事件审计配置比较
+            // 2. 事件审计配置比较
             List<EventAudit> ruleAudit = eventAuditMapper.selectByType("rule");
             List<EventAudit> resultAudit = eventAuditMapper.selectByTypeAndMac("result", macAddress);
             log.debug("Event Audit - Rules: {}, Results: {}", ruleAudit.size(), resultAudit.size());
@@ -308,68 +308,68 @@ public class BaselineServiceImpl implements BaselineService {
                     log.debug("Processing event audit results");
                     EventAudit result = resultAudit.get(0);
             
-            // 审核系统事件
-            addBaselineItem(results, "审核系统事件",
+                    // 审核系统事件
+                    addBaselineItem(results, "审核系统事件",
                         String.valueOf(rule.getAuditSystemEvents()),
                         String.valueOf(result.getAuditSystemEvents()),
-                        compareEventAudit(rule, result),
-                        "值必须与规则值相同", "event_audit");
+                        isAuditSettingValid(rule.getAuditSystemEvents(), result.getAuditSystemEvents()),
+                        "值必须大于等于规则值", "event_audit");
             
-            // 审核登录事件
-            addBaselineItem(results, "审核登录事件",
+                    // 审核登录事件
+                    addBaselineItem(results, "审核登录事件",
                         String.valueOf(rule.getAuditLogonEvents()),
                         String.valueOf(result.getAuditLogonEvents()),
-                        compareEventAudit(rule, result),
-                        "值必须与规则值相同", "event_audit");
+                        isAuditSettingValid(rule.getAuditLogonEvents(), result.getAuditLogonEvents()),
+                        "值必须大于等于规则值", "event_audit");
             
-            // 审核对象访问
-            addBaselineItem(results, "审核对象访问",
+                    // 审核对象访问
+                    addBaselineItem(results, "审核对象访问",
                         String.valueOf(rule.getAuditObjectAccess()),
                         String.valueOf(result.getAuditObjectAccess()),
-                        compareEventAudit(rule, result),
-                        "值必须与规则值相同", "event_audit");
+                        isAuditSettingValid(rule.getAuditObjectAccess(), result.getAuditObjectAccess()),
+                        "值必须大于等于规则值", "event_audit");
 
                     // 审核特权使用
                     addBaselineItem(results, "审核特权使用",
                         String.valueOf(rule.getAuditPrivilegeUse()),
                         String.valueOf(result.getAuditPrivilegeUse()),
-                        compareEventAudit(rule, result),
-                        "值必须与规则值相同", "event_audit");
+                        isAuditSettingValid(rule.getAuditPrivilegeUse(), result.getAuditPrivilegeUse()),
+                        "值必须大于等于规则值", "event_audit");
 
                     // 审核策略更改
                     addBaselineItem(results, "审核策略更改",
                         String.valueOf(rule.getAuditPolicyChange()),
                         String.valueOf(result.getAuditPolicyChange()),
-                        compareEventAudit(rule, result),
-                        "值必须与规则值相同", "event_audit");
+                        isAuditSettingValid(rule.getAuditPolicyChange(), result.getAuditPolicyChange()),
+                        "值必须大于等于规则值", "event_audit");
 
                     // 审核账户管理
                     addBaselineItem(results, "审核账户管理",
                         String.valueOf(rule.getAuditAccountManage()),
                         String.valueOf(result.getAuditAccountManage()),
-                        compareEventAudit(rule, result),
-                        "值必须与规则值相同", "event_audit");
+                        isAuditSettingValid(rule.getAuditAccountManage(), result.getAuditAccountManage()),
+                        "值必须大于等于规则值", "event_audit");
 
                     // 审核进程追踪
                     addBaselineItem(results, "审核进程追踪",
                         String.valueOf(rule.getAuditProcessTracking()),
                         String.valueOf(result.getAuditProcessTracking()),
-                        compareEventAudit(rule, result),
-                        "值必须与规则值相同", "event_audit");
+                        isAuditSettingValid(rule.getAuditProcessTracking(), result.getAuditProcessTracking()),
+                        "值必须大于等于规则值", "event_audit");
 
                     // 审核目录服务访问
                     addBaselineItem(results, "审核目录服务访问",
                         String.valueOf(rule.getAuditDsAccess()),
                         String.valueOf(result.getAuditDsAccess()),
-                        compareEventAudit(rule, result),
-                        "值必须与规则值相同", "event_audit");
+                        isAuditSettingValid(rule.getAuditDsAccess(), result.getAuditDsAccess()),
+                        "值必须大于等于规则值", "event_audit");
 
                     // 审核账户登录
                     addBaselineItem(results, "审核账户登录",
                         String.valueOf(rule.getAuditAccountLogon()),
                         String.valueOf(result.getAuditAccountLogon()),
-                        compareEventAudit(rule, result),
-                        "值必须与规则值相同", "event_audit");
+                        isAuditSettingValid(rule.getAuditAccountLogon(), result.getAuditAccountLogon()),
+                        "值必须大于等于规则值", "event_audit");
                 } else {
                     log.debug("No event audit results found, adding placeholder");
                     addBaselineItem(results, "事件审计配置", 
@@ -378,9 +378,9 @@ public class BaselineServiceImpl implements BaselineService {
                         false,
                         "需要进行事件审计配置检测", "event_audit");
                 }
-        }
+            }
 
-        // 3. 权限配置比较
+            // 3. 权限配置比较
             List<PrivilegeRights> ruleRights = privilegeRightsMapper.selectByType("rule");
             List<PrivilegeRights> resultRights = privilegeRightsMapper.selectByTypeAndMac("result", macAddress);
             log.debug("Privilege Rights - Rules: {}, Results: {}", ruleRights.size(), resultRights.size());
@@ -391,26 +391,26 @@ public class BaselineServiceImpl implements BaselineService {
                     log.debug("Processing privilege rights results");
                     PrivilegeRights result = resultRights.get(0);
             
-            // 单一进程权限
-            addBaselineItem(results, "单一进程权限",
+                    // 单一进程权限
+                    addBaselineItem(results, "单一进程权限",
                         rule.getSeProfileSingleProcessPrivilege(),
                         result.getSeProfileSingleProcessPrivilege(),
-                        comparePrivilegeRights(rule, result),
-                        "权限列表必须匹配规则值", "privilege_rights");
+                        isPrivilegeListValid(rule.getSeProfileSingleProcessPrivilege(), result.getSeProfileSingleProcessPrivilege()),
+                        "权限列表必须包含规则值中的所有权限", "privilege_rights");
 
-            // 远程关机权限
-            addBaselineItem(results, "远程关机权限",
+                    // 远程关机权限
+                    addBaselineItem(results, "远程关机权限",
                         rule.getSeRemoteShutdownPrivilege(),
                         result.getSeRemoteShutdownPrivilege(),
-                        comparePrivilegeRights(rule, result),
-                        "权限列表必须匹配规则值", "privilege_rights");
+                        isPrivilegeListValid(rule.getSeRemoteShutdownPrivilege(), result.getSeRemoteShutdownPrivilege()),
+                        "权限列表必须包含规则值中的所有权限", "privilege_rights");
 
                     // 本地关机权限
                     addBaselineItem(results, "本地关机权限",
                         rule.getSeShutdownPrivilege(),
                         result.getSeShutdownPrivilege(),
-                        comparePrivilegeRights(rule, result),
-                        "权限列表必须匹配规则值", "privilege_rights");
+                        isPrivilegeListValid(rule.getSeShutdownPrivilege(), result.getSeShutdownPrivilege()),
+                        "权限列表必须包含规则值中的所有权限", "privilege_rights");
                 } else {
                     log.debug("No privilege rights results found, adding placeholder");
                     addBaselineItem(results, "权限配置", 
@@ -419,9 +419,9 @@ public class BaselineServiceImpl implements BaselineService {
                         false,
                         "需要进行权限配置检测", "privilege_rights");
                 }
-        }
+            }
 
-        // 4. 系统安全选项比较
+            // 4. 系统安全选项比较
             List<SystemSecurityOption> ruleOption = systemSecurityOptionMapper.selectByType("rule");
             List<SystemSecurityOption> resultOption = systemSecurityOptionMapper.selectByTypeAndMac("result", macAddress);
             log.debug("System Security Options - Rules: {}, Results: {}", ruleOption.size(), resultOption.size());
@@ -432,46 +432,46 @@ public class BaselineServiceImpl implements BaselineService {
                     log.debug("Processing system security options results");
                     SystemSecurityOption result = resultOption.get(0);
             
-            // LM哈希
-            addBaselineItem(results, "禁用LM哈希",
+                    // LM哈希
+                    addBaselineItem(results, "禁用LM哈希",
                         String.valueOf(rule.getNoLmHash()),
                         String.valueOf(result.getNoLmHash()),
-                        compareSystemSecurityOption(rule, result),
+                        isBinaryOptionValid(rule.getNoLmHash(), result.getNoLmHash()),
                         "值必须与规则值相同", "system_security_option");
             
-            // 限制空密码使用
-            addBaselineItem(results, "限制空密码使用",
+                    // 限制空密码使用
+                    addBaselineItem(results, "限制空密码使用",
                         String.valueOf(rule.getLimitBlankPasswordUse()),
                         String.valueOf(result.getLimitBlankPasswordUse()),
-                        compareSystemSecurityOption(rule, result),
+                        isBinaryOptionValid(rule.getLimitBlankPasswordUse(), result.getLimitBlankPasswordUse()),
                         "值必须与规则值相同", "system_security_option");
             
-            // 限制匿名访问
-            addBaselineItem(results, "限制匿名访问",
+                    // 限制匿名访问
+                    addBaselineItem(results, "限制匿名访问",
                         String.valueOf(rule.getRestrictAnonymous()),
                         String.valueOf(result.getRestrictAnonymous()),
-                        compareSystemSecurityOption(rule, result),
+                        isBinaryOptionValid(rule.getRestrictAnonymous(), result.getRestrictAnonymous()),
                         "值必须与规则值相同", "system_security_option");
 
                     // 不显示上次登录用户名
                     addBaselineItem(results, "不显示上次登录用户名",
                         String.valueOf(rule.getDontDisplayLastUserName()),
                         String.valueOf(result.getDontDisplayLastUserName()),
-                        compareSystemSecurityOption(rule, result),
+                        isBinaryOptionValid(rule.getDontDisplayLastUserName(), result.getDontDisplayLastUserName()),
                         "值必须与规则值相同", "system_security_option");
 
                     // 启用明文密码
                     addBaselineItem(results, "启用明文密码",
                         String.valueOf(rule.getEnablePlainTextPassword()),
                         String.valueOf(result.getEnablePlainTextPassword()),
-                        compareSystemSecurityOption(rule, result),
+                        isBinaryOptionValid(rule.getEnablePlainTextPassword(), result.getEnablePlainTextPassword()),
                         "值必须与规则值相同", "system_security_option");
 
                     // 关机时清除页面文件
                     addBaselineItem(results, "关机时清除页面文件",
                         String.valueOf(rule.getClearPageFileAtShutdown()),
                         String.valueOf(result.getClearPageFileAtShutdown()),
-                        compareSystemSecurityOption(rule, result),
+                        isBinaryOptionValid(rule.getClearPageFileAtShutdown(), result.getClearPageFileAtShutdown()),
                         "值必须与规则值相同", "system_security_option");
                 } else {
                     log.debug("No system security options found, adding placeholder");
@@ -484,10 +484,10 @@ public class BaselineServiceImpl implements BaselineService {
             }
 
             log.info("Baseline detail processing completed. Found {} items", results.size());
-        return results;
+            return results;
         } catch (Exception e) {
             log.error("获取基线检测详情失败: {}", e.getMessage(), e);
-            throw e;  // 让异常继续向上传播，以便更好地诊断问题
+            throw e;
         }
     }
 
@@ -507,344 +507,49 @@ public class BaselineServiceImpl implements BaselineService {
         }
     }
 
-    private boolean compareSystemAccess(SystemAccess standardRule, SystemAccess actualValue) {
-        if (standardRule == null || actualValue == null) {
-            return false;
-        }
-
-        // 创建一个计数器来跟踪匹配的字段数和总字段数
-        int matchedFields = 0;
-        int totalFields = 0;
-
-        // 最小密码年龄
-        if (standardRule.getMinimumPasswordAge() != null && actualValue.getMinimumPasswordAge() != null) {
-            totalFields++;
-            if (standardRule.getMinimumPasswordAge().equals(actualValue.getMinimumPasswordAge())) {
-                matchedFields++;
-            }
-        }
-
-        // 最大密码年龄
-        if (standardRule.getMaximumPasswordAge() != null && actualValue.getMaximumPasswordAge() != null) {
-            totalFields++;
-            if (standardRule.getMaximumPasswordAge().equals(actualValue.getMaximumPasswordAge())) {
-                matchedFields++;
-            }
-        }
-
-        // 最小密码长度
-        if (standardRule.getMinimumPasswordLength() != null && actualValue.getMinimumPasswordLength() != null) {
-            totalFields++;
-            if (standardRule.getMinimumPasswordLength().equals(actualValue.getMinimumPasswordLength())) {
-                matchedFields++;
-            }
-        }
-
-        // 密码复杂度
-        if (standardRule.getPasswordComplexity() != null && actualValue.getPasswordComplexity() != null) {
-            totalFields++;
-            if (standardRule.getPasswordComplexity().equals(actualValue.getPasswordComplexity())) {
-                matchedFields++;
-            }
-        }
-
-        // 密码历史大小
-        if (standardRule.getPasswordHistorySize() != null && actualValue.getPasswordHistorySize() != null) {
-            totalFields++;
-            if (standardRule.getPasswordHistorySize().equals(actualValue.getPasswordHistorySize())) {
-                matchedFields++;
-            }
-        }
-
-        // 账户锁定阈值
-        if (standardRule.getLockoutBadCount() != null && actualValue.getLockoutBadCount() != null) {
-            totalFields++;
-            if (standardRule.getLockoutBadCount().equals(actualValue.getLockoutBadCount())) {
-                matchedFields++;
-            }
-        }
-
-        // 必须登录才能更改密码
-        if (standardRule.getRequireLogonToChangePassword() != null && actualValue.getRequireLogonToChangePassword() != null) {
-            totalFields++;
-            if (standardRule.getRequireLogonToChangePassword().equals(actualValue.getRequireLogonToChangePassword())) {
-                matchedFields++;
-            }
-        }
-
-        // 强制用户在时间到期时注销
-        if (standardRule.getForceLogoffWhenHourExpire() != null && actualValue.getForceLogoffWhenHourExpire() != null) {
-            totalFields++;
-            if (standardRule.getForceLogoffWhenHourExpire().equals(actualValue.getForceLogoffWhenHourExpire())) {
-                matchedFields++;
-            }
-        }
-
-        // 管理员账户状态
-        if (standardRule.getEnableAdminAccount() != null && actualValue.getEnableAdminAccount() != null) {
-            totalFields++;
-            if (standardRule.getEnableAdminAccount().equals(actualValue.getEnableAdminAccount())) {
-                matchedFields++;
-            }
-        }
-
-        // 访客账户状态
-        if (standardRule.getEnableGuestAccount() != null && actualValue.getEnableGuestAccount() != null) {
-            totalFields++;
-            if (standardRule.getEnableGuestAccount().equals(actualValue.getEnableGuestAccount())) {
-                matchedFields++;
-            }
-        }
-
-        // 明文密码
-        if (standardRule.getClearTextPassword() != null && actualValue.getClearTextPassword() != null) {
-            totalFields++;
-            if (standardRule.getClearTextPassword().equals(actualValue.getClearTextPassword())) {
-                matchedFields++;
-            }
-        }
-
-        // LSA匿名名称查找
-        if (standardRule.getLsaAnonymousNameLookup() != null && actualValue.getLsaAnonymousNameLookup() != null) {
-            totalFields++;
-            if (standardRule.getLsaAnonymousNameLookup().equals(actualValue.getLsaAnonymousNameLookup())) {
-                matchedFields++;
-            }
-        }
-
-        // 如果没有任何可比较的字段，返回false
-        if (totalFields == 0) {
-                return false;
-            }
-
-        // 如果匹配率超过80%，则认为是合格的
-        return (double) matchedFields / totalFields >= 0.8;
+    private boolean isPasswordAgeValid(Integer standardAge, Integer actualAge, boolean isMinimum) {
+        if (standardAge == null || actualAge == null) return false;
+        return isMinimum ? 
+            actualAge <= standardAge :  // 最短使用期限
+            actualAge >= standardAge;   // 最长使用期限
     }
 
-    private boolean compareEventAudit(EventAudit standardRule, EventAudit actualValue) {
-        if (standardRule == null || actualValue == null) {
-            return false;
-        }
-
-        // 创建一个计数器来跟踪匹配的字段数和总字段数
-        int matchedFields = 0;
-        int totalFields = 0;
-
-        // 审计系统事件
-        if (standardRule.getAuditSystemEvents() != null && actualValue.getAuditSystemEvents() != null) {
-            totalFields++;
-            if (standardRule.getAuditSystemEvents().equals(actualValue.getAuditSystemEvents())) {
-                matchedFields++;
-            }
-        }
-
-        // 审计登录事件
-        if (standardRule.getAuditLogonEvents() != null && actualValue.getAuditLogonEvents() != null) {
-            totalFields++;
-            if (standardRule.getAuditLogonEvents().equals(actualValue.getAuditLogonEvents())) {
-                matchedFields++;
-            }
-        }
-
-        // 审计对象访问
-        if (standardRule.getAuditObjectAccess() != null && actualValue.getAuditObjectAccess() != null) {
-            totalFields++;
-            if (standardRule.getAuditObjectAccess().equals(actualValue.getAuditObjectAccess())) {
-                matchedFields++;
-            }
-        }
-
-        // 审计策略更改
-        if (standardRule.getAuditPolicyChange() != null && actualValue.getAuditPolicyChange() != null) {
-            totalFields++;
-            if (standardRule.getAuditPolicyChange().equals(actualValue.getAuditPolicyChange())) {
-                matchedFields++;
-            }
-        }
-
-        // 审计权限使用
-        if (standardRule.getAuditPrivilegeUse() != null && actualValue.getAuditPrivilegeUse() != null) {
-            totalFields++;
-            if (standardRule.getAuditPrivilegeUse().equals(actualValue.getAuditPrivilegeUse())) {
-                matchedFields++;
-            }
-        }
-
-        // 审计进程跟踪
-        if (standardRule.getAuditProcessTracking() != null && actualValue.getAuditProcessTracking() != null) {
-            totalFields++;
-            if (standardRule.getAuditProcessTracking().equals(actualValue.getAuditProcessTracking())) {
-                matchedFields++;
-            }
-        }
-
-        // 审计目录服务访问
-        if (standardRule.getAuditDsAccess() != null && actualValue.getAuditDsAccess() != null) {
-            totalFields++;
-            if (standardRule.getAuditDsAccess().equals(actualValue.getAuditDsAccess())) {
-                matchedFields++;
-            }
-        }
-
-        // 审计账户管理
-        if (standardRule.getAuditAccountManage() != null && actualValue.getAuditAccountManage() != null) {
-            totalFields++;
-            if (standardRule.getAuditAccountManage().equals(actualValue.getAuditAccountManage())) {
-                matchedFields++;
-            }
-        }
-
-        // 审计账户登录
-        if (standardRule.getAuditAccountLogon() != null && actualValue.getAuditAccountLogon() != null) {
-            totalFields++;
-            if (standardRule.getAuditAccountLogon().equals(actualValue.getAuditAccountLogon())) {
-                matchedFields++;
-            }
-        }
-
-        // 如果没有任何可比较的字段，返回false
-        if (totalFields == 0) {
-                return false;
-            }
-
-        // 如果匹配率超过80%，则认为是合格的
-        return (double) matchedFields / totalFields >= 0.8;
+    private boolean isPasswordLengthValid(Integer standardLength, Integer actualLength) {
+        if (standardLength == null || actualLength == null) return false;
+        return actualLength >= standardLength;  // 密码长度必须大于等于标准值
     }
 
-    private boolean comparePrivilegeRights(PrivilegeRights standardRule, PrivilegeRights actualValue) {
-        if (standardRule == null || actualValue == null) {
-            return false;
-        }
-
-        // 创建一个计数器来跟踪匹配的字段数和总字段数
-        int matchedFields = 0;
-        int totalFields = 0;
-
-        // 单进程配置权限
-        if (standardRule.getSeProfileSingleProcessPrivilege() != null && actualValue.getSeProfileSingleProcessPrivilege() != null) {
-            totalFields++;
-            if (comparePrivilegeList(standardRule.getSeProfileSingleProcessPrivilege(), actualValue.getSeProfileSingleProcessPrivilege())) {
-                matchedFields++;
-            }
-        }
-
-        // 远程关机权限
-        if (standardRule.getSeRemoteShutdownPrivilege() != null && actualValue.getSeRemoteShutdownPrivilege() != null) {
-            totalFields++;
-            if (comparePrivilegeList(standardRule.getSeRemoteShutdownPrivilege(), actualValue.getSeRemoteShutdownPrivilege())) {
-                matchedFields++;
-            }
-        }
-
-        // 本地关机权限
-        if (standardRule.getSeShutdownPrivilege() != null && actualValue.getSeShutdownPrivilege() != null) {
-            totalFields++;
-            if (comparePrivilegeList(standardRule.getSeShutdownPrivilege(), actualValue.getSeShutdownPrivilege())) {
-                matchedFields++;
-            }
-        }
-
-        // 如果没有任何可比较的字段，返回false
-        if (totalFields == 0) {
-                return false;
-            }
-
-        // 如果匹配率超过80%，则认为是合格的
-        return (double) matchedFields / totalFields >= 0.8;
+    private boolean isPasswordHistoryValid(Integer standardSize, Integer actualSize) {
+        if (standardSize == null || actualSize == null) return false;
+        return actualSize >= standardSize;  // 密码历史必须大于等于标准值
     }
 
-    // 辅助方法：比较权限列表
-    private boolean comparePrivilegeList(String ruleList, String actualList) {
-        if (ruleList == null || actualList == null) {
-            return false;
-        }
-
-        // 将字符串转换为列表
-        List<String> ruleItems = Arrays.asList(ruleList.replace("[", "").replace("]", "").split(",\\s*"));
-        List<String> actualItems = Arrays.asList(actualList.replace("[", "").replace("]", "").split(",\\s*"));
-
-        // 检查规则列表中的所有项是否都在实际列表中
-        for (String ruleItem : ruleItems) {
-            if (!actualItems.contains(ruleItem.trim())) {
-                return false;
-            }
-        }
-
-        // 检查实际列表中是否有不应该存在的项
-        for (String actualItem : actualItems) {
-            if (!ruleItems.contains(actualItem.trim())) {
-                return false;
-            }
-        }
-
-        return true;
+    private boolean isLockoutThresholdValid(Integer standardCount, Integer actualCount) {
+        if (standardCount == null || actualCount == null) return false;
+        return actualCount > 0 && actualCount <= standardCount;  // 必须大于0且小于等于标准值
     }
 
-    private boolean compareSystemSecurityOption(SystemSecurityOption standardRule, SystemSecurityOption actualValue) {
-        if (standardRule == null || actualValue == null) {
-            return false;
-        }
-
-        // 创建一个计数器来跟踪匹配的字段数和总字段数
-        int matchedFields = 0;
-        int totalFields = 0;
-
-        // 不存储LM哈希值
-        if (standardRule.getNoLmHash() != null && actualValue.getNoLmHash() != null) {
-            totalFields++;
-            if (standardRule.getNoLmHash().equals(actualValue.getNoLmHash())) {
-                matchedFields++;
-            }
-        }
-
-        // 限制使用空密码
-        if (standardRule.getLimitBlankPasswordUse() != null && actualValue.getLimitBlankPasswordUse() != null) {
-            totalFields++;
-            if (standardRule.getLimitBlankPasswordUse().equals(actualValue.getLimitBlankPasswordUse())) {
-                matchedFields++;
-            }
-        }
-
-        // 限制匿名访问
-        if (standardRule.getRestrictAnonymous() != null && actualValue.getRestrictAnonymous() != null) {
-            totalFields++;
-            if (standardRule.getRestrictAnonymous().equals(actualValue.getRestrictAnonymous())) {
-                matchedFields++;
-            }
-        }
-
-        // 不显示上次登录用户名
-        if (standardRule.getDontDisplayLastUserName() != null && actualValue.getDontDisplayLastUserName() != null) {
-            totalFields++;
-            if (standardRule.getDontDisplayLastUserName().equals(actualValue.getDontDisplayLastUserName())) {
-                matchedFields++;
-            }
-        }
-
-        // 启用明文密码
-        if (standardRule.getEnablePlainTextPassword() != null && actualValue.getEnablePlainTextPassword() != null) {
-            totalFields++;
-            if (standardRule.getEnablePlainTextPassword().equals(actualValue.getEnablePlainTextPassword())) {
-                matchedFields++;
-            }
-        }
-
-        // 关机时清除页面文件
-        if (standardRule.getClearPageFileAtShutdown() != null && actualValue.getClearPageFileAtShutdown() != null) {
-            totalFields++;
-            if (standardRule.getClearPageFileAtShutdown().equals(actualValue.getClearPageFileAtShutdown())) {
-                matchedFields++;
-            }
-        }
-
-        // 如果没有任何可比较的字段，返回false
-        if (totalFields == 0) {
-                return false;
-            }
-
-        // 如果匹配率超过80%，则认为是合格的
-        return (double) matchedFields / totalFields >= 0.8;
+    private boolean isBinaryOptionValid(Integer standardOption, Integer actualOption) {
+        if (standardOption == null || actualOption == null) return false;
+        return standardOption.equals(actualOption);  // 二进制选项必须完全匹配
     }
+
+    private boolean isAuditSettingValid(Integer standardSetting, Integer actualSetting) {
+        if (standardSetting == null || actualSetting == null) return false;
+        return actualSetting >= standardSetting;  // 审计设置必须大于等于标准值
+    }
+
+    private boolean isPrivilegeListValid(String standardList, String actualList) {
+    if (standardList == null || actualList == null) return false;
+    
+    List<String> standardItems = Arrays.asList(standardList.replace("[", "").replace("]", "").split(",\\s*"));
+    List<String> actualItems = Arrays.asList(actualList.replace("[", "").replace("]", "").split(",\\s*"));
+    
+    // 检查两个列表是否完全相等（忽略顺序）
+    return standardItems.size() == actualItems.size() && 
+           standardItems.containsAll(actualItems) && 
+           actualItems.containsAll(standardItems);
+}
 
     public void processBaselineData(Map<String, Object> data) {
         String macAddress = (String) data.get("macAddress");
