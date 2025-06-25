@@ -144,37 +144,161 @@ public class BaselineServiceImpl implements BaselineService {
     @Override
     public ResponseResult<Map<String, Object>> getStatistics() {
         try {
-        Map<String, Object> statistics = new HashMap<>();
+            Map<String, Object> statistics = new HashMap<>();
             
             // 1. 获取基线检测总数（从baseline_scan表）
             Integer totalCount = baselineScanMapper.selectTotalCount(null, null);
             statistics.put("totalCount", totalCount != null ? totalCount : 0);
 
-            // 2. 获取系统配置检测数（从system_access表）
-            String systemAccessSql = "SELECT COUNT(DISTINCT mac_address) FROM system_access";
-            Integer systemCount = jdbcTemplate.queryForObject(systemAccessSql, Integer.class);
-            statistics.put("systemCount", systemCount != null ? systemCount : 0);
+            // 2. 获取异常项目总数
+            String riskSql = "SELECT (" +
+                    // 系统访问配置不合格项
+                    "SELECT COUNT(*) FROM (" +
+                    "  SELECT " +
+                    "    CASE " +
+                    "      WHEN minimum_password_age > (SELECT minimum_password_age FROM system_access WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN maximum_password_age > (SELECT maximum_password_age FROM system_access WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN minimum_password_length < (SELECT minimum_password_length FROM system_access WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN password_complexity != (SELECT password_complexity FROM system_access WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN password_history_size < (SELECT password_history_size FROM system_access WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN (lockout_bad_count <= 0 OR lockout_bad_count > (SELECT lockout_bad_count FROM system_access WHERE type = 'rule' LIMIT 1)) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN require_logon_to_change_password != (SELECT require_logon_to_change_password FROM system_access WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN force_logoff_when_hour_expire != (SELECT force_logoff_when_hour_expire FROM system_access WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN enable_admin_account != (SELECT enable_admin_account FROM system_access WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN enable_guest_account != (SELECT enable_guest_account FROM system_access WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN clear_text_password != (SELECT clear_text_password FROM system_access WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN lsa_anonymous_name_lookup != (SELECT lsa_anonymous_name_lookup FROM system_access WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END as total_mismatches " +
+                    "  FROM system_access " +
+                    "  WHERE type = 'result' " +
+                    ") t) + " +
 
-            // 3. 获取安全策略检测数（从event_audit表）
-            String securitySql = "SELECT COUNT(DISTINCT mac_address) FROM event_audit";
-            Integer securityCount = jdbcTemplate.queryForObject(securitySql, Integer.class);
-            statistics.put("securityCount", securityCount != null ? securityCount : 0);
+                    // 事件审计配置不合格项
+                    "(SELECT COUNT(*) FROM (" +
+                    "  SELECT " +
+                    "    CASE " +
+                    "      WHEN audit_system_events != (SELECT audit_system_events FROM event_audit WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN audit_logon_events != (SELECT audit_logon_events FROM event_audit WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN audit_object_access != (SELECT audit_object_access FROM event_audit WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN audit_privilege_use != (SELECT audit_privilege_use FROM event_audit WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN audit_policy_change != (SELECT audit_policy_change FROM event_audit WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN audit_account_manage != (SELECT audit_account_manage FROM event_audit WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN audit_process_tracking != (SELECT audit_process_tracking FROM event_audit WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN audit_DS_access != (SELECT audit_DS_access FROM event_audit WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN audit_account_logon != (SELECT audit_account_logon FROM event_audit WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END as total_mismatches " +
+                    "  FROM event_audit " +
+                    "  WHERE type = 'result' " +
+                    ") t) + " +
 
-            // 4. 获取风险项目数
-            // 从各个表中统计状态不合格的项目数
-            String riskSql = "SELECT " +
-                    "(SELECT COUNT(*) FROM system_access WHERE type = 'result' AND (" +
-                    "minimum_password_age < (SELECT minimum_password_age FROM system_access WHERE type = 'rule' LIMIT 1) OR " +
-                    "maximum_password_age > (SELECT maximum_password_age FROM system_access WHERE type = 'rule' LIMIT 1) OR " +
-                    "minimum_password_length < (SELECT minimum_password_length FROM system_access WHERE type = 'rule' LIMIT 1))) + " +
-                    "(SELECT COUNT(*) FROM event_audit WHERE type = 'result' AND (" +
-                    "audit_system_events != (SELECT audit_system_events FROM event_audit WHERE type = 'rule' LIMIT 1) OR " +
-                    "audit_logon_events != (SELECT audit_logon_events FROM event_audit WHERE type = 'rule' LIMIT 1))) + " +
-                    "(SELECT COUNT(*) FROM privilege_rights WHERE type = 'result' AND (" +
-                    "se_shutdown_privilege != (SELECT se_shutdown_privilege FROM privilege_rights WHERE type = 'rule' LIMIT 1))) + " +
-                    "(SELECT COUNT(*) FROM system_security_option WHERE type = 'result' AND (" +
-                    "no_lm_hash != (SELECT no_lm_hash FROM system_security_option WHERE type = 'rule' LIMIT 1) OR " +
-                    "limit_blank_password_use != (SELECT limit_blank_password_use FROM system_security_option WHERE type = 'rule' LIMIT 1)))";
+                    // 权限配置不合格项
+                    "(SELECT COUNT(*) FROM (" +
+                    "  SELECT " +
+                    "    CASE " +
+                    "      WHEN se_profile_single_process_privilege != (SELECT se_profile_single_process_privilege FROM privilege_rights WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN se_remote_shutdown_privilege != (SELECT se_remote_shutdown_privilege FROM privilege_rights WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN se_shutdown_privilege != (SELECT se_shutdown_privilege FROM privilege_rights WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END as total_mismatches " +
+                    "  FROM privilege_rights " +
+                    "  WHERE type = 'result' " +
+                    ") t) + " +
+
+                    // 系统安全选项不合格项
+                    "(SELECT COUNT(*) FROM (" +
+                    "  SELECT " +
+                    "    CASE " +
+                    "      WHEN no_LM_hash != (SELECT no_LM_hash FROM system_security_option WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN limit_blank_password_use != (SELECT limit_blank_password_use FROM system_security_option WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN restrict_anonymous != (SELECT restrict_anonymous FROM system_security_option WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN dont_display_last_user_name != (SELECT dont_display_last_user_name FROM system_security_option WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN enable_plain_text_password != (SELECT enable_plain_text_password FROM system_security_option WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END + " +
+                    "    CASE " +
+                    "      WHEN clear_page_file_at_shutdown != (SELECT clear_page_file_at_shutdown FROM system_security_option WHERE type = 'rule' LIMIT 1) THEN 1 " +
+                    "      ELSE 0 " +
+                    "    END as total_mismatches " +
+                    "  FROM system_security_option " +
+                    "  WHERE type = 'result' " +
+                    ") t)";
 
             Integer riskCount = jdbcTemplate.queryForObject(riskSql, Integer.class);
             statistics.put("riskCount", riskCount != null ? riskCount : 0);
@@ -193,7 +317,7 @@ public class BaselineServiceImpl implements BaselineService {
         try {
             log.info("Getting baseline details for MAC address: {}", macAddress);
         
-            // 1. 系统访问配置比较
+        // 1. 系统访问配置比较
             List<SystemAccess> ruleAccess = systemAccessMapper.selectByType("rule");
             List<SystemAccess> resultAccess = systemAccessMapper.selectByTypeAndMac("result", macAddress);
             log.debug("System Access - Rules: {}, Results: {}", ruleAccess.size(), resultAccess.size());
@@ -204,29 +328,29 @@ public class BaselineServiceImpl implements BaselineService {
                     log.debug("Processing system access results");
                     SystemAccess result = resultAccess.get(0);
             
-                    // 密码最短留存期
-                    addBaselineItem(results, "密码最短留存期", 
+            // 密码最短留存期
+            addBaselineItem(results, "密码最短留存期", 
                         String.valueOf(rule.getMinimumPasswordAge()),
                         String.valueOf(result.getMinimumPasswordAge()),
                         isPasswordAgeValid(rule.getMinimumPasswordAge(), result.getMinimumPasswordAge(), true),
                         "值必须小于等于规则值", "system_access");
             
-                    // 密码最长留存期
-                    addBaselineItem(results, "密码最长留存期",
+            // 密码最长留存期
+            addBaselineItem(results, "密码最长留存期",
                         String.valueOf(rule.getMaximumPasswordAge()),
                         String.valueOf(result.getMaximumPasswordAge()),
                         isPasswordAgeValid(rule.getMaximumPasswordAge(), result.getMaximumPasswordAge(), false),
-                        "值必须大于等于规则值", "system_access");
+                        "值必须小于等于规则值", "system_access");
             
-                    // 密码最小长度
-                    addBaselineItem(results, "密码最小长度",
+            // 密码最小长度
+            addBaselineItem(results, "密码最小长度",
                         String.valueOf(rule.getMinimumPasswordLength()),
                         String.valueOf(result.getMinimumPasswordLength()),
                         isPasswordLengthValid(rule.getMinimumPasswordLength(), result.getMinimumPasswordLength()),
                         "值必须大于等于规则值", "system_access");
             
-                    // 密码复杂度要求
-                    addBaselineItem(results, "密码复杂度要求",
+            // 密码复杂度要求
+            addBaselineItem(results, "密码复杂度要求",
                         String.valueOf(rule.getPasswordComplexity()),
                         String.valueOf(result.getPasswordComplexity()),
                         isBinaryOptionValid(rule.getPasswordComplexity(), result.getPasswordComplexity()),
@@ -295,9 +419,9 @@ public class BaselineServiceImpl implements BaselineService {
                         false,
                         "需要进行系统访问配置检测", "system_access");
                 }
-            }
+        }
 
-            // 2. 事件审计配置比较
+        // 2. 事件审计配置比较
             List<EventAudit> ruleAudit = eventAuditMapper.selectByType("rule");
             List<EventAudit> resultAudit = eventAuditMapper.selectByTypeAndMac("result", macAddress);
             log.debug("Event Audit - Rules: {}, Results: {}", ruleAudit.size(), resultAudit.size());
@@ -308,22 +432,22 @@ public class BaselineServiceImpl implements BaselineService {
                     log.debug("Processing event audit results");
                     EventAudit result = resultAudit.get(0);
             
-                    // 审核系统事件
-                    addBaselineItem(results, "审核系统事件",
+            // 审核系统事件
+            addBaselineItem(results, "审核系统事件",
                         String.valueOf(rule.getAuditSystemEvents()),
                         String.valueOf(result.getAuditSystemEvents()),
                         isAuditSettingValid(rule.getAuditSystemEvents(), result.getAuditSystemEvents()),
                         "值必须大于等于规则值", "event_audit");
             
-                    // 审核登录事件
-                    addBaselineItem(results, "审核登录事件",
+            // 审核登录事件
+            addBaselineItem(results, "审核登录事件",
                         String.valueOf(rule.getAuditLogonEvents()),
                         String.valueOf(result.getAuditLogonEvents()),
                         isAuditSettingValid(rule.getAuditLogonEvents(), result.getAuditLogonEvents()),
                         "值必须大于等于规则值", "event_audit");
             
-                    // 审核对象访问
-                    addBaselineItem(results, "审核对象访问",
+            // 审核对象访问
+            addBaselineItem(results, "审核对象访问",
                         String.valueOf(rule.getAuditObjectAccess()),
                         String.valueOf(result.getAuditObjectAccess()),
                         isAuditSettingValid(rule.getAuditObjectAccess(), result.getAuditObjectAccess()),
@@ -359,9 +483,9 @@ public class BaselineServiceImpl implements BaselineService {
 
                     // 审核目录服务访问
                     addBaselineItem(results, "审核目录服务访问",
-                        String.valueOf(rule.getAuditDsAccess()),
-                        String.valueOf(result.getAuditDsAccess()),
-                        isAuditSettingValid(rule.getAuditDsAccess(), result.getAuditDsAccess()),
+                        String.valueOf(rule.getAuditDSAccess()),
+                        String.valueOf(result.getAuditDSAccess()),
+                        isAuditSettingValid(rule.getAuditDSAccess(), result.getAuditDSAccess()),
                         "值必须大于等于规则值", "event_audit");
 
                     // 审核账户登录
@@ -378,9 +502,9 @@ public class BaselineServiceImpl implements BaselineService {
                         false,
                         "需要进行事件审计配置检测", "event_audit");
                 }
-            }
+        }
 
-            // 3. 权限配置比较
+        // 3. 权限配置比较
             List<PrivilegeRights> ruleRights = privilegeRightsMapper.selectByType("rule");
             List<PrivilegeRights> resultRights = privilegeRightsMapper.selectByTypeAndMac("result", macAddress);
             log.debug("Privilege Rights - Rules: {}, Results: {}", ruleRights.size(), resultRights.size());
@@ -391,15 +515,15 @@ public class BaselineServiceImpl implements BaselineService {
                     log.debug("Processing privilege rights results");
                     PrivilegeRights result = resultRights.get(0);
             
-                    // 单一进程权限
-                    addBaselineItem(results, "单一进程权限",
+            // 单一进程权限
+            addBaselineItem(results, "单一进程权限",
                         rule.getSeProfileSingleProcessPrivilege(),
                         result.getSeProfileSingleProcessPrivilege(),
                         isPrivilegeListValid(rule.getSeProfileSingleProcessPrivilege(), result.getSeProfileSingleProcessPrivilege()),
                         "权限列表必须包含规则值中的所有权限", "privilege_rights");
 
-                    // 远程关机权限
-                    addBaselineItem(results, "远程关机权限",
+            // 远程关机权限
+            addBaselineItem(results, "远程关机权限",
                         rule.getSeRemoteShutdownPrivilege(),
                         result.getSeRemoteShutdownPrivilege(),
                         isPrivilegeListValid(rule.getSeRemoteShutdownPrivilege(), result.getSeRemoteShutdownPrivilege()),
@@ -419,9 +543,9 @@ public class BaselineServiceImpl implements BaselineService {
                         false,
                         "需要进行权限配置检测", "privilege_rights");
                 }
-            }
+        }
 
-            // 4. 系统安全选项比较
+        // 4. 系统安全选项比较
             List<SystemSecurityOption> ruleOption = systemSecurityOptionMapper.selectByType("rule");
             List<SystemSecurityOption> resultOption = systemSecurityOptionMapper.selectByTypeAndMac("result", macAddress);
             log.debug("System Security Options - Rules: {}, Results: {}", ruleOption.size(), resultOption.size());
@@ -432,22 +556,22 @@ public class BaselineServiceImpl implements BaselineService {
                     log.debug("Processing system security options results");
                     SystemSecurityOption result = resultOption.get(0);
             
-                    // LM哈希
-                    addBaselineItem(results, "禁用LM哈希",
-                        String.valueOf(rule.getNoLmHash()),
-                        String.valueOf(result.getNoLmHash()),
-                        isBinaryOptionValid(rule.getNoLmHash(), result.getNoLmHash()),
+            // LM哈希
+            addBaselineItem(results, "禁用LM哈希",
+                        String.valueOf(rule.getNoLMHash()),
+                        String.valueOf(result.getNoLMHash()),
+                        isBinaryOptionValid(rule.getNoLMHash(), result.getNoLMHash()),
                         "值必须与规则值相同", "system_security_option");
             
-                    // 限制空密码使用
-                    addBaselineItem(results, "限制空密码使用",
+            // 限制空密码使用
+            addBaselineItem(results, "限制空密码使用",
                         String.valueOf(rule.getLimitBlankPasswordUse()),
                         String.valueOf(result.getLimitBlankPasswordUse()),
                         isBinaryOptionValid(rule.getLimitBlankPasswordUse(), result.getLimitBlankPasswordUse()),
                         "值必须与规则值相同", "system_security_option");
             
-                    // 限制匿名访问
-                    addBaselineItem(results, "限制匿名访问",
+            // 限制匿名访问
+            addBaselineItem(results, "限制匿名访问",
                         String.valueOf(rule.getRestrictAnonymous()),
                         String.valueOf(result.getRestrictAnonymous()),
                         isBinaryOptionValid(rule.getRestrictAnonymous(), result.getRestrictAnonymous()),
@@ -484,7 +608,7 @@ public class BaselineServiceImpl implements BaselineService {
             }
 
             log.info("Baseline detail processing completed. Found {} items", results.size());
-            return results;
+        return results;
         } catch (Exception e) {
             log.error("获取基线检测详情失败: {}", e.getMessage(), e);
             throw e;
@@ -510,8 +634,8 @@ public class BaselineServiceImpl implements BaselineService {
     private boolean isPasswordAgeValid(Integer standardAge, Integer actualAge, boolean isMinimum) {
         if (standardAge == null || actualAge == null) return false;
         return isMinimum ? 
-            actualAge <= standardAge :  // 最短使用期限
-            actualAge >= standardAge;   // 最长使用期限
+            actualAge <= standardAge : 
+            actualAge <= standardAge;   
     }
 
     private boolean isPasswordLengthValid(Integer standardLength, Integer actualLength) {
@@ -543,62 +667,140 @@ public class BaselineServiceImpl implements BaselineService {
     if (standardList == null || actualList == null) return false;
     
     List<String> standardItems = Arrays.asList(standardList.replace("[", "").replace("]", "").split(",\\s*"));
-    List<String> actualItems = Arrays.asList(actualList.replace("[", "").replace("]", "").split(",\\s*"));
-    
+        List<String> actualItems = Arrays.asList(actualList.replace("[", "").replace("]", "").split(",\\s*"));
+
     // 检查两个列表是否完全相等（忽略顺序）
     return standardItems.size() == actualItems.size() && 
            standardItems.containsAll(actualItems) && 
            actualItems.containsAll(standardItems);
-}
+    }
 
+    @Override
     public void processBaselineData(Map<String, Object> data) {
-        String macAddress = (String) data.get("macAddress");
-        JSONObject baselineData = (JSONObject) data.get("baselineData");
-
         try {
-            // 更新baseline_scan表中的start_time
-            BaselineScan scan = new BaselineScan();
-            scan.setMacAddress(macAddress);
-            scan.setStartTime(new Date());
-            scan.setHostName((String) data.get("hostName"));
+            String macAddress = (String) data.get("macAddress");
+            JSONObject baselineData = (JSONObject) data.get("baselineData");
 
-            // 检查是否存在相同MAC地址的记录
-            List<BaselineScan> existingScans = baselineScanMapper.selectByMacAddress(macAddress);
-            if (!existingScans.isEmpty()) {
-                // 存在记录，更新start_time
-                BaselineScan existingScan = existingScans.get(0);
-                scan.setId(existingScan.getId());
-                baselineScanMapper.updateByPrimaryKey(scan);
-            } else {
-                // 不存在记录，插入新记录
-                baselineScanMapper.insert(scan);
-            }
+            // 打印接收到的原始数据
+            log.info("Received baseline data for MAC {}: {}", macAddress, baselineData);
 
-            // 1. 处理并保存 System Access 数据
+            // 处理系统访问配置
             if (baselineData.containsKey("system_access")) {
-                processSystemAccess(macAddress, baselineData.getJSONObject("system_access"));
+                JSONObject sysAccessJson = baselineData.getJSONObject("system_access");
+                processSystemAccess(macAddress, sysAccessJson);
             }
 
-            // 2. 处理并保存 Event Audit 数据
+            // 处理事件审计配置
             if (baselineData.containsKey("event_audit")) {
-                processEventAudit(macAddress, baselineData.getJSONObject("event_audit"));
+                JSONObject eventAuditJson = baselineData.getJSONObject("event_audit");
+                // 打印事件审计数据
+                log.info("Processing event audit data: {}", eventAuditJson);
+                
+                EventAudit eventAudit = new EventAudit();
+                eventAudit.setMacAddress(macAddress);
+                eventAudit.setType("result");
+
+                // 确保大写DS
+                if (eventAuditJson.containsKey("AuditDSAccess")) {
+                    Integer auditDSAccess = eventAuditJson.getInteger("AuditDSAccess");
+                    log.info("Setting AuditDSAccess value: {}", auditDSAccess);
+                    eventAudit.setAuditDSAccess(auditDSAccess);
+                }
+
+                // 设置其他审计字段
+                if (eventAuditJson.containsKey("AuditSystemEvents")) {
+                    eventAudit.setAuditSystemEvents(eventAuditJson.getInteger("AuditSystemEvents"));
+                }
+                if (eventAuditJson.containsKey("AuditLogonEvents")) {
+                    eventAudit.setAuditLogonEvents(eventAuditJson.getInteger("AuditLogonEvents"));
+                }
+                if (eventAuditJson.containsKey("AuditObjectAccess")) {
+                    eventAudit.setAuditObjectAccess(eventAuditJson.getInteger("AuditObjectAccess"));
+                }
+                if (eventAuditJson.containsKey("AuditPrivilegeUse")) {
+                    eventAudit.setAuditPrivilegeUse(eventAuditJson.getInteger("AuditPrivilegeUse"));
+                }
+                if (eventAuditJson.containsKey("AuditPolicyChange")) {
+                    eventAudit.setAuditPolicyChange(eventAuditJson.getInteger("AuditPolicyChange"));
+                }
+                if (eventAuditJson.containsKey("AuditAccountManage")) {
+                    eventAudit.setAuditAccountManage(eventAuditJson.getInteger("AuditAccountManage"));
+                }
+                if (eventAuditJson.containsKey("AuditProcessTracking")) {
+                    eventAudit.setAuditProcessTracking(eventAuditJson.getInteger("AuditProcessTracking"));
+                }
+                if (eventAuditJson.containsKey("AuditAccountLogon")) {
+                    eventAudit.setAuditAccountLogon(eventAuditJson.getInteger("AuditAccountLogon"));
+                }
+
+                // 实现 upsert 操作
+                List<EventAudit> existingRecords = eventAuditMapper.selectByTypeAndMac("result", macAddress);
+                if (!existingRecords.isEmpty()) {
+                    EventAudit existingRecord = existingRecords.get(0);
+                    eventAudit.setEventAuditId(existingRecord.getEventAuditId());
+                    log.info("Updating event audit record for MAC: {}, AuditDSAccess: {}", macAddress, eventAudit.getAuditDSAccess());
+                    eventAuditMapper.updateByPrimaryKeySelective(eventAudit);
+                } else {
+                    log.info("Inserting new event audit record for MAC: {}, AuditDSAccess: {}", macAddress, eventAudit.getAuditDSAccess());
+                    eventAuditMapper.insertSelective(eventAudit);
+                }
             }
 
-            // 3. 处理并保存 Privilege Rights 数据
+            // 处理权限配置
             if (baselineData.containsKey("privilege_rights")) {
-                processPrivilegeRights(macAddress, baselineData.getJSONObject("privilege_rights"));
+                JSONObject privilegeRightsJson = baselineData.getJSONObject("privilege_rights");
+                processPrivilegeRights(macAddress, privilegeRightsJson);
             }
 
-            // 4. 处理并保存 System Security Option 数据
+            // 处理系统安全选项
             if (baselineData.containsKey("system_security_option")) {
-                processSystemSecurityOption(macAddress, baselineData.getJSONObject("system_security_option"));
-            }
+                JSONObject secOptJson = baselineData.getJSONObject("system_security_option");
+                // 打印系统安全选项数据
+                log.info("Processing system security option data: {}", secOptJson);
+                
+                SystemSecurityOption securityOption = new SystemSecurityOption();
+                securityOption.setMacAddress(macAddress);
+                securityOption.setType("result");
 
-            // 5. 进行基线检查
-            checkBaseline(Collections.singletonMap("macAddress", macAddress));
+                // 确保大写LM
+                if (secOptJson.containsKey("NoLMHash")) {
+                    Integer noLMHash = secOptJson.getInteger("NoLMHash");
+                    log.info("Setting NoLMHash value: {}", noLMHash);
+                    securityOption.setNoLMHash(noLMHash);
+                }
+
+                // 设置其他字段
+                if (secOptJson.containsKey("LimitBlankPasswordUse")) {
+                    securityOption.setLimitBlankPasswordUse(secOptJson.getInteger("LimitBlankPasswordUse"));
+                }
+                if (secOptJson.containsKey("RestrictAnonymous")) {
+                    securityOption.setRestrictAnonymous(secOptJson.getInteger("RestrictAnonymous"));
+                }
+                if (secOptJson.containsKey("DontDisplayLastUserName")) {
+                    securityOption.setDontDisplayLastUserName(secOptJson.getInteger("DontDisplayLastUserName"));
+                }
+                if (secOptJson.containsKey("EnablePlainTextPassword")) {
+                    securityOption.setEnablePlainTextPassword(secOptJson.getInteger("EnablePlainTextPassword"));
+                }
+                if (secOptJson.containsKey("ClearPageFileAtShutdown")) {
+                    securityOption.setClearPageFileAtShutdown(secOptJson.getInteger("ClearPageFileAtShutdown"));
+                }
+
+                // 实现 upsert 操作
+                List<SystemSecurityOption> existingRecords = systemSecurityOptionMapper.selectByTypeAndMac("result", macAddress);
+                if (!existingRecords.isEmpty()) {
+                    SystemSecurityOption existingRecord = existingRecords.get(0);
+                    securityOption.setSystemSecurityOptionId(existingRecord.getSystemSecurityOptionId());
+                    log.info("Updating system security option for MAC: {}, NoLMHash: {}", macAddress, securityOption.getNoLMHash());
+                    systemSecurityOptionMapper.updateByPrimaryKeySelective(securityOption);
+            } else {
+                    log.info("Inserting new system security option for MAC: {}, NoLMHash: {}", macAddress, securityOption.getNoLMHash());
+                    systemSecurityOptionMapper.insertSelective(securityOption);
+                }
+            }
         } catch (Exception e) {
             log.error("处理基线数据失败: {}", e.getMessage(), e);
-            throw new RuntimeException("处理基线数据失败: " + e.getMessage());
+            throw e;
         }
     }
 
@@ -744,63 +946,53 @@ public class BaselineServiceImpl implements BaselineService {
             eventAudit.setMacAddress(macAddress);
             eventAudit.setType("result");
 
-            // 添加数据验证
-            validateAndSetEventAuditFields(eventAudit, eventAuditJson);
+            // 处理 AuditDSAccess 字段
+            if (eventAuditJson.containsKey("AuditDSAccess")) {
+                Integer auditDSAccess = eventAuditJson.getInteger("AuditDSAccess");
+                eventAudit.setAuditDSAccess(auditDSAccess);
+            }
 
-            // 查询是否存在相同MAC地址的记录
+            // 处理其他审计字段
+            if (eventAuditJson.containsKey("AuditSystemEvents")) {
+                eventAudit.setAuditSystemEvents(eventAuditJson.getInteger("AuditSystemEvents"));
+            }
+            if (eventAuditJson.containsKey("AuditLogonEvents")) {
+                eventAudit.setAuditLogonEvents(eventAuditJson.getInteger("AuditLogonEvents"));
+            }
+            if (eventAuditJson.containsKey("AuditObjectAccess")) {
+                eventAudit.setAuditObjectAccess(eventAuditJson.getInteger("AuditObjectAccess"));
+            }
+            if (eventAuditJson.containsKey("AuditPrivilegeUse")) {
+                eventAudit.setAuditPrivilegeUse(eventAuditJson.getInteger("AuditPrivilegeUse"));
+            }
+            if (eventAuditJson.containsKey("AuditPolicyChange")) {
+                eventAudit.setAuditPolicyChange(eventAuditJson.getInteger("AuditPolicyChange"));
+            }
+            if (eventAuditJson.containsKey("AuditAccountManage")) {
+                eventAudit.setAuditAccountManage(eventAuditJson.getInteger("AuditAccountManage"));
+            }
+            if (eventAuditJson.containsKey("AuditProcessTracking")) {
+                eventAudit.setAuditProcessTracking(eventAuditJson.getInteger("AuditProcessTracking"));
+            }
+            if (eventAuditJson.containsKey("AuditAccountLogon")) {
+                eventAudit.setAuditAccountLogon(eventAuditJson.getInteger("AuditAccountLogon"));
+            }
+
+            // 实现 upsert 操作
             List<EventAudit> existingRecords = eventAuditMapper.selectByTypeAndMac("result", macAddress);
             
             if (!existingRecords.isEmpty()) {
-                // 存在记录，执行更新
                 EventAudit existingRecord = existingRecords.get(0);
                 eventAudit.setEventAuditId(existingRecord.getEventAuditId());
                 eventAuditMapper.updateByPrimaryKeySelective(eventAudit);
+                log.info("Updated event audit for MAC: {}, AuditDSAccess: {}", macAddress, eventAudit.getAuditDSAccess());
             } else {
-                // 不存在记录，执行插入
             eventAuditMapper.insertSelective(eventAudit);
+                log.info("Inserted new event audit for MAC: {}, AuditDSAccess: {}", macAddress, eventAudit.getAuditDSAccess());
             }
         } catch (Exception e) {
             log.error("处理事件审计数据失败: {}", e.getMessage(), e);
             throw e;
-        }
-    }
-
-    private void validateAndSetEventAuditFields(EventAudit eventAudit, JSONObject json) {
-        // 验证和设置所有事件审计字段
-        String[] auditFields = {
-            "AuditSystemEvents",      // 系统事件审核
-            "AuditLogonEvents",       // 登录事件审核
-            "AuditObjectAccess",      // 对象访问审核
-            "AuditPrivilegeUse",      // 特权使用审核
-            "AuditPolicyChange",      // 策略更改审核
-            "AuditAccountManage",     // 账户管理审核
-            "AuditProcessTracking",   // 进程追踪审核
-            "AuditDsAccess",          // 目录服务访问审核
-            "AuditAccountLogon"       // 账户登录事件审核
-        };
-
-        for (String field : auditFields) {
-            try {
-                int value = Integer.parseInt(json.getString(field));
-                if (value < 0 || value > 3) {
-                    throw new IllegalArgumentException(field + " must be between 0 and 3");
-                }
-
-                // 使用反射动态设置字段值
-                String setterMethod = "set" + field;
-                Method method = EventAudit.class.getMethod(setterMethod, Integer.class);
-                method.invoke(eventAudit, value);
-            } catch (Exception e) {
-                System.err.println("Invalid " + field + ": " + e.getMessage());
-                try {
-                    // 设置为null表示无效值
-                    String setterMethod = "set" + field;
-                    Method method = EventAudit.class.getMethod(setterMethod, Integer.class);
-                    method.invoke(eventAudit, (Integer)null);
-                } catch (Exception ex) {
-                    System.err.println("Failed to set " + field + " to null: " + ex.getMessage());
-                }
-            }
         }
     }
 
@@ -869,85 +1061,43 @@ public class BaselineServiceImpl implements BaselineService {
             securityOption.setMacAddress(macAddress);
             securityOption.setType("result");
 
-            // 添加数据验证
-            validateAndSetSystemSecurityOptionFields(securityOption, secOptJson);
+            // 处理 NoLMHash 字段
+            if (secOptJson.containsKey("NoLMHash")) {
+                Integer noLMHash = secOptJson.getInteger("NoLMHash");
+                securityOption.setNoLMHash(noLMHash);
+            }
 
-            // 查询是否存在相同MAC地址的记录
+            // 处理其他字段
+            if (secOptJson.containsKey("LimitBlankPasswordUse")) {
+                securityOption.setLimitBlankPasswordUse(secOptJson.getInteger("LimitBlankPasswordUse"));
+            }
+            if (secOptJson.containsKey("RestrictAnonymous")) {
+                securityOption.setRestrictAnonymous(secOptJson.getInteger("RestrictAnonymous"));
+            }
+            if (secOptJson.containsKey("DontDisplayLastUserName")) {
+                securityOption.setDontDisplayLastUserName(secOptJson.getInteger("DontDisplayLastUserName"));
+            }
+            if (secOptJson.containsKey("EnablePlainTextPassword")) {
+                securityOption.setEnablePlainTextPassword(secOptJson.getInteger("EnablePlainTextPassword"));
+            }
+            if (secOptJson.containsKey("ClearPageFileAtShutdown")) {
+                securityOption.setClearPageFileAtShutdown(secOptJson.getInteger("ClearPageFileAtShutdown"));
+            }
+
+            // 实现 upsert 操作
             List<SystemSecurityOption> existingRecords = systemSecurityOptionMapper.selectByTypeAndMac("result", macAddress);
             
             if (!existingRecords.isEmpty()) {
-                // 存在记录，执行更新
                 SystemSecurityOption existingRecord = existingRecords.get(0);
                 securityOption.setSystemSecurityOptionId(existingRecord.getSystemSecurityOptionId());
                 systemSecurityOptionMapper.updateByPrimaryKeySelective(securityOption);
+                log.info("Updated system security option for MAC: {}, NoLMHash: {}", macAddress, securityOption.getNoLMHash());
             } else {
-                // 不存在记录，执行插入
             systemSecurityOptionMapper.insertSelective(securityOption);
+                log.info("Inserted new system security option for MAC: {}, NoLMHash: {}", macAddress, securityOption.getNoLMHash());
             }
         } catch (Exception e) {
             log.error("处理系统安全选项数据失败: {}", e.getMessage(), e);
-            throw e;
-        }
-    }
-
-    private void validateAndSetSystemSecurityOptionFields(SystemSecurityOption securityOption, JSONObject json) {
-        try {
-            // NoLmHash
-            if (json.containsKey("NoLmHash")) {
-                Integer noLmHash = json.getInteger("NoLmHash");
-                if (noLmHash != null && (noLmHash < 0 || noLmHash > 1)) {
-                    throw new IllegalArgumentException("NoLmHash must be 0 or 1");
-                }
-                securityOption.setNoLmHash(noLmHash);
-            }
-
-            // 限制空密码使用
-            if (json.containsKey("LimitBlankPasswordUse")) {
-                Integer limitBlankPwd = json.getInteger("LimitBlankPasswordUse");
-                if (limitBlankPwd != null && (limitBlankPwd < 0 || limitBlankPwd > 1)) {
-                    throw new IllegalArgumentException("LimitBlankPasswordUse must be 0 or 1");
-                }
-                securityOption.setLimitBlankPasswordUse(limitBlankPwd);
-            }
-
-            // 限制匿名访问
-            if (json.containsKey("RestrictAnonymous")) {
-                Integer restrictAnonymous = json.getInteger("RestrictAnonymous");
-                if (restrictAnonymous != null && (restrictAnonymous < 0 || restrictAnonymous > 1)) {
-                    throw new IllegalArgumentException("RestrictAnonymous must be 0 or 1");
-                }
-                securityOption.setRestrictAnonymous(restrictAnonymous);
-            }
-
-            // 不显示上次登录用户名
-            if (json.containsKey("DontDisplayLastUserName")) {
-                Integer dontDisplayLastUser = json.getInteger("DontDisplayLastUserName");
-                if (dontDisplayLastUser != null && (dontDisplayLastUser < 0 || dontDisplayLastUser > 1)) {
-                    throw new IllegalArgumentException("DontDisplayLastUserName must be 0 or 1");
-                }
-                securityOption.setDontDisplayLastUserName(dontDisplayLastUser);
-            }
-
-            // 启用明文密码
-            if (json.containsKey("EnablePlainTextPassword")) {
-                Integer enablePlainTextPwd = json.getInteger("EnablePlainTextPassword");
-                if (enablePlainTextPwd != null && (enablePlainTextPwd < 0 || enablePlainTextPwd > 1)) {
-                    throw new IllegalArgumentException("EnablePlainTextPassword must be 0 or 1");
-                }
-                securityOption.setEnablePlainTextPassword(enablePlainTextPwd);
-            }
-
-            // 关机时清除页面文件
-            if (json.containsKey("ClearPageFileAtShutdown")) {
-                Integer clearPageFile = json.getInteger("ClearPageFileAtShutdown");
-                if (clearPageFile != null && (clearPageFile < 0 || clearPageFile > 1)) {
-                    throw new IllegalArgumentException("ClearPageFileAtShutdown must be 0 or 1");
-                }
-                securityOption.setClearPageFileAtShutdown(clearPageFile);
-            }
-
-        } catch (Exception e) {
-            System.err.println("Error validating system security option fields: " + e.getMessage());
             throw e;
         }
     }
