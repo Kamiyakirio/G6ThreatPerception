@@ -52,7 +52,7 @@
 <div class="layui-fluid">
     <!-- 简化后的统计卡片 -->
     <div class="layui-row layui-col-space15" style="margin-bottom: 20px;">
-        <div class="layui-col-md3">
+        <div class="layui-col-md4">
             <div class="layui-card">
                 <div class="layui-card-body" style="text-align: center; padding: 25px 0;">
                     <div style="font-size: 24px; font-weight: bold; color: #1E9FFF;" id="totalLogs">0</div>
@@ -60,15 +60,7 @@
                 </div>
             </div>
         </div>
-        <div class="layui-col-md3">
-            <div class="layui-card">
-                <div class="layui-card-body" style="text-align: center; padding: 25px 0;">
-                    <div style="font-size: 24px; font-weight: bold; color: #FF5722;" id="systemLogs">0</div>
-                    <div style="margin-top: 5px; color: #666;">系统日志统计数</div>
-                </div>
-            </div>
-        </div>
-        <div class="layui-col-md3">
+        <div class="layui-col-md4">
             <div class="layui-card">
                 <div class="layui-card-body" style="text-align: center; padding: 25px 0;">
                     <div style="font-size: 24px; font-weight: bold; color: #009688;" id="securityLogs">0</div>
@@ -76,7 +68,7 @@
                 </div>
             </div>
         </div>
-        <div class="layui-col-md3">
+        <div class="layui-col-md4">
             <div class="layui-card">
                 <div class="layui-card-body" style="text-align: center; padding: 25px 0;">
                     <div style="font-size: 24px; font-weight: bold; color: #1b0096;" id="riskLogs">0</div>
@@ -568,23 +560,48 @@
         // 加载全部日志统计数据
         function loadStatistics() {
             $.ajax({
-                url: '/log/all/statistics',
-                type: 'GET',
+                url: '/log/list',  // 修改为获取日志列表的接口
+                type: 'POST',      // 改为POST请求
                 headers: {
                     'Authorization': localStorage.getItem('token')
                 },
+                data: {
+                    page: 1,
+                    limit: 999999  // 获取所有数据以便统计
+                },
                 success: function (res) {
-                    if (res.code === 200 && res.data) {
-                        $('#totalLogs').text(res.data.totalLogs || 0);
-                        $('#systemLogs').text(res.data.systemLogs || 0);
-                        $('#securityLogs').text(res.data.securityLogs || 0);
-                        $('#riskLogs').text(res.data.riskLogs || 0);
+                    if (res.code === 0) {
+                        let totalCount = res.data.length || 0;
+                        let securityCount = 0;
+                        let riskCount = 0;
+                        
+                        // 遍历数据，根据risk_level统计
+                        res.data.forEach(item => {
+                            if (item.riskLevel === 0) {
+                                securityCount++;
+                            } else {
+                                riskCount++;
+                            }
+                        });
+                        
+                        // 更新统计数字，使用数字格式化
+                        $('#totalLogs').text(formatNumber(totalCount));
+                        $('#securityLogs').text(formatNumber(securityCount));
+                        $('#riskLogs').text(formatNumber(riskCount));
+                    } else {
+                        layer.msg('获取统计数据失败：' + res.msg, {icon: 2});
                     }
                 },
                 error: function (xhr, status, error) {
                     console.error('加载统计数据失败:', error);
+                    layer.msg('加载统计数据失败，请稍后重试', {icon: 2});
                 }
             });
+        }
+
+        // 数字格式化函数
+        function formatNumber(num) {
+            return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
         }
 
         // 审计日志页面刷新按钮实现
