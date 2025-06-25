@@ -420,7 +420,7 @@ public class RabbitMQController {
                     JSONObject dataItem = dataList.getJSONObject(i);
                     String dataType = dataItem.getString("type");
                     if ("log".equalsIgnoreCase(dataType)) {
-                        JSONArray logsArray = dataItem.getJSONArray("data");
+                        JSONArray logsArray = dataItem.getJSONArray("data").getJSONArray(0);
                         for (int j = 0; j < logsArray.size(); j++) {
                             JSONObject logData = logsArray.getJSONObject(j);
                             Log log = new Log();
@@ -550,6 +550,7 @@ public class RabbitMQController {
                     Map<String, Object> data = new HashMap<>();
                     data.put("macAddress", macAddress);
                     data.put("baselineData", baselineData);
+                    data.put("hostName",hostName);
                     baselineService.processBaselineData(data);
                 }
             }
