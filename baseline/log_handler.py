@@ -7,8 +7,9 @@ from baseline.baseline_detect import powershell_command
 from system.pc_information import PcInfo
 from utils.naming_convert import underscore_to_camelcase
 
-file_path = 'config.cfg'  # 配置文件路径
+file_path = "config.cfg"  # 配置文件路径
 log_file_path = "output.txt"
+
 
 def get_section_fields(file_path, sections_and_fields):
     """
@@ -19,7 +20,7 @@ def get_section_fields(file_path, sections_and_fields):
     :return: 提取的字段和值
     """
     config = configparser.ConfigParser()
-    config.read(file_path, encoding='utf-16')  # 指定编码格式为 UTF-16
+    config.read(file_path, encoding="utf-16")  # 指定编码格式为 UTF-16
 
     result = {}
 
@@ -37,23 +38,47 @@ def get_section_fields(file_path, sections_and_fields):
     return result
 
 
-#整理数据
+# 整理数据
 def get_baseline_cfg():
     baseline = {}
     sections_and_fields = {
-        'System Access': ['MinimumPasswordAge', 'MaximumPasswordAge', 'MinimumPasswordLength', 'PasswordComplexity',
-                          'PasswordHistorySize', 'LockoutBadCount', 'RequireLogonToChangePassword',
-                          'ForceLogoffWhenHourExpire', 'NewAdministratorName', 'NewGuestName', 'ClearTextPassword',
-                          'LSAAnonymousNameLookup', 'EnableAdminAccount', 'EnableGuestAccount'],
-        'Event Audit': ['AuditSystemEvents', 'AuditLogonEvents', 'AuditObjectAccess', 'AuditPrivilegeUse',
-                        'AuditPolicyChange', 'AuditAccountManage', 'AuditProcessTracking', 'AuditDSAccess',
-                        'AuditAccountLogon', ],
-        'Privilege Rights': ['SeProfileSingleProcessPrivilege', 'SeRemoteShutdownPrivilege', 'SeShutdownPrivilege']
+        "System Access": [
+            "MinimumPasswordAge",
+            "MaximumPasswordAge",
+            "MinimumPasswordLength",
+            "PasswordComplexity",
+            "PasswordHistorySize",
+            "LockoutBadCount",
+            "RequireLogonToChangePassword",
+            "ForceLogoffWhenHourExpire",
+            "NewAdministratorName",
+            "NewGuestName",
+            "ClearTextPassword",
+            "LSAAnonymousNameLookup",
+            "EnableAdminAccount",
+            "EnableGuestAccount",
+        ],
+        "Event Audit": [
+            "AuditSystemEvents",
+            "AuditLogonEvents",
+            "AuditObjectAccess",
+            "AuditPrivilegeUse",
+            "AuditPolicyChange",
+            "AuditAccountManage",
+            "AuditProcessTracking",
+            "AuditDSAccess",
+            "AuditAccountLogon",
+        ],
+        "Privilege Rights": [
+            "SeProfileSingleProcessPrivilege",
+            "SeRemoteShutdownPrivilege",
+            "SeShutdownPrivilege",
+        ],
     }
     result = get_section_fields(file_path, sections_and_fields)
-    baseline['system_access'] = result['System Access']
-    baseline['event_audit'] = result['Event Audit']
-    baseline['privilege_rights'] = result['Privilege Rights']
+    baseline["system_access"] = result["System Access"]
+    baseline["event_audit"] = result["Event Audit"]
+    baseline["privilege_rights"] = result["Privilege Rights"]
     return baseline
 
 
@@ -68,36 +93,47 @@ def get_baseline_txt():
     # 匹配以 SysSecurityOptionPolicy:: 开头的行
     pattern = r"(SysSecurityOptionPolicy::[^=]+)(.+)$"
 
-    with open(log_file_path, 'r', encoding='utf-8') as file:
+    with open(log_file_path, "r", encoding="utf-8") as file:
         for line in file:
             match = re.search(pattern, line.strip())
             if match:
                 key = match.group(1).strip()
                 value = match.group(2).strip()
                 result[key] = value
-    #获取值中的第一个数字为新值
-    data['NoLMHash'] = re.search(r'\d+', result['SysSecurityOptionPolicy::NoLMHash']).group()
-    data['LimitBlankPasswordUse'] = re.search(r'\d+', result['SysSecurityOptionPolicy::LimitBlankPasswordUse']).group()
-    data['RestrictAnonymous'] = re.search(r'\d+', result['SysSecurityOptionPolicy::RestrictAnonymous']).group()
-    data['DontDisplayLastUserName'] = re.search(r'\d+',
-                                                result['SysSecurityOptionPolicy::DontDisplayLastUserName']).group()
-    data['EnablePlainTextPassword'] = re.search(r'\d+',
-                                                result['SysSecurityOptionPolicy::EnablePlainTextPassword']).group()
-    data['ClearPageFileAtShutdown'] = re.search(r'\d+',
-                                                result['SysSecurityOptionPolicy::ClearPageFileAtShutdown']).group()
+    # 获取值中的第一个数字为新值
+    data["NoLMHash"] = re.search(
+        r"\d+", result["SysSecurityOptionPolicy::NoLMHash"]
+    ).group()
+    data["LimitBlankPasswordUse"] = re.search(
+        r"\d+", result["SysSecurityOptionPolicy::LimitBlankPasswordUse"]
+    ).group()
+    data["RestrictAnonymous"] = re.search(
+        r"\d+", result["SysSecurityOptionPolicy::RestrictAnonymous"]
+    ).group()
+    data["DontDisplayLastUserName"] = re.search(
+        r"\d+", result["SysSecurityOptionPolicy::DontDisplayLastUserName"]
+    ).group()
+    data["EnablePlainTextPassword"] = re.search(
+        r"\d+", result["SysSecurityOptionPolicy::EnablePlainTextPassword"]
+    ).group()
+    data["ClearPageFileAtShutdown"] = re.search(
+        r"\d+", result["SysSecurityOptionPolicy::ClearPageFileAtShutdown"]
+    ).group()
     return data
+
 
 def get_baseline():
     """
     获取基线数据
     :return: 基线数据
     """
-    #运行脚本
+    # 运行脚本
     powershell_command()
-    data=get_baseline_cfg()
-    data['system_security_option'] = get_baseline_txt()
+    data = get_baseline_cfg()
+    data["system_security_option"] = get_baseline_txt()
 
     return data
+
 
 def baseline_detect(data):
     threads = []
@@ -115,7 +151,9 @@ def baseline_detect(data):
     if localhost_mac_address != data["mac_address"]:
         return ""
     else:
-        return_data["info"] = {underscore_to_camelcase(k): v for k, v in basic_info.items()}
+        return_data["info"] = {
+            underscore_to_camelcase(k): v for k, v in basic_info.items()
+        }
 
         if data["baseline_task"]:
             t = thread_pool.submit(get_baseline)
@@ -124,13 +162,12 @@ def baseline_detect(data):
         for i in as_completed(threads):
             result = i.result()
             # 组装完整的 JSON 结构
-            return_data["data"].append({
-                "type": "baseline",
-                "data": result
-            })
+            return_data["data"].append({"type": "baseline", "data": result})
 
-        return_data["info"]["time"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(return_data)
+        return_data["info"]["time"] = datetime.datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+        # print(return_data)
         print("Detect ended!")
 
         # 🔥 最终返回为字符串
@@ -142,6 +179,6 @@ if __name__ == "__main__":
         "host_name": "localhost",
         "mac_address": "f5:d4:52:4a:2b:af",
         "id": "1",
-        "baseline_task": True
+        "baseline_task": True,
     }
     print(baseline_detect(test_data))

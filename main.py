@@ -108,7 +108,7 @@ def create_asset_detect_message_callback(mac_address):
             elif detect_type == "baseline":
                 detect_result = baseline_detect(data)
                 queue_name = "baseline_detect_result"
-            elif detect_type == "baseline_repair":
+            elif detect_type == "reinforce":
                 detect_result = baseline_repair(data)
                 queue_name = "baseline_detect_result"
             else:

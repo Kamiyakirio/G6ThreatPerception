@@ -180,3 +180,6 @@ test.py
 **/rabbit_config.py
 encrypt_file.py
 vulscripts/
+
+config.cfg
+config.cfg.bak
