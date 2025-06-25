@@ -123,6 +123,7 @@
                 <a class="layui-btn layui-btn-warm layui-btn-xs" lay-event="detail">
                     <i class="layui-icon layui-icon-list"></i>查看详情
                 </a>
+                <a class="layui-btn layui-btn-xs" lay-event="ai">AI分析</a>
             </script>
 
             <!-- 添加空状态模板 -->
@@ -207,6 +208,8 @@
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
 <script src="/layui/layui.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script src="/js/jquery-3.7.1.min.js"></script>
+<script src="/js/ai_utils.js"></script>
 <script type="text/javascript">
     // 日期格式转换函数
     function formatDate(str) {
@@ -359,7 +362,7 @@
                 none: $('#emptyStateTpl').html()
             }
             , parseData: function(res) {
-                console.log('API Response:', res);
+                // console.log('API Response:', res);
                 if (res.code === 0 && res.data) {
                     return {
                         "code": 0,
@@ -377,7 +380,7 @@
                 }
             }
             , done: function(res) {
-                console.log('Table Render Result:', res);
+                // console.log('Table Render Result:', res);
                 if (res.code !== 0) {
                     layer.msg(res.msg || '加载数据失败', {icon: 2});
                     return;
@@ -391,7 +394,7 @@
 
         // 搜索按钮事件
         form.on('submit(LAY-sysuser-front-search)', function(data) {
-            console.log('Search Params:', data.field); // 添加调试日志
+            // console.log('Search Params:', data.field); // 添加调试日志
             table.reload('LAY-user-manage', {
                 where: {
                     macAddress: data.field.keywords || '',
@@ -417,8 +420,8 @@
         //监听行工具事件
         table.on('tool(LAY-user-manage)', function (obj) {
             var data = obj.data;
-            console.log('Tool event:', obj.event);
-            console.log('Row data:', data);
+            // console.log('Tool event:', obj.event);
+            // console.log('Row data:', data);
 
             if (obj.event === "detect") {
                 layer.open({
@@ -536,7 +539,8 @@
                         layer.msg('获取修复详情失败', {icon: 2});
                     }
                 });
-            } else if (obj.event === "detail") {
+            } else if (obj.event === "detail")
+            {
                 if (!data || !data.macAddress) {
                     layer.msg('无法获取MAC地址，请刷新页面重试', {icon: 2});
                     return;
@@ -544,7 +548,7 @@
 
                 // 处理MAC地址，保留原始格式
                 var macAddress = data.macAddress;
-                console.log('MAC地址:', macAddress); // 添加调试日志
+                //console.log('MAC地址:', macAddress); // 添加调试日志
 
                 // 创建一个加载层
                 var loadIndex = layer.load(1, {
@@ -564,7 +568,7 @@
                     },
                     success: function(res) {
                         layer.close(loadIndex);
-                        console.log('API响应:', res); // 添加调试日志
+                        //console.log('API响应:', res); // 添加调试日志
 
                         if (res.code === 0 && res.data) {
                             // 创建表格HTML
@@ -674,6 +678,34 @@
                     }
                 });
             }
+            else if (obj.event==="ai"){
+                var macAddress = data.macAddress;
+                $.ajax({
+                    url: '/api/baseline/detail',
+                    type: 'GET',
+                    headers: {
+                        'Authorization': localStorage.getItem('token'),
+                        'Content-Type': 'application/json;charset=utf-8'
+                    },
+                    data: {
+                        macAddress: macAddress
+                    },
+                    success: function(res) {
+                        layer.close(loadIndex);
+                        // console.log('API响应:', res); // 添加调试日志
+                        if (res.code === 0 && res.data) {
+                            ai({id:1234,data:res.data}, "/ai/baseline_analysis");
+                        } else {
+                            layer.msg(res.msg || '获取数据失败', {icon: 2});
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        layer.close(loadIndex);
+                        console.error('请求失败:', error); // 添加错误日志
+                        layer.msg('服务器错误，请稍后重试', {icon: 2});
+                    }
+                });
+            }
         });
 
         // 页面加载完成后执行
@@ -756,51 +788,6 @@
                     , content: "/page/baseline/detail?macAddress=" + data.macAddress
                     , area: ["80%","80%"]
                 });
-            }
-
-            if (obj.event === 'aiAnalysis') {
-                if (data.aiResult) {
-                    layer.open({
-                        type: 2,
-                        title: 'AI日志分析结果',
-                        area: ['60%', '60%'],
-                        content: '/page/ai/aiResultTmpl2',
-                        success: function (layero, index) {
-                            let contentWindow = layero.find('iframe')[0].contentWindow;
-                            contentWindow.postMessage(data.aiResult);
-                        }
-                    });
-                } else {
-                    layer.msg('正在将日志发送至AI分析，请稍候...');
-                    var loadIndex = layer.load(1);
-                    $.ajax({
-                        url: '/log/ai/analysis',
-                        method: 'post',
-                        headers: {'Authorization': localStorage.getItem('token')},
-                        contentType: 'application/json',
-                        dataType: 'json',
-                        data: JSON.stringify([data]),
-                        success: function (response) {
-                            layer.close(loadIndex);
-                            let msg = response.msg || '';
-                            layer.open({
-                                type: 2,
-                                title: 'AI日志分析结果',
-                                area: ['60%', '60%'],
-                                content: '/page/ai/aiResultTmpl2',
-                                success: function (layero, index) {
-                                    let contentWindow = layero.find('iframe')[0].contentWindow;
-                                    contentWindow.postMessage(msg);
-                                }
-                            });
-                            layui.table.reload('logTable');
-                        },
-                        error: function (xhr, status, error) {
-                            layer.close(loadIndex);
-                            layer.msg(error, {icon: 5});
-                        }
-                    });
-                }
             }
         });
     });

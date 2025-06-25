@@ -315,12 +315,12 @@ public class BaselineServiceImpl implements BaselineService {
         List<BaselineItemResult> results = new ArrayList<>();
         
         try {
-            log.info("Getting baseline details for MAC address: {}", macAddress);
+//            log.info("Getting baseline details for MAC address: {}", macAddress);
         
         // 1. 系统访问配置比较
             List<SystemAccess> ruleAccess = systemAccessMapper.selectByType("rule");
             List<SystemAccess> resultAccess = systemAccessMapper.selectByTypeAndMac("result", macAddress);
-            log.debug("System Access - Rules: {}, Results: {}", ruleAccess.size(), resultAccess.size());
+//            log.debug("System Access - Rules: {}, Results: {}", ruleAccess.size(), resultAccess.size());
             
             if (!ruleAccess.isEmpty()) {
                 SystemAccess rule = ruleAccess.get(0);
@@ -607,7 +607,7 @@ public class BaselineServiceImpl implements BaselineService {
                 }
             }
 
-            log.info("Baseline detail processing completed. Found {} items", results.size());
+//            log.info("Baseline detail processing completed. Found {} items", results.size());
         return results;
         } catch (Exception e) {
             log.error("获取基线检测详情失败: {}", e.getMessage(), e);

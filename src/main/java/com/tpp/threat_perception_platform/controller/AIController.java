@@ -94,6 +94,14 @@ public class AIController {
         return new ResponseResult(1, result);
     }
 
+    @PostMapping("/ai/baseline_analysis")
+    public ResponseResult AIBaselineAnalysis(@RequestBody Map<String, Object> hotfixResults)
+    {
+        String prompt = TextFileLoader.loadTextFile("texts/prompts/baseline_analysis_prompt.txt");
+        String result = aiService.aiAssistWithPrompt(prompt, JSON.toJSONString(hotfixResults));
+        return new ResponseResult(1, result);
+    }
+
 
 
 }
