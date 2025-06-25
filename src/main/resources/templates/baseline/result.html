@@ -45,6 +45,15 @@
             color: #999;
             font-size: 16px;
         }
+
+        .layui-table thead tr th {
+            text-align: center !important;  /* 强制居中对齐 */
+            font-weight: bold;              /* 加粗显示 */
+        }
+
+        .layui-table tbody tr td {
+         text-align: center !important;
+        }
     </style>
 </head>
 <body>
@@ -52,7 +61,7 @@
 <div class="layui-fluid">
     <!-- 简化后的统计卡片 -->
     <div class="layui-row layui-col-space15" style="margin-bottom: 20px;">
-        <div class="layui-col-md3">
+        <div class="layui-col-md6">
             <div class="layui-card">
                 <div class="layui-card-body" style="text-align: center; padding: 25px 0;">
                     <div style="font-size: 24px; font-weight: bold; color: #1E9FFF;" id="totalLogs">0</div>
@@ -60,27 +69,11 @@
                 </div>
             </div>
         </div>
-        <div class="layui-col-md3">
-            <div class="layui-card">
-                <div class="layui-card-body" style="text-align: center; padding: 25px 0;">
-                    <div style="font-size: 24px; font-weight: bold; color: #FF5722;" id="systemLogs">0</div>
-                    <div style="margin-top: 5px; color: #666;">系统配置检测数</div>
-                </div>
-            </div>
-        </div>
-        <div class="layui-col-md3">
-            <div class="layui-card">
-                <div class="layui-card-body" style="text-align: center; padding: 25px 0;">
-                    <div style="font-size: 24px; font-weight: bold; color: #009688;" id="securityLogs">0</div>
-                    <div style="margin-top: 5px; color: #666;">安全策略检测数</div>
-                </div>
-            </div>
-        </div>
-        <div class="layui-col-md3">
+        <div class="layui-col-md6">
             <div class="layui-card">
                 <div class="layui-card-body" style="text-align: center; padding: 25px 0;">
                     <div style="font-size: 24px; font-weight: bold; color: #1b0096;" id="riskLogs">0</div>
-                    <div style="margin-top: 5px; color: #666;">风险项目数</div>
+                    <div style="margin-top: 5px; color: #666;">异常项目总数</div>
                 </div>
             </div>
         </div>
@@ -346,17 +339,17 @@
             , cols: [
                 [
                     {type: 'checkbox', fixed: 'left', width: 50}
-                    , {field: 'id', title: 'ID', width: 80}
-                    , {field: 'macAddress', title: 'MAC地址', width: 150, templet: function(d) {
+                    , {field: 'id', title: 'ID', width: 100}
+                    , {field: 'macAddress', title: 'MAC地址', width: 200, templet: function(d) {
                         if (!d.macAddress) return '';
                         var mac = d.macAddress.replace(/:/g, '');
                         return mac.match(/.{2}/g).join(':');
                     }}
-                    , {field: 'hostName', title: '主机名称', width: 150}
-                    , {field: 'startTime', title: '执行时间', width: 180, templet: function(d) {
+                    , {field: 'hostName', title: '主机名称', width: 200}
+                    , {field: 'startTime', title: '执行时间', width: 200, templet: function(d) {
                         return formatDate(d.startTime);
                     }}
-                    , {title: '操作', toolbar: '#table-useradmin-webuser', width: 360}
+                    , {title: '操作', toolbar: '#table-useradmin-webuser', width: 460}
                 ]
             ]
             , page: true
@@ -430,7 +423,7 @@
             if (obj.event === "detect") {
                 layer.open({
                     type: 2
-                    , title: '基线检测'
+                    , title: '基线修复'
                     , skin: 'layui-layer-molv'
                     , content: '/page/baseline/detect'
                     , maxmin: true
@@ -707,8 +700,6 @@
                     if (res.code === 0 && res.data) {
                         // 使用动画效果显示数据
                         animateNumber('#totalLogs', res.data.totalCount || 0);
-                        animateNumber('#systemLogs', res.data.systemCount || 0);
-                        animateNumber('#securityLogs', res.data.securityCount || 0);
                         animateNumber('#riskLogs', res.data.riskCount || 0);
                     } else {
                         console.warn('加载统计数据失败：', res.msg);

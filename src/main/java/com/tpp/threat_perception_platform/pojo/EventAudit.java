@@ -48,7 +48,7 @@ public class EventAudit {
     /**
      * 审核目录服务访问
      */
-    private Integer auditDsAccess;
+    private Integer auditDSAccess;
 
     /**
      * 审核账户登录事件
@@ -180,15 +180,15 @@ public class EventAudit {
     /**
      * 审核目录服务访问
      */
-    public Integer getAuditDsAccess() {
-        return auditDsAccess;
+    public Integer getAuditDSAccess() {
+        return auditDSAccess;
     }
 
     /**
      * 审核目录服务访问
      */
-    public void setAuditDsAccess(Integer auditDsAccess) {
-        this.auditDsAccess = auditDsAccess;
+    public void setAuditDSAccess(Integer auditDSAccess) {
+        this.auditDSAccess = auditDSAccess;
     }
 
     /**
@@ -253,7 +253,7 @@ public class EventAudit {
             && (this.getAuditPolicyChange() == null ? other.getAuditPolicyChange() == null : this.getAuditPolicyChange().equals(other.getAuditPolicyChange()))
             && (this.getAuditAccountManage() == null ? other.getAuditAccountManage() == null : this.getAuditAccountManage().equals(other.getAuditAccountManage()))
             && (this.getAuditProcessTracking() == null ? other.getAuditProcessTracking() == null : this.getAuditProcessTracking().equals(other.getAuditProcessTracking()))
-            && (this.getAuditDsAccess() == null ? other.getAuditDsAccess() == null : this.getAuditDsAccess().equals(other.getAuditDsAccess()))
+            && (this.getAuditDSAccess() == null ? other.getAuditDSAccess() == null : this.getAuditDSAccess().equals(other.getAuditDSAccess()))
             && (this.getAuditAccountLogon() == null ? other.getAuditAccountLogon() == null : this.getAuditAccountLogon().equals(other.getAuditAccountLogon()))
             && (this.getType() == null ? other.getType() == null : this.getType().equals(other.getType()))
             && (this.getMacAddress() == null ? other.getMacAddress() == null : this.getMacAddress().equals(other.getMacAddress()));
@@ -271,7 +271,7 @@ public class EventAudit {
         result = prime * result + ((getAuditPolicyChange() == null) ? 0 : getAuditPolicyChange().hashCode());
         result = prime * result + ((getAuditAccountManage() == null) ? 0 : getAuditAccountManage().hashCode());
         result = prime * result + ((getAuditProcessTracking() == null) ? 0 : getAuditProcessTracking().hashCode());
-        result = prime * result + ((getAuditDsAccess() == null) ? 0 : getAuditDsAccess().hashCode());
+        result = prime * result + ((getAuditDSAccess() == null) ? 0 : getAuditDSAccess().hashCode());
         result = prime * result + ((getAuditAccountLogon() == null) ? 0 : getAuditAccountLogon().hashCode());
         result = prime * result + ((getType() == null) ? 0 : getType().hashCode());
         result = prime * result + ((getMacAddress() == null) ? 0 : getMacAddress().hashCode());
@@ -292,7 +292,7 @@ public class EventAudit {
         sb.append(", auditPolicyChange=").append(auditPolicyChange);
         sb.append(", auditAccountManage=").append(auditAccountManage);
         sb.append(", auditProcessTracking=").append(auditProcessTracking);
-        sb.append(", auditDsAccess=").append(auditDsAccess);
+        sb.append(", auditDSAccess=").append(auditDSAccess);
         sb.append(", auditAccountLogon=").append(auditAccountLogon);
         sb.append(", type=").append(type);
         sb.append(", macAddress=").append(macAddress);

@@ -13,7 +13,7 @@ public class SystemSecurityOption {
     /**
      * 
      */
-    private Integer noLmHash;
+    private Integer noLMHash;
 
     /**
      * 
@@ -67,15 +67,15 @@ public class SystemSecurityOption {
     /**
      * 
      */
-    public Integer getNoLmHash() {
-        return noLmHash;
+    public Integer getNoLMHash() {
+        return noLMHash;
     }
 
     /**
      * 
      */
-    public void setNoLmHash(Integer noLmHash) {
-        this.noLmHash = noLmHash;
+    public void setNoLMHash(Integer noLMHash) {
+        this.noLMHash = noLMHash;
     }
 
     /**
@@ -189,7 +189,7 @@ public class SystemSecurityOption {
         }
         SystemSecurityOption other = (SystemSecurityOption) that;
         return (this.getSystemSecurityOptionId() == null ? other.getSystemSecurityOptionId() == null : this.getSystemSecurityOptionId().equals(other.getSystemSecurityOptionId()))
-            && (this.getNoLmHash() == null ? other.getNoLmHash() == null : this.getNoLmHash().equals(other.getNoLmHash()))
+            && (this.getNoLMHash() == null ? other.getNoLMHash() == null : this.getNoLMHash().equals(other.getNoLMHash()))
             && (this.getLimitBlankPasswordUse() == null ? other.getLimitBlankPasswordUse() == null : this.getLimitBlankPasswordUse().equals(other.getLimitBlankPasswordUse()))
             && (this.getRestrictAnonymous() == null ? other.getRestrictAnonymous() == null : this.getRestrictAnonymous().equals(other.getRestrictAnonymous()))
             && (this.getDontDisplayLastUserName() == null ? other.getDontDisplayLastUserName() == null : this.getDontDisplayLastUserName().equals(other.getDontDisplayLastUserName()))
@@ -204,7 +204,7 @@ public class SystemSecurityOption {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((getSystemSecurityOptionId() == null) ? 0 : getSystemSecurityOptionId().hashCode());
-        result = prime * result + ((getNoLmHash() == null) ? 0 : getNoLmHash().hashCode());
+        result = prime * result + ((getNoLMHash() == null) ? 0 : getNoLMHash().hashCode());
         result = prime * result + ((getLimitBlankPasswordUse() == null) ? 0 : getLimitBlankPasswordUse().hashCode());
         result = prime * result + ((getRestrictAnonymous() == null) ? 0 : getRestrictAnonymous().hashCode());
         result = prime * result + ((getDontDisplayLastUserName() == null) ? 0 : getDontDisplayLastUserName().hashCode());
@@ -222,7 +222,7 @@ public class SystemSecurityOption {
         sb.append(" [");
         sb.append("Hash = ").append(hashCode());
         sb.append(", systemSecurityOptionId=").append(systemSecurityOptionId);
-        sb.append(", noLmHash=").append(noLmHash);
+        sb.append(", noLMHash=").append(noLMHash);
         sb.append(", limitBlankPasswordUse=").append(limitBlankPasswordUse);
         sb.append(", restrictAnonymous=").append(restrictAnonymous);
         sb.append(", dontDisplayLastUserName=").append(dontDisplayLastUserName);

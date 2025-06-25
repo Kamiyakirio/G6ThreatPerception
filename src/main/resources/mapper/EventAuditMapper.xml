@@ -13,7 +13,7 @@
             <result property="auditPolicyChange" column="audit_policy_change" />
             <result property="auditAccountManage" column="audit_account_manage" />
             <result property="auditProcessTracking" column="audit_process_tracking" />
-            <result property="auditDsAccess" column="audit_DS_access" />
+            <result property="auditDSAccess" column="audit_DS_access" />
             <result property="auditAccountLogon" column="audit_account_logon" />
             <result property="type" column="type" />
             <result property="macAddress" column="mac_address" />
@@ -56,7 +56,7 @@
         audit_account_manage,audit_process_tracking,audit_DS_access,audit_account_logon,type,
         mac_address)
         values (#{eventAuditId},#{auditSystemEvents},#{auditLogonEvents},#{auditObjectAccess},#{auditPrivilegeUse},#{auditPolicyChange},
-        #{auditAccountManage},#{auditProcessTracking},#{auditDsAccess},#{auditAccountLogon},#{type},
+        #{auditAccountManage},#{auditProcessTracking},#{auditDSAccess},#{auditAccountLogon},#{type},
         #{macAddress})
     </insert>
     <insert id="insertSelective" keyColumn="event_audit_id" keyProperty="eventAuditId" parameterType="com.tpp.threat_perception_platform.pojo.EventAudit" useGeneratedKeys="true">
@@ -70,7 +70,7 @@
                 <if test="auditPolicyChange != null">audit_policy_change,</if>
                 <if test="auditAccountManage != null">audit_account_manage,</if>
                 <if test="auditProcessTracking != null">audit_process_tracking,</if>
-                <if test="auditDsAccess != null">audit_DS_access,</if>
+                <if test="auditDSAccess != null">audit_DS_access,</if>
                 <if test="auditAccountLogon != null">audit_account_logon,</if>
                 <if test="type != null">type,</if>
                 <if test="macAddress != null">mac_address,</if>
@@ -84,7 +84,7 @@
                 <if test="auditPolicyChange != null">#{auditPolicyChange},</if>
                 <if test="auditAccountManage != null">#{auditAccountManage},</if>
                 <if test="auditProcessTracking != null">#{auditProcessTracking},</if>
-                <if test="auditDsAccess != null">#{auditDsAccess},</if>
+                <if test="auditDSAccess != null">#{auditDSAccess},</if>
                 <if test="auditAccountLogon != null">#{auditAccountLogon},</if>
                 <if test="type != null">#{type},</if>
                 <if test="macAddress != null">#{macAddress},</if>
@@ -114,8 +114,8 @@
                 <if test="auditProcessTracking != null">
                     audit_process_tracking = #{auditProcessTracking},
                 </if>
-                <if test="auditDsAccess != null">
-                    audit_DS_access = #{auditDsAccess},
+                <if test="auditDSAccess != null">
+                    audit_DS_access = #{auditDSAccess},
                 </if>
                 <if test="auditAccountLogon != null">
                     audit_account_logon = #{auditAccountLogon},
@@ -139,7 +139,7 @@
             audit_policy_change =  #{auditPolicyChange},
             audit_account_manage =  #{auditAccountManage},
             audit_process_tracking =  #{auditProcessTracking},
-            audit_DS_access =  #{auditDsAccess},
+            audit_DS_access =  #{auditDSAccess},
             audit_account_logon =  #{auditAccountLogon},
             type =  #{type},
             mac_address =  #{macAddress}

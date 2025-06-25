@@ -6,7 +6,7 @@
 
     <resultMap id="BaseResultMap" type="com.tpp.threat_perception_platform.pojo.SystemSecurityOption">
             <id property="systemSecurityOptionId" column="system_security_option_id" />
-            <result property="noLmHash" column="no_LM_hash" />
+            <result property="noLMHash" column="no_LM_hash" />
             <result property="limitBlankPasswordUse" column="limit_blank_password_use" />
             <result property="restrictAnonymous" column="restrict_anonymous" />
             <result property="dontDisplayLastUserName" column="dont_display_last_user_name" />
@@ -48,14 +48,14 @@
         insert into system_security_option
         ( system_security_option_id,no_LM_hash,limit_blank_password_use,restrict_anonymous,dont_display_last_user_name,enable_plain_text_password,
         clear_page_file_at_shutdown,type,mac_address)
-        values (#{systemSecurityOptionId},#{noLmHash},#{limitBlankPasswordUse},#{restrictAnonymous},#{dontDisplayLastUserName},#{enablePlainTextPassword},
+        values (#{systemSecurityOptionId},#{noLMHash},#{limitBlankPasswordUse},#{restrictAnonymous},#{dontDisplayLastUserName},#{enablePlainTextPassword},
         #{clearPageFileAtShutdown},#{type},#{macAddress})
     </insert>
     <insert id="insertSelective" keyColumn="system_security_option_id" keyProperty="systemSecurityOptionId" parameterType="com.tpp.threat_perception_platform.pojo.SystemSecurityOption" useGeneratedKeys="true">
         insert into system_security_option
         <trim prefix="(" suffix=")" suffixOverrides=",">
                 <if test="systemSecurityOptionId != null">system_security_option_id,</if>
-                <if test="noLmHash != null">no_LM_hash,</if>
+                <if test="noLMHash != null">no_LM_hash,</if>
                 <if test="limitBlankPasswordUse != null">limit_blank_password_use,</if>
                 <if test="restrictAnonymous != null">restrict_anonymous,</if>
                 <if test="dontDisplayLastUserName != null">dont_display_last_user_name,</if>
@@ -66,7 +66,7 @@
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
                 <if test="systemSecurityOptionId != null">#{systemSecurityOptionId},</if>
-                <if test="noLmHash != null">#{noLmHash},</if>
+                <if test="noLMHash != null">#{noLMHash},</if>
                 <if test="limitBlankPasswordUse != null">#{limitBlankPasswordUse},</if>
                 <if test="restrictAnonymous != null">#{restrictAnonymous},</if>
                 <if test="dontDisplayLastUserName != null">#{dontDisplayLastUserName},</if>
@@ -79,8 +79,8 @@
     <update id="updateByPrimaryKeySelective" parameterType="com.tpp.threat_perception_platform.pojo.SystemSecurityOption">
         update system_security_option
         <set>
-                <if test="noLmHash != null">
-                    no_LM_hash = #{noLmHash},
+                <if test="noLMHash != null">
+                    no_LM_hash = #{noLMHash},
                 </if>
                 <if test="limitBlankPasswordUse != null">
                     limit_blank_password_use = #{limitBlankPasswordUse},
@@ -109,7 +109,7 @@
     <update id="updateByPrimaryKey" parameterType="com.tpp.threat_perception_platform.pojo.SystemSecurityOption">
         update system_security_option
         set
-            no_LM_hash =  #{noLmHash},
+            no_LM_hash =  #{noLMHash},
             limit_blank_password_use =  #{limitBlankPasswordUse},
             restrict_anonymous =  #{restrictAnonymous},
             dont_display_last_user_name =  #{dontDisplayLastUserName},
