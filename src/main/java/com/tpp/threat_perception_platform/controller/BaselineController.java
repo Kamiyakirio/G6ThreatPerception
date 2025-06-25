@@ -186,19 +186,19 @@ public class BaselineController {
             Integer id = Integer.parseInt(data.get("id").toString());
             String macAddress = (String) data.get("macAddress");
             Integer interval = Integer.parseInt(data.get("interval").toString());
-
+            
             System.out.println("设置定时下发 - ID: " + id + ", MAC: " + macAddress + ", 间隔: " + interval + "小时");
-
+            
             // 查询任务信息
             BaselineTask task = baselineTaskMapper.selectById(id);
             if (task == null) {
                 return new ResponseResult<>(1, "任务不存在", null);
             }
-
+            
             // 获取当前时间
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String currentTime = dateFormat.format(new Date());
-
+            
             // 存储任务信息
             Map<String, Object> taskInfo = new LinkedHashMap<>();
             taskInfo.put("id", id);
@@ -206,19 +206,19 @@ public class BaselineController {
             taskInfo.put("macAddress", macAddress);
             taskInfo.put("interval", interval);
             taskInfo.put("lastSyncTime", currentTime);
-
+            
             // 计算下次同步时间（当前时间 + 间隔时间）
             Calendar calendar = Calendar.getInstance();
             calendar.add(Calendar.HOUR, interval); // 使用小时作为单位
             String nextSyncTime = dateFormat.format(calendar.getTime());
             taskInfo.put("nextSyncTime", nextSyncTime);
-
+            
             // 使用MAC地址作为key存储任务
             syncTasks.put(macAddress, taskInfo);
-
+            
             System.out.println("定时任务已存储. 当前任务数量: " + syncTasks.size());
             System.out.println("任务详情: " + JSON.toJSONString(taskInfo));
-
+            
             // 立即发送一次消息
             Map<String, Object> messageMap = new LinkedHashMap<>();
             messageMap.put("hostName", task.getHostName());
@@ -227,14 +227,14 @@ public class BaselineController {
             messageMap.put("taskTime", dateFormat.format(task.getTaskTime()));
             messageMap.put("type", "baseline");
             messageMap.put("baselineTask", true);
-
+            
             // 发送到队列
             String queueName = "agentQueue" + macAddress.replace(":", "");
             System.out.println("发送初始消息到队列: " + queueName);
             System.out.println("消息内容: " + JSON.toJSONString(messageMap));
-
+            
             rabbitMQService.sendMessage("", queueName, JSON.toJSONString(messageMap));
-
+            
             return new ResponseResult<>(0, "定时下发设置成功", null);
         } catch (Exception e) {
             e.printStackTrace();
@@ -512,7 +512,7 @@ public class BaselineController {
             return new ResponseResult<>(500, "删除失败：" + e.getMessage(), null);
         }
     }
-
+    
     /**
      * 添加任务
      */
@@ -522,12 +522,12 @@ public class BaselineController {
         try {
             // 创建新的基线检测任务对象
             BaselineTask task = new BaselineTask();
-
+            
             // 设置任务属性
             task.setTaskName(data.get("taskName").toString());
             task.setMacAddress(data.get("macAddress").toString());
             task.setHostName(data.get("hostName").toString());
-
+            
             // 解析时间字符串
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             try {
@@ -536,20 +536,20 @@ public class BaselineController {
                 // 如果解析失败，使用当前时间
                 task.setTaskTime(new Date());
             }
-
+            
             // 设置任务状态（0-未执行，1-已执行）
             task.setTaskStatus(0);
 
             // 保存任务
             baselineTaskMapper.insert(task);
 
-            return new ResponseResult<>(0, "添加任务成功", null);
+                return new ResponseResult<>(0, "添加任务成功", null);
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseResult<>(500, "添加任务失败：" + e.getMessage(), null);
         }
     }
-
+    
     /**
      * 批量删除任务
      */
@@ -562,7 +562,7 @@ public class BaselineController {
             if (ids == null || ids.isEmpty()) {
                 return new ResponseResult<>(1, "未选择要删除的任务", null);
             }
-
+            
             for (Integer id : ids) {
                 baselineTaskMapper.deleteById(id);
             }
@@ -573,7 +573,7 @@ public class BaselineController {
             return new ResponseResult<>(500, "批量删除失败：" + e.getMessage(), null);
         }
     }
-
+    
     /**
      * 任务编辑页面
      */
@@ -589,25 +589,25 @@ public class BaselineController {
             Integer id = Integer.parseInt(params.get("id").toString());
             String macAddress = (String) params.get("macAddress");
             String queueName = (String) params.get("queueName");
-
+            
             // 打印队列名称，用于调试
             System.out.println("使用队列名称: " + queueName);
-
+            
             // 从数据库获取任务详情
             BaselineTask task = baselineTaskMapper.selectById(id);
             if (task == null) {
                 return new ResponseResult<>(1, "任务不存在", null);
             }
-
+            
             // 检查主机是否在线
             if (redisCache.getCacheObject("Heartbeat from " + macAddress) == null) {
                 return new ResponseResult<>(1002, "主机不在线！无法下发基线检测任务", null);
             }
-
+            
             // 格式化日期为字符串形式
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String taskTimeStr = dateFormat.format(task.getTaskTime());
-
+            
             // 构建消息内容，使用LinkedHashMap保持顺序
             Map<String, Object> message = new LinkedHashMap<>();
             message.put("hostName", task.getHostName());
@@ -616,18 +616,18 @@ public class BaselineController {
             message.put("taskTime", taskTimeStr);
             message.put("type", "baseline");
             message.put("baselineTask", true);
-
+            
             // 打印消息内容到日志，用于调试
             System.out.println("发送消息到队列 " + queueName + ": " + JSON.toJSONString(message));
-
+            
             // 发送消息到队列，参考LogServiceImpl中的实现
             rabbitMQService.sendMessage("", queueName, JSON.toJSONString(message));
             System.out.println("消息已发送");
-
+            
             // 更新任务状态为已下发
             task.setTaskStatus(1); // 1表示已下发/已执行
             baselineTaskMapper.update(task);
-
+            
             return new ResponseResult<>(0, "任务下发成功", null);
         } catch (Exception e) {
             e.printStackTrace();
@@ -657,9 +657,9 @@ public class BaselineController {
                     }
 
                     // 构建消息内容
-                    Map<String, Object> messageMap = new LinkedHashMap<>();
+            Map<String, Object> messageMap = new LinkedHashMap<>();
                     messageMap.put("hostName", task.get("host_name"));
-                    messageMap.put("macAddress", macAddress);
+            messageMap.put("macAddress", macAddress);
                     messageMap.put("id", task.get("id"));
 
                     // 处理任务时间
@@ -679,26 +679,26 @@ public class BaselineController {
                     }
 
                     messageMap.put("taskTime", taskTimeStr);
-                    messageMap.put("type", "baseline");
-                    messageMap.put("baselineTask", true);
-
-                    // 发送到队列
-                    String queueName = "agentQueue" + macAddress.replace(":", "");
+            messageMap.put("type", "baseline");
+            messageMap.put("baselineTask", true);
+            
+            // 发送到队列
+            String queueName = "agentQueue" + macAddress.replace(":", "");
                     System.out.println("自动执行任务，发送到队列: " + queueName);
-                    System.out.println("消息内容: " + JSON.toJSONString(messageMap));
-
-                    rabbitMQService.sendMessage("", queueName, JSON.toJSONString(messageMap));
-
+            System.out.println("消息内容: " + JSON.toJSONString(messageMap));
+            
+            rabbitMQService.sendMessage("", queueName, JSON.toJSONString(messageMap));
+            
                     // 更新任务状态为已执行
                     String updateSql = "UPDATE baseline_task SET task_status = 1, update_time = NOW() WHERE id = ?";
                     jdbcTemplate.update(updateSql, task.get("id"));
 
                     System.out.println("成功执行任务：" + task.get("id"));
-                } catch (Exception e) {
+        } catch (Exception e) {
                     System.out.println("执行任务失败：" + task.get("id") + ", 错误：" + e.getMessage());
-                    e.printStackTrace();
-                }
-            }
+            e.printStackTrace();
+        }
+    }
         } catch (Exception e) {
             System.out.println("检查未执行任务时出错：" + e.getMessage());
             e.printStackTrace();
@@ -713,7 +713,7 @@ public class BaselineController {
     public String ruleAddPage() {
         return "baseline/rule/add";
     }
-
+    
     /**
      * 获取规则列表
      */
@@ -724,7 +724,7 @@ public class BaselineController {
             // 获取分页参数
             int page = params.containsKey("page") ? Integer.parseInt(params.get("page").toString()) : 1;
             int limit = params.containsKey("limit") ? Integer.parseInt(params.get("limit").toString()) : 10;
-
+            
             // 计算偏移量
             int offset = (page - 1) * limit;
 
@@ -756,7 +756,7 @@ public class BaselineController {
             return new ResponseResult<>(500, "获取规则列表失败：" + e.getMessage(), null);
         }
     }
-
+    
     /**
      * 添加规则
      */
@@ -779,7 +779,7 @@ public class BaselineController {
             return new ResponseResult<>(500, "添加规则失败：" + e.getMessage(), null);
         }
     }
-
+    
     /**
      * 删除规则
      */
@@ -794,7 +794,7 @@ public class BaselineController {
                 "DELETE FROM baseline_rule WHERE id = ?",
                 id
             );
-
+            
             if (result > 0) {
                 return new ResponseResult<>(0, "删除规则成功", null);
             } else {
@@ -805,18 +805,18 @@ public class BaselineController {
             return new ResponseResult<>(500, "删除规则失败：" + e.getMessage(), null);
         }
     }
-
+    
 @PostMapping("/baseline/rule/batch_delete")
     @ResponseBody
     public ResponseResult<Void> batchDeleteRules(@RequestBody Map<String, Object> params) {
         try {
             @SuppressWarnings("unchecked")
             List<Object> ruleIds = (List<Object>) params.get("ruleIds");
-
+            
             if (ruleIds == null || ruleIds.isEmpty()) {
                 return new ResponseResult<>(1, "未提供规则ID");
             }
-
+            
             // 构建SQL语句
             java.lang.StringBuilder sql = new java.lang.StringBuilder("DELETE FROM baseline_rule WHERE rule_id IN (");
             for (int i = 0; i < ruleIds.size(); i++) {
@@ -826,10 +826,10 @@ public class BaselineController {
                 }
             }
             sql.append(")");
-
+            
             // 执行批量删除
             int result = jdbcTemplate.update(sql.toString(), ruleIds.toArray());
-
+            
             if (result > 0) {
                 return new ResponseResult<>(0, "成功删除" + result + "条规则");
             } else {
@@ -840,16 +840,16 @@ public class BaselineController {
             return new ResponseResult<>(500, "批量删除规则失败: " + e.getMessage());
         }
     }
-
+    
     /**
      * 将下划线命名转换为驼峰命名
      */
     private String convertToCamelCase(String underscoreName) {
         java.lang.StringBuilder result = new java.lang.StringBuilder();
         String[] parts = underscoreName.split("_");
-
+        
         result.append(parts[0].toLowerCase());
-
+        
         for (int i = 1; i < parts.length; i++) {
             if (parts[i].length() > 0) {
                 result.append(parts[i].substring(0, 1).toUpperCase());
@@ -858,11 +858,11 @@ public class BaselineController {
                 }
             }
         }
-
+        
         return result.toString();
     }
 
-      /**
+    /**
      * 获取基线规则列表（包含设置值）
      */
     @PostMapping("/baseline/rules/settings")
@@ -872,119 +872,119 @@ public class BaselineController {
             // 获取分页参数
             int page = params != null && params.containsKey("page") ? Integer.parseInt(params.get("page").toString()) : 1;
             int limit = params != null && params.containsKey("limit") ? Integer.parseInt(params.get("limit").toString()) : 15;
-
+            
             // 首先获取system_access表中的设置
             String sql1 = "SELECT * FROM system_access WHERE type = 'rule' ORDER BY system_access_id DESC LIMIT 1";
             Map<String, Object> settings = jdbcTemplate.queryForMap(sql1);
-
+            
             // 获取system_security_option表中的设置
             String sql2 = "SELECT * FROM system_security_option WHERE type = 'rule' ORDER BY system_security_option_id DESC LIMIT 1";
             Map<String, Object> securitySettings = jdbcTemplate.queryForMap(sql2);
-
+            
             // 获取event_audit表中的设置
             String sql3 = "SELECT * FROM event_audit WHERE type = 'rule' ORDER BY event_audit_id DESC LIMIT 1";
             Map<String, Object> auditSettings = jdbcTemplate.queryForMap(sql3);
-
+            
             // 获取privilege_rights表中的设置
             String sql4 = "SELECT * FROM privilege_rights WHERE type = 'rule' ORDER BY privilege_rights_id DESC LIMIT 1";
             Map<String, Object> privilegeSettings = jdbcTemplate.queryForMap(sql4);
-
+            
             // 构建规则列表
             List<Map<String, Object>> allRules = new ArrayList<>();
-
+            
             // 密码策略规则
-            allRules.add(createRule("1", "密码最小使用期限", "密码更改前必须使用的最短天数",
+            allRules.add(createRule("1", "密码最小使用期限", "密码更改前必须使用的最短天数", 
                     Collections.singletonMap("minimum_password_age", settings.get("minimum_password_age"))));
-            allRules.add(createRule("2", "密码最大使用期限", "密码必须更改前的最大天数",
+            allRules.add(createRule("2", "密码最大使用期限", "密码必须更改前的最大天数", 
                     Collections.singletonMap("maximum_password_age", settings.get("maximum_password_age"))));
-            allRules.add(createRule("3", "密码最小长度", "密码必须包含的最少字符数",
+            allRules.add(createRule("3", "密码最小长度", "密码必须包含的最少字符数", 
                     Collections.singletonMap("minimum_password_length", settings.get("minimum_password_length"))));
-            allRules.add(createRule("4", "密码复杂性要求", "密码是否必须包含多种字符类型",
+            allRules.add(createRule("4", "密码复杂性要求", "密码是否必须包含多种字符类型", 
                     Collections.singletonMap("password_complexity", settings.get("password_complexity"))));
-            allRules.add(createRule("5", "密码历史记录大小", "防止重复使用最近使用过的密码数量",
+            allRules.add(createRule("5", "密码历史记录大小", "防止重复使用最近使用过的密码数量", 
                     Collections.singletonMap("password_history_size", settings.get("password_history_size"))));
-            allRules.add(createRule("6", "账户锁定阈值", "登录尝试失败次数后锁定账户",
+            allRules.add(createRule("6", "账户锁定阈值", "登录尝试失败次数后锁定账户", 
                     Collections.singletonMap("lockout_bad_count", settings.get("lockout_bad_count"))));
-            allRules.add(createRule("7", "登录修改密码要求", "是否需要登录才能更改密码",
+            allRules.add(createRule("7", "登录修改密码要求", "是否需要登录才能更改密码", 
                     Collections.singletonMap("require_logon_to_change_password", settings.get("require_logon_to_change_password"))));
-            allRules.add(createRule("8", "强制注销超时", "是否在登录时间到期时强制注销用户",
+            allRules.add(createRule("8", "强制注销超时", "是否在登录时间到期时强制注销用户", 
                     Collections.singletonMap("force_logoff_when_hour_expire", settings.get("force_logoff_when_hour_expire"))));
-            allRules.add(createRule("9", "管理员账户名称", "管理员账户的自定义名称",
+            allRules.add(createRule("9", "管理员账户名称", "管理员账户的自定义名称", 
                     Collections.singletonMap("new_administrator_name", settings.get("new_administrator_name"))));
-            allRules.add(createRule("10", "来宾账户名称", "来宾账户的自定义名称",
+            allRules.add(createRule("10", "来宾账户名称", "来宾账户的自定义名称", 
                     Collections.singletonMap("new_guest_name", settings.get("new_guest_name"))));
-            allRules.add(createRule("11", "明文密码禁用", "是否禁止使用明文密码",
+            allRules.add(createRule("11", "明文密码禁用", "是否禁止使用明文密码", 
                     Collections.singletonMap("clear_text_password", settings.get("clear_text_password"))));
-            allRules.add(createRule("12", "LSA匿名查询", "是否允许LSA匿名名称查找",
+            allRules.add(createRule("12", "LSA匿名查询", "是否允许LSA匿名名称查找", 
                     Collections.singletonMap("LSA_anonymous_name_lookup", settings.get("LSA_anonymous_name_lookup"))));
-            allRules.add(createRule("13", "管理员账户状态", "是否启用管理员账户",
+            allRules.add(createRule("13", "管理员账户状态", "是否启用管理员账户", 
                     Collections.singletonMap("enable_admin_account", settings.get("enable_admin_account"))));
-            allRules.add(createRule("14", "来宾账户状态", "是否启用来宾账户",
+            allRules.add(createRule("14", "来宾账户状态", "是否启用来宾账户", 
                     Collections.singletonMap("enable_guest_account", settings.get("enable_guest_account"))));
-
+            
             // 系统安全选项规则
-            allRules.add(createRule("15", "LM哈希禁用", "是否禁止存储LM哈希",
+            allRules.add(createRule("15", "LM哈希禁用", "是否禁止存储LM哈希", 
                     Collections.singletonMap("no_LM_hash", securitySettings.get("no_LM_hash"))));
-            allRules.add(createRule("16", "空密码限制", "是否限制空密码账户的使用",
+            allRules.add(createRule("16", "空密码限制", "是否限制空密码账户的使用", 
                     Collections.singletonMap("limit_blank_password_use", securitySettings.get("limit_blank_password_use"))));
-            allRules.add(createRule("17", "匿名访问限制", "是否限制匿名用户访问",
+            allRules.add(createRule("17", "匿名访问限制", "是否限制匿名用户访问", 
                     Collections.singletonMap("restrict_anonymous", securitySettings.get("restrict_anonymous"))));
-            allRules.add(createRule("18", "显示最后用户名", "是否在登录界面显示最后登录的用户名",
+            allRules.add(createRule("18", "显示最后用户名", "是否在登录界面显示最后登录的用户名", 
                     Collections.singletonMap("dont_display_last_user_name", securitySettings.get("dont_display_last_user_name"))));
-            allRules.add(createRule("19", "明文密码禁用", "是否禁止使用明文密码",
+            allRules.add(createRule("19", "明文密码禁用", "是否禁止使用明文密码", 
                     Collections.singletonMap("enable_plain_text_password", securitySettings.get("enable_plain_text_password"))));
-            allRules.add(createRule("20", "页面文件清理", "是否在关机时清理页面文件",
+            allRules.add(createRule("20", "页面文件清理", "是否在关机时清理页面文件", 
                     Collections.singletonMap("clear_page_file_at_shutdown", securitySettings.get("clear_page_file_at_shutdown"))));
-
+            
             // 审计策略规则
-            allRules.add(createRule("21", "系统事件审计", "是否审计系统事件",
+            allRules.add(createRule("21", "系统事件审计", "是否审计系统事件", 
                     Collections.singletonMap("audit_system_events", auditSettings.get("audit_system_events"))));
-            allRules.add(createRule("22", "登录事件审计", "是否审计登录事件",
+            allRules.add(createRule("22", "登录事件审计", "是否审计登录事件", 
                     Collections.singletonMap("audit_logon_events", auditSettings.get("audit_logon_events"))));
-            allRules.add(createRule("23", "对象访问审计", "是否审计对象访问",
+            allRules.add(createRule("23", "对象访问审计", "是否审计对象访问", 
                     Collections.singletonMap("audit_object_access", auditSettings.get("audit_object_access"))));
-            allRules.add(createRule("24", "特权使用审计", "是否审计特权使用",
+            allRules.add(createRule("24", "特权使用审计", "是否审计特权使用", 
                     Collections.singletonMap("audit_privilege_use", auditSettings.get("audit_privilege_use"))));
-            allRules.add(createRule("25", "策略更改审计", "是否审计策略更改",
+            allRules.add(createRule("25", "策略更改审计", "是否审计策略更改", 
                     Collections.singletonMap("audit_policy_change", auditSettings.get("audit_policy_change"))));
-            allRules.add(createRule("26", "账户管理审计", "是否审计账户管理操作",
+            allRules.add(createRule("26", "账户管理审计", "是否审计账户管理操作", 
                     Collections.singletonMap("audit_account_manage", auditSettings.get("audit_account_manage"))));
-            allRules.add(createRule("27", "进程追踪审计", "是否审计详细进程创建记录",
+            allRules.add(createRule("27", "进程追踪审计", "是否审计详细进程创建记录", 
                     Collections.singletonMap("audit_process_tracking", auditSettings.get("audit_process_tracking"))));
-            allRules.add(createRule("28", "目录服务访问审计", "是否审计目录服务访问",
+            allRules.add(createRule("28", "目录服务访问审计", "是否审计目录服务访问", 
                     Collections.singletonMap("audit_DS_access", auditSettings.get("audit_DS_access"))));
-            allRules.add(createRule("29", "账户登录审计", "是否审计账户登录",
+            allRules.add(createRule("29", "账户登录审计", "是否审计账户登录", 
                     Collections.singletonMap("audit_account_logon", auditSettings.get("audit_account_logon"))));
-
+            
             // 权限规则
-            allRules.add(createRule("30", "分析单个进程权限", "允许分析单个进程的性能",
+            allRules.add(createRule("30", "分析单个进程权限", "允许分析单个进程的性能", 
                     Collections.singletonMap("se_profile_single_process_privilege", privilegeSettings.get("se_profile_single_process_privilege"))));
-            allRules.add(createRule("31", "远程关机权限", "允许从远程系统强制关机",
+            allRules.add(createRule("31", "远程关机权限", "允许从远程系统强制关机", 
                     Collections.singletonMap("se_remote_shutdown_privilege", privilegeSettings.get("se_remote_shutdown_privilege"))));
-            allRules.add(createRule("32", "关机权限", "允许关闭系统",
+            allRules.add(createRule("32", "关机权限", "允许关闭系统", 
                     Collections.singletonMap("se_shutdown_privilege", privilegeSettings.get("se_shutdown_privilege"))));
-
+            
             // 计算总记录数
             int total = allRules.size();
-
+            
             // 计算分页
             int startIndex = (page - 1) * limit;
             int endIndex = Math.min(startIndex + limit, total);
-
+            
             // 获取当前页的数据
             List<Map<String, Object>> pageRules = allRules.subList(startIndex, endIndex);
-
+            
             // 返回分页结果
             ResponseResult<List<Map<String, Object>>> result = new ResponseResult<>(0, "获取成功", pageRules);
             result.setCount((long) total);
             return result;
-
+            
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseResult<>(1, "获取失败: " + e.getMessage());
         }
     }
-
+    
     /**
      * 创建规则对象
      */
@@ -1008,14 +1008,14 @@ public class BaselineController {
             Integer ruleId = Integer.parseInt(params.get("rule_id").toString());
             @SuppressWarnings("unchecked")
             Map<String, Object> settings = (Map<String, Object>) params.get("settings");
-
+            
             if (settings == null || settings.isEmpty()) {
                 return new ResponseResult<>(1, "设置值不能为空");
             }
 
             // 创建规则ID到字段名的映射
             Map<Integer, Map<String, String>> ruleFieldMappings = new HashMap<>();
-
+            
             // 系统访问设置映射
             Map<String, String> systemAccessFields = new HashMap<>();
             systemAccessFields.put("1", "minimum_password_age");

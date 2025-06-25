@@ -852,23 +852,23 @@ public class BaselineServiceImpl implements BaselineService {
 
         try {
             // 1. 处理并保存 System Access 数据
-            if (baselineData.containsKey("system access")) {
-                processSystemAccess(macAddress, baselineData.getJSONObject("system access"));
+            if (baselineData.containsKey("system_access")) {
+                processSystemAccess(macAddress, baselineData.getJSONObject("system_access"));
             }
 
             // 2. 处理并保存 Event Audit 数据
-            if (baselineData.containsKey("event audit")) {
-                processEventAudit(macAddress, baselineData.getJSONObject("event audit"));
+            if (baselineData.containsKey("event_audit")) {
+                processEventAudit(macAddress, baselineData.getJSONObject("event_audit"));
             }
 
             // 3. 处理并保存 Privilege Rights 数据
-            if (baselineData.containsKey("privilege rights")) {
-                processPrivilegeRights(macAddress, baselineData.getJSONObject("privilege rights"));
+            if (baselineData.containsKey("privilege_rights")) {
+                processPrivilegeRights(macAddress, baselineData.getJSONObject("privilege_rights"));
             }
 
             // 4. 处理并保存 System Security Option 数据
-            if (baselineData.containsKey("system security option")) {
-                processSystemSecurityOption(macAddress, baselineData.getJSONObject("system security option"));
+            if (baselineData.containsKey("system_security_option")) {
+                processSystemSecurityOption(macAddress, baselineData.getJSONObject("system_security_option"));
             }
 
             // 5. 进行基线检查
