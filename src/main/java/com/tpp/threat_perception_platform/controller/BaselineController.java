@@ -135,26 +135,7 @@ public class BaselineController {
                                                              @RequestParam(required = false) String taskTime,
                                                              @RequestParam(defaultValue = "1") Integer page,
                                                              @RequestParam(defaultValue = "10") Integer limit) {
-        try {
-            // 计算偏移量
-            int offset = (page - 1) * limit;
-
-            // 查询分页数据
-            List<BaselineScan> records = baselineScanMapper.selectPageList(macAddress, taskTime, offset, limit);
-
-            // 查询总数
-            int total = baselineScanMapper.selectTotalCount(macAddress, taskTime);
-
-            // 构建返回结果
-            Map<String, Object> result = new HashMap<>();
-            result.put("records", records);
-            result.put("total", total);
-
-            return new ResponseResult<>(0, "获取成功", result);
-        } catch (Exception e) {
-            log.error("获取基线检测列表失败", e);
-            return new ResponseResult<>(-1, "获取基线检测列表失败：" + e.getMessage(), null);
-        }
+        return baselineService.getBaselineList(macAddress, taskTime, page, limit);
     }
 
     /**
@@ -671,7 +652,7 @@ public class BaselineController {
 
                     // 检查主机是否在线
                     if (redisCache.getCacheObject("Heartbeat from " + macAddress) == null) {
-//                        System.out.println("主机离线，无法执行任务：" + task.get("id") + ", MAC: " + macAddress);
+                        System.out.println("主机离线，无法执行任务：" + task.get("id") + ", MAC: " + macAddress);
                         continue;
                     }
 
@@ -1138,7 +1119,7 @@ public class BaselineController {
 
             System.out.println("执行的SQL: " + sql);
             System.out.println("参数值: " + fieldValue);
-//            System.out.println("参数类型: " + (fieldValue != null ? fieldValue.getClass().getName() : "null"));
+            System.out.println("参数类型: " + (fieldValue != null ? fieldValue.getClass().getName() : "null"));
 
             // 执行更新
             int result = jdbcTemplate.update(sql, fieldValue);
