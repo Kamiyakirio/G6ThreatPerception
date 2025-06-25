@@ -206,7 +206,7 @@ public class BaselineController {
             String macAddress = (String) data.get("macAddress");
             Integer interval = Integer.parseInt(data.get("interval").toString());
 
-            System.out.println("设置定时下发 - ID: " + id + ", MAC: " + macAddress + ", 间隔: " + interval + "小时");
+//            System.out.println("设置定时下发 - ID: " + id + ", MAC: " + macAddress + ", 间隔: " + interval + "小时");
 
             // 查询任务信息
             BaselineTask task = baselineTaskMapper.selectById(id);
@@ -235,8 +235,8 @@ public class BaselineController {
             // 使用MAC地址作为key存储任务
             syncTasks.put(macAddress, taskInfo);
 
-            System.out.println("定时任务已存储. 当前任务数量: " + syncTasks.size());
-            System.out.println("任务详情: " + JSON.toJSONString(taskInfo));
+//            System.out.println("定时任务已存储. 当前任务数量: " + syncTasks.size());
+//            System.out.println("任务详情: " + JSON.toJSONString(taskInfo));
 
             // 立即发送一次消息
             Map<String, Object> messageMap = new LinkedHashMap<>();
@@ -610,7 +610,7 @@ public class BaselineController {
             String queueName = (String) params.get("queueName");
 
             // 打印队列名称，用于调试
-            System.out.println("使用队列名称: " + queueName);
+//            System.out.println("使用队列名称: " + queueName);
 
             // 从数据库获取任务详情
             BaselineTask task = baselineTaskMapper.selectById(id);
@@ -637,11 +637,11 @@ public class BaselineController {
             message.put("baselineTask", true);
 
             // 打印消息内容到日志，用于调试
-            System.out.println("发送消息到队列 " + queueName + ": " + JSON.toJSONString(message));
+//            System.out.println("发送消息到队列 " + queueName + ": " + JSON.toJSONString(message));
 
             // 发送消息到队列，参考LogServiceImpl中的实现
             rabbitMQService.sendMessage("", queueName, JSON.toJSONString(message));
-            System.out.println("消息已发送");
+//            System.out.println("消息已发送");
 
             // 更新任务状态为已下发
             task.setTaskStatus(1); // 1表示已下发/已执行
@@ -671,7 +671,7 @@ public class BaselineController {
 
                     // 检查主机是否在线
                     if (redisCache.getCacheObject("Heartbeat from " + macAddress) == null) {
-                        System.out.println("主机离线，无法执行任务：" + task.get("id") + ", MAC: " + macAddress);
+//                        System.out.println("主机离线，无法执行任务：" + task.get("id") + ", MAC: " + macAddress);
                         continue;
                     }
 
@@ -703,8 +703,8 @@ public class BaselineController {
 
                     // 发送到队列
                     String queueName = "agentQueue" + macAddress.replace(":", "");
-                    System.out.println("自动执行任务，发送到队列: " + queueName);
-                    System.out.println("消息内容: " + JSON.toJSONString(messageMap));
+//                    System.out.println("自动执行任务，发送到队列: " + queueName);
+//                    System.out.println("消息内容: " + JSON.toJSONString(messageMap));
 
                     rabbitMQService.sendMessage("", queueName, JSON.toJSONString(messageMap));
 
@@ -712,9 +712,9 @@ public class BaselineController {
                     String updateSql = "UPDATE baseline_task SET task_status = 1, update_time = NOW() WHERE id = ?";
                     jdbcTemplate.update(updateSql, task.get("id"));
 
-                    System.out.println("成功执行任务：" + task.get("id"));
+//                    System.out.println("成功执行任务：" + task.get("id"));
                 } catch (Exception e) {
-                    System.out.println("执行任务失败：" + task.get("id") + ", 错误：" + e.getMessage());
+//                    System.out.println("执行任务失败：" + task.get("id") + ", 错误：" + e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -1138,7 +1138,7 @@ public class BaselineController {
 
             System.out.println("执行的SQL: " + sql);
             System.out.println("参数值: " + fieldValue);
-            System.out.println("参数类型: " + (fieldValue != null ? fieldValue.getClass().getName() : "null"));
+//            System.out.println("参数类型: " + (fieldValue != null ? fieldValue.getClass().getName() : "null"));
 
             // 执行更新
             int result = jdbcTemplate.update(sql, fieldValue);

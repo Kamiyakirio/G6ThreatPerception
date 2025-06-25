@@ -18,7 +18,7 @@ class ThreatPerceptionPlatformApplicationTests {
     @Test
     void test01() {
         // $2a$10$l4/yfZ1SuK/8tpafODPLnuryGoL6YpZC4aYOhApSQ0Sqq4LSGrkBq
-        System.out.println(bCryptPasswordEncoder.encode("123123"));
+//        System.out.println(bCryptPasswordEncoder.encode("123123"));
 
     }
 

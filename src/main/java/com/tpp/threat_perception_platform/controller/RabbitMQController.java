@@ -114,7 +114,7 @@ public class RabbitMQController {
         long tag = message.getMessageProperties().getDeliveryTag();
         try {
             String messageBody = new String(message.getBody());
-            System.out.println("收到主机信息消息: " + messageBody);
+//            System.out.println("收到主机信息消息: " + messageBody);
 
             Host host = new Host();
             HashMap<String, Object> dataDict = JSON.parseObject(messageBody, HashMap.class);
@@ -141,7 +141,7 @@ public class RabbitMQController {
             channel.basicAck(tag, false);
             System.out.println("主机信息处理成功");
         } catch (Exception e) {
-            System.out.println("处理主机信息失败: " + e.getMessage());
+//            System.out.println("处理主机信息失败: " + e.getMessage());
             e.printStackTrace();
             channel.basicNack(tag, false, true);
         }
@@ -290,7 +290,7 @@ public class RabbitMQController {
                     result.setDetectedAt(new Date());
                     appRiskResultMapper.insertSelective(result);
                 }
-                System.out.println("应用风险探测结果已保存到数据库");
+//                System.out.println("应用风险探测结果已保存到数据库");
             }
 
             channel.basicAck(deliveryTag, false);
@@ -396,7 +396,7 @@ public class RabbitMQController {
                 try {
                     time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(timeStr);
                 } catch (Exception e) {
-                    System.err.println("解析info.time失败: " + timeStr + ", 错误: " + e.getMessage());
+//                    System.err.println("解析info.time失败: " + timeStr + ", 错误: " + e.getMessage());
                 }
 
                 // 收集所有日志用于AI分析
@@ -455,7 +455,7 @@ public class RabbitMQController {
                                         Date timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(cleanTimestamp);
                                         log.setTimestamp(timestamp);
                                     } catch (Exception e2) {
-                                        System.err.println("解析timestamp失败: " + timestampStr + ", 错误: " + e2.getMessage());
+//                                        System.err.println("解析timestamp失败: " + timestampStr + ", 错误: " + e2.getMessage());
                                         log.setTimestamp(null);
                                     }
                                 }
@@ -484,7 +484,7 @@ public class RabbitMQController {
                                 logsToAnalyze.add(log);
 //                            System.out.println("日志记录已保存到数据库");
                             } else {
-                                System.out.println("相同的日志记录已存在，跳过保存");
+//                                System.out.println("相同的日志记录已存在，跳过保存");
                             }
                         }
                     }
@@ -493,7 +493,7 @@ public class RabbitMQController {
                 channel.basicAck(deliveryTag, false);
             } catch (Exception e) {
                 e.printStackTrace();
-                System.err.println("处理日志探测结果失败: " + e.getMessage());
+//                System.err.println("处理日志探测结果失败: " + e.getMessage());
                 channel.basicAck(deliveryTag, false);
             }
         }
@@ -529,8 +529,8 @@ public class RabbitMQController {
 
                     // 发送检测命令到对应的agent队列
                     String queueName = "agentQueue" + macAddress.replace(":", "");
-                    System.out.println("发送重新检测命令到队列: " + queueName);
-                    System.out.println("检测命令内容: " + JSON.toJSONString(detectData));
+//                    System.out.println("发送重新检测命令到队列: " + queueName);
+//                    System.out.println("检测命令内容: " + JSON.toJSONString(detectData));
                     rabbitMQService.sendMessage("", queueName, JSON.toJSONString(detectData));
 
                     channel.basicAck(deliveryTag, false);
@@ -562,7 +562,7 @@ public class RabbitMQController {
                     // 存在记录，更新时间
                     existingScan.setStartTime(new Date());
                     baselineScanMapper.updateByPrimaryKey(existingScan);
-                    System.out.println("更新基线扫描记录时间，ID: " + existingScan.getId() + ", MAC: " + macAddress);
+//                    System.out.println("更新基线扫描记录时间，ID: " + existingScan.getId() + ", MAC: " + macAddress);
                 } else {
                     // 不存在记录，创建新记录
                     BaselineScan baselineScan = new BaselineScan();

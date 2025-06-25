@@ -100,24 +100,24 @@ public void sendMessage(String exchangeName, String routingKey, String message) 
 
     rabbitTemplate.convertAndSend(exchangeName, routingKey, message);
 
-    System.out.println("【使用 routingKey=" + routingKey + " 作为队列】消息发送成功: " + message);
+//    System.out.println("【使用 routingKey=" + routingKey + " 作为队列】消息发送成功: " + message);
 }
 
 @Override
 public void handleHotfixDetectResult(String message) {
     try {
-        System.out.println("开始处理补丁检测结果消息");
-        System.out.println("收到补丁检测结果消息: " + message);
+//        System.out.println("开始处理补丁检测结果消息");
+//        System.out.println("收到补丁检测结果消息: " + message);
 
 //        String innerJson = objectMapper.readValue(message, String.class);
         List<Map<String, String>> result = objectMapper.readValue(message, new TypeReference<List<Map<String, String>>>() {});
         
-        System.out.println("消息解析成功，包含 " + result.size() + " 条记录");
+//        System.out.println("消息解析成功，包含 " + result.size() + " 条记录");
 
         int count = hotfixResultService.processHotfixResults(result);
-        System.out.println("成功处理 " + count + " 条补丁检测结果");
+//        System.out.println("成功处理 " + count + " 条补丁检测结果");
     } catch (Exception e) {
-        System.out.println("处理补丁检测结果失败: " + e.getMessage());
+//        System.out.println("处理补丁检测结果失败: " + e.getMessage());
         e.printStackTrace();
         throw new RuntimeException("处理补丁检测结果失败", e);
     }
@@ -131,12 +131,12 @@ public void handleHotfixDetectResultMessage(Message message, Channel channel) th
         handleHotfixDetectResult(messageBody);
 
         channel.basicAck(tag, false);
-        System.out.println("消息已确认，deliveryTag: " + tag);
+//        System.out.println("消息已确认，deliveryTag: " + tag);
     } catch (Exception e) {
-        System.out.println("处理补丁检测结果失败: " + e.getMessage());
+//        System.out.println("处理补丁检测结果失败: " + e.getMessage());
         e.printStackTrace();
         channel.basicNack(tag, false, false);
-        System.out.println("消息处理失败，已重新入队，deliveryTag: " + tag);
+//        System.out.println("消息处理失败，已重新入队，deliveryTag: " + tag);
     }
 }
 }

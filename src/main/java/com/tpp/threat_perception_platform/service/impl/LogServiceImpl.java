@@ -163,7 +163,7 @@ public class LogServiceImpl implements LogService {
             LocalDateTime startDateTime = LocalDateTime.parse(startTime, ISO_FORMATTER);
             String formattedStartTime = startDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
-            System.out.println("Latest log time: " + formattedStartTime + ", Host name: " + hostName);
+//            System.out.println("Latest log time: " + formattedStartTime + ", Host name: " + hostName);
 
             // 获取当前时间
             String currentTime = DATE_FORMATTER.format(new Date());
@@ -186,8 +186,8 @@ public class LogServiceImpl implements LogService {
             // 使用MAC地址作为key存储任务
             syncTasks.put(macAddress, taskInfo);
 
-            System.out.println("Task stored in syncTasks. Current tasks count: " + syncTasks.size());
-            System.out.println("Task details: " + JSON.toJSONString(taskInfo));
+//            System.out.println("Task stored in syncTasks. Current tasks count: " + syncTasks.size());
+//            System.out.println("Task details: " + JSON.toJSONString(taskInfo));
 
             // 立即发送一次消息
             Map<String, Object> messageMap = new LinkedHashMap<>();
@@ -201,8 +201,8 @@ public class LogServiceImpl implements LogService {
 
             // 发送到队列
             String queueName = "agentQueue" + macAddress.replace(":", "");
-            System.out.println("Sending initial message to queue: " + queueName);
-            System.out.println("Message content: " + JSON.toJSONString(messageMap));
+//            System.out.println("Sending initial message to queue: " + queueName);
+//            System.out.println("Message content: " + JSON.toJSONString(messageMap));
 
             rabbitMQService.sendMessage("", queueName, JSON.toJSONString(messageMap));
 
@@ -230,7 +230,7 @@ public class LogServiceImpl implements LogService {
                     // 检查是否到达下次同步时间
                     Date nextSync = DATE_FORMATTER.parse(nextSyncTime);
                     if (now.after(nextSync)) {
-                        System.out.println("Time to sync for MAC: " + macAddress);
+//                        System.out.println("Time to sync for MAC: " + macAddress);
                         executeSyncForTask(taskInfo, currentTime);
 
                         // 计算下次同步时间
