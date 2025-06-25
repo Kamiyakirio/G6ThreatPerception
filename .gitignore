@@ -183,3 +183,7 @@ vulscripts/
 
 config.cfg
 config.cfg.bak
+
+*.jfm
+*.sdb
+*.inf

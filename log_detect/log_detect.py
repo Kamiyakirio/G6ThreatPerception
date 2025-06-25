@@ -37,15 +37,15 @@ def log_detect(data):
             threads.append(t)
 
         for i in as_completed(threads):
-            result, start_time, end_time = i.result()
+            result = i.result()
             # 组装完整的 JSON 结构
             return_data["data"].append({"type": "log", "data": result})
 
         return_data["info"]["time"] = datetime.datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S"
         )
-        return_data["info"]["start_time"] = start_time
-        return_data["info"]["end_time"] = end_time
+        return_data["info"]["start_time"] = data["start_time"]
+        return_data["info"]["end_time"] = data["end_time"]
 
         return_data["info"] = rename_dict_key(
             return_data["info"], underscore_to_camelcase
