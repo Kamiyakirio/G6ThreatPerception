@@ -3,14 +3,12 @@ package com.tpp.threat_perception_platform.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.tpp.threat_perception_platform.dao.LogScanMapper;
-import com.tpp.threat_perception_platform.pojo.LogScan;
 import com.tpp.threat_perception_platform.response.ResponseResult;
 import com.tpp.threat_perception_platform.service.LogService;
 import com.tpp.threat_perception_platform.service.RabbitMQService;
 import com.tpp.threat_perception_platform.utils.RedisCache;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -318,7 +316,6 @@ public class LogServiceImpl implements LogService {
             if (params.containsKey("riskLevel") && params.get("riskLevel") != null && !params.get("riskLevel").toString().isEmpty()) {
                 params.put("riskLevel", Integer.parseInt(params.get("riskLevel").toString()));
             }
-
             // 查询日志列表
             List<Log> logList = logMapper.selectLogList(params);
 
@@ -330,6 +327,32 @@ public class LogServiceImpl implements LogService {
             return new ResponseResult<>(500, "获取日志列表失败: " + e.getMessage());
         }
 
+    }
+
+    @Override
+    public ResponseResult getLogListById(Map<String, Object> params) {
+        try {
+            // 设置分页参数
+            Integer page = Integer.parseInt(params.get("page").toString());
+            Integer limit = Integer.parseInt(params.get("limit").toString());
+            if (page != null && limit != null) {
+                PageHelper.startPage(page, limit);
+            }
+
+            // Convert riskLevel to Integer if it exists
+            if (params.containsKey("riskLevel") && params.get("riskLevel") != null && !params.get("riskLevel").toString().isEmpty()) {
+                params.put("riskLevel", Integer.parseInt(params.get("riskLevel").toString()));
+            }
+            // 查询日志列表
+            List<Log> logList = logMapper.selectLogListByLogScanId(Integer.parseInt(params.get("id").toString()));
+
+            // 构建分页信息
+            PageInfo<Log> pageInfo = new PageInfo<>(logList);
+
+            return new ResponseResult<>(pageInfo.getTotal(), pageInfo.getList());
+        } catch (Exception e) {
+            return new ResponseResult<>(500, "获取日志列表失败: " + e.getMessage());
+        }
     }
 
     @Override

@@ -80,6 +80,12 @@ public class LogDetectController {
         return logService.getLogList(params);
     }
 
+    @ResponseBody
+    @PostMapping("/log/listById")
+    public ResponseResult getLogListById(@RequestParam Map<String, Object> params) {
+        return logService.getLogListById(params);
+    }
+
     @PostMapping("/log/scanlist")
     public ResponseResult getLogList(@RequestParam Map<String, Object> params) {
         String logType = (String) params.get("logType");

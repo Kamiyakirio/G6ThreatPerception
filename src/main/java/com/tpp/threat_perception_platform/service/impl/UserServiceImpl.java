@@ -37,11 +37,11 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public ResponseResult userList(MyParam param) {
+        List<Role> roleList = roleMapper.findAllWithoutParam();
         // 设置分页参数
         PageHelper.startPage(param.getPage(), param.getLimit());
         // 查询所有
         List<User> userList = userMapper.findAll(param);
-        List<Role> roleList = roleMapper.findAllWithoutParam();
         HashMap<Integer,String> roleMap = new HashMap<Integer, String>();
         for (Role role : roleList) {
             roleMap.put(role.getRoleId(), role.getRoleName());

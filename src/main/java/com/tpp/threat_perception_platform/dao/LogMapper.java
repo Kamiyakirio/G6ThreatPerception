@@ -67,4 +67,6 @@ public interface LogMapper {
 
     Long countSystemLogs();
     Long countSecurityLogs();
+
+    List<Log> selectLogListByLogScanId(Integer logScanId);
 }

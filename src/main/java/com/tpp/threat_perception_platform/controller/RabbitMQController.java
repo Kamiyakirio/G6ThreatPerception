@@ -48,45 +48,6 @@ public class RabbitMQController {
     @Autowired private BaselineService baselineService;
     @Autowired private RabbitMQService rabbitMQService;
 
-
-    // 辅助方法：清理和解析AI返回的JSON
-    private JSONObject parseAIResult(String aiResult) throws Exception {
-        if (aiResult == null || aiResult.trim().isEmpty()) {
-            throw new Exception("AI分析结果为空");
-        }
-
-        String cleanedJson = aiResult.trim();
-
-        // 移除可能的代码块标记
-        if (cleanedJson.startsWith("```json")) {
-            cleanedJson = cleanedJson.substring(7);
-        } else if (cleanedJson.startsWith("```")) {
-            cleanedJson = cleanedJson.substring(3);
-        }
-
-        if (cleanedJson.endsWith("```")) {
-            cleanedJson = cleanedJson.substring(0, cleanedJson.length() - 3);
-        }
-
-        cleanedJson = cleanedJson.trim();
-
-        // 尝试解析JSON
-        try {
-            return JSON.parseObject(cleanedJson);
-        } catch (Exception e) {
-            // 如果解析失败，尝试查找JSON对象
-            int startBrace = cleanedJson.indexOf('{');
-            int endBrace = cleanedJson.lastIndexOf('}');
-
-            if (startBrace >= 0 && endBrace > startBrace) {
-                String jsonPart = cleanedJson.substring(startBrace, endBrace + 1);
-                return JSON.parseObject(jsonPart);
-            }
-
-            throw new Exception("无法解析AI分析结果: " + e.getMessage());
-        }
-    }
-
     // 获取下一个 detectId
     private int getNextDetectId(String macAddress, AccountMapper mapper) {
         Integer lastId = mapper.selectLastDetectIdByMac(macAddress);
@@ -381,6 +342,12 @@ public class RabbitMQController {
                 JSONObject fullData = JSON.parseObject(new String(message.getBody(), StandardCharsets.UTF_8));
                 JSONObject info = fullData.getJSONObject("info");
                 JSONArray dataList = fullData.getJSONArray("data");
+
+                if(dataList.size()==1 && ((JSONObject) dataList.get(0)).getString("data").equals("")){
+                    channel.basicAck(deliveryTag, false);
+                    return;
+                }
+
 
                 String macAddress = info.getString("macAddress");
                 String hostName = info.getString("hostName");

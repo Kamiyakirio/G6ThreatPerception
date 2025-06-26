@@ -17,7 +17,7 @@
             <result property="eventData" column="event_data" />
             <result property="aiResult" column="ai_result" />
             <result property="time" column="time" />
-            <result property="scanId" column="scan_id"/>
+            <result property="logScanId" column="log_scan_id"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -263,5 +263,10 @@
     </select>
     <select id="countSecurityLogs" resultType="java.lang.Long">
         select count(*) from log where event_id in (4624, 4625, 4634, 4647, 4720, 4722, 4723, 4724, 4728, 4738, 4726)
+    </select>
+    <select id="selectLogListByLogScanId" resultType="com.tpp.threat_perception_platform.pojo.Log">
+        select
+            <include refid="Base_Column_List"/>
+            from log where log_scan_id = #{logScanId}
     </select>
 </mapper>

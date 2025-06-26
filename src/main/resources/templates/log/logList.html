@@ -114,18 +114,17 @@
 
         //监听行工具事件: 单行删除和修改
 
-        function renderTable(urlName, tableId, data, cols, noDataId) {
+        function renderTable(urlName, tableId, data, cols, noDataId,id) {
             table.render({
                 elem: '#' + tableId
                 , method: 'post'
-                , url: '/log/list' //后端接口
+                , url: '/log/listById' //后端接口
                 , headers: {
                     'Authorization': localStorage.getItem('token')
                 }
                 , where: data
                 , cols: [cols]
                 , page: true // 开启分页
-                , limit: 10
                 , limits: [5, 10, 15, 20, 30]
                 , autoSort: false
                 , height: 'full-150'
@@ -174,12 +173,17 @@
             loadStatistics();
 
             // 渲染表格
-            renderTable('log', 'logTable', {logType: 'audit'}, logCols, 'log-no-data');
+            // renderTable('log', 'logTable', {logType: 'audit'}, logCols, 'log-no-data');
 
             // 窗口大小改变时重绘图表
             $(window).resize(function () {
                 riskChart.resize();
             });
+        });
+
+        window.addEventListener('message', function (event) {
+            const data = event.data;
+            renderTable('log', 'logTable', {id:data.id}, logCols, 'log-no-data', data.id);
         });
 
         //监听行工具事件: 查看AI分析结果
