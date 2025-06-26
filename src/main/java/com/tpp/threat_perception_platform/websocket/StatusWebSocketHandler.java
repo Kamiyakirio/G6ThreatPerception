@@ -36,12 +36,6 @@ public class StatusWebSocketHandler extends TextWebSocketHandler {
     }
 
     public void broadcastMessage(String message, Integer iconType) {
-        for (WebSocketSession session : sessions) {
-            try {
-                session.sendMessage(new TextMessage(JSON.toJSONString(Map.of("message",message,"iconType",iconType,"type","message"))));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        broadcastStatusChange(JSON.toJSONString(Map.of("message",message,"iconType",iconType,"type","message")));
     }
 }

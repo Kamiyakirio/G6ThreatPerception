@@ -90,7 +90,7 @@ public class PermissionCheckAspect {
             String sql = "SELECT value FROM permission WHERE name = ? AND type = ?";
             String encodedJson = jdbcTemplate.queryForObject(sql, String.class, name, type);
             if (encodedJson == null || encodedJson.trim().isEmpty()) {
-                throw new RuntimeException("数据库中未找到权限信息");
+                return new ArrayList<String>();
             }
 
             // Base64 解码

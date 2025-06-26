@@ -22,6 +22,7 @@ public class AIController {
     @Autowired
     private AIService aiService;
 
+    @RequiresPermission("ai.account")
     @PostMapping("/ai/account_analysis")
     public ResponseResult AIAccountAnalysis(@RequestBody Map<String, Object> accounts)
     {

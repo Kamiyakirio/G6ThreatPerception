@@ -1,6 +1,7 @@
 package com.tpp.threat_perception_platform.controller;
 
 import com.tpp.threat_perception_platform.param.MyParam;
+import com.tpp.threat_perception_platform.permission.RequiresPermission;
 import com.tpp.threat_perception_platform.pojo.Host;
 import com.tpp.threat_perception_platform.response.ResponseResult;
 import com.tpp.threat_perception_platform.service.HostService;
@@ -24,6 +25,7 @@ public class HostController {
     /**
      * 获取主机列表（分页）
      */
+//    @RequiresPermission("host.list")
     @PostMapping("/list")
     @ResponseBody
     public ResponseResult hostList(MyParam param){
