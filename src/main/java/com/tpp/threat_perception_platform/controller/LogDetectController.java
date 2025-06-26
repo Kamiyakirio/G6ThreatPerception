@@ -141,4 +141,20 @@ public class LogDetectController {
     public ResponseResult batchAnalyzeLogsWithAI(@RequestBody Map<String, Object> params) {
         return logService.batchAnalyzeLogsWithAI(params);
     }
+
+    /**
+     * 获取日志同步状态
+     */
+    @PostMapping("/log/get_sync_status")
+    public ResponseResult getSyncStatus(@RequestBody Map<String, Object> data) {
+        return logService.getSyncStatus(data);
+    }
+
+    /**
+     * 禁用日志同步
+     */
+    @PostMapping("/log/disable_sync")
+    public ResponseResult disableSync(@RequestBody Map<String, Object> data) {
+        return logService.disableSync(data);
+    }
 }

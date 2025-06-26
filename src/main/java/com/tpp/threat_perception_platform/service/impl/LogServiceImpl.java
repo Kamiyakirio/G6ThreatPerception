@@ -496,4 +496,38 @@ public class LogServiceImpl implements LogService {
         }
     }
 
+    @Override
+    public ResponseResult getSyncStatus(Map<String, Object> data) {
+        try {
+            String macAddress = data.get("macAddress").toString();
+            Map<String, Object> taskInfo = syncTasks.get(macAddress);
+            
+            Map<String, Object> result = new HashMap<>();
+            if (taskInfo != null) {
+                result.put("enabled", true);
+                result.put("interval", taskInfo.get("interval"));
+            } else {
+                result.put("enabled", false);
+                result.put("interval", null);
+            }
+            
+            return new ResponseResult(0, result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(500, "获取同步状态失败：" + e.getMessage());
+        }
+    }
+
+    @Override
+    public ResponseResult disableSync(Map<String, Object> data) {
+        try {
+            String macAddress = data.get("macAddress").toString();
+            syncTasks.remove(macAddress);
+            return new ResponseResult(0, "已停止定时同步");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseResult(500, "停止定时同步失败：" + e.getMessage());
+        }
+    }
+
 }
