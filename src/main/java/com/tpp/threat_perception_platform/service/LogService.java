@@ -73,4 +73,13 @@ public interface LogService {
      */
     ResponseResult batchAnalyzeLogsWithAI(Map<String, Object> params);
 
+    /**
+     * 获取日志同步状态
+     */
+    ResponseResult getSyncStatus(Map<String, Object> data);
+
+    /**
+     * 禁用日志同步
+     */
+    ResponseResult disableSync(Map<String, Object> data);
 }
