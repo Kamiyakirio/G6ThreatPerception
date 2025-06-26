@@ -530,4 +530,14 @@ public class LogServiceImpl implements LogService {
         }
     }
 
+    @Override
+    public ResponseResult deleteAll(Map<String, Object> data){
+        Integer id=Integer.parseInt(data.get("id").toString());
+        Integer logScanResult=jdbcTemplate.update("delete from log_scan where id=?", id);
+        Integer logResult=jdbcTemplate.update("DELETE FROM log WHERE log_scan_id=?",id);
+        if(logScanResult+logResult>=2){
+            return new ResponseResult(0,"删除成功！");
+        }
+        else return new ResponseResult(1001,"删除失败！");
+    }
 }

@@ -157,4 +157,9 @@ public class LogDetectController {
     public ResponseResult disableSync(@RequestBody Map<String, Object> data) {
         return logService.disableSync(data);
     }
+
+    @PostMapping("/log/deleteAllById")
+    public ResponseResult deleteAllById(@RequestBody Map<String,Object> data){
+        return logService.deleteAll(data);
+    }
 }

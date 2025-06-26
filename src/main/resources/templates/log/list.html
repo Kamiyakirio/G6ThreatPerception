@@ -138,6 +138,7 @@
             <script type="text/html" id="logTableBar">
                 <a class="layui-btn layui-btn-xs" lay-event="logList">查看日志详细</a>
                 <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="aiAnalysis">AI分析</a>
+                <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="deleteAll">删除本次扫描结果</a>
             </script>
 
         </div>
@@ -351,7 +352,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="layui-form-item" id="intervalSetting" style="${statusRes.data && statusRes.data.enabled ? '' : 'display:none;'}">
-                                                    <label class="layui-form-label">时间间隔</label>
+                                                    <label class="layui-form-label">时间间隔 (分钟)</label>
                                                     <div class="layui-input-block">
                                                         <input type="number" name="interval" required lay-verify="required|number"
                                                                placeholder="请输入时间间隔（分钟）" class="layui-input" min="1" value="${statusRes.data ? statusRes.data.interval || 5 : 5}">
@@ -564,48 +565,6 @@
             });
         });
 
-        //监听行工具事件: 查看AI分析结果
-        // table.on('tool(logTable)', function (obj) {
-        //   var data = obj.data;
-        //
-        //   if(obj.event==="logList"){
-        //       console.log();
-        //   }
-        //
-        //   if (obj.event === 'viewAiResult') {
-        //     if (data.aiResult) {
-        //       let aiObj;
-        //       try {
-        //         aiObj = JSON.parse(data.aiResult);
-        //       } catch (e) {
-        //         aiObj = data.aiResult; // 兼容老数据
-        //       }
-        //       let html = '';
-        //       if (typeof aiObj === 'object') {
-        //         html += `<table class="layui-table" style="width:100%;margin-bottom:10px;">
-        //           <tr><th>事件ID</th><td>${aiObj.event_id || ''}</td></tr>
-        //
-        //           <tr><th>分析</th><td>${aiObj.analysis || ''}</td></tr>
-        //           <tr><th>威胁描述</th><td>${aiObj.threat_description || ''}</td></tr>
-        //           <tr><th>建议</th><td>${aiObj.recommendation || ''}</td></tr>
-        //         </table>`;
-        //       } else {
-        //         html = `<pre>${data.aiResult}</pre>`;
-        //       }
-        //       layer.open({
-        //         type: 1, // Page type
-        //         title: 'AI分析结果',
-        //         shadeClose: true,
-        //         shade: 0.8,
-        //         area: ['60%', '60%'], // Adjust size as needed
-        //         content: `<div style="padding: 20px; word-break: break-all;">${html}</div>` // Content
-        //       });
-        //     } else {
-        //       layer.msg('无AI分析结果', {icon: 5});
-        //     }
-        //   }
-        // });
-
         //监听Tab切换
         element.on('tab(detect-tabs)', function (data) {
             // console.log(this); //当前Tab标题所在的dom对象
@@ -691,6 +650,26 @@
                     }
                 });
                 //ai("/log/ai/analysis",{})
+            }
+
+            if(obj.event==="deleteAll") {
+                $.ajax({
+                    url: "/log/deleteAllById"
+                    , method: "post"
+                    , headers: {
+                        'Authorization': localStorage.getItem('token')
+                    }
+                    , data: JSON.stringify({id: data.id})
+                    , contentType: "application/json"
+                    , success: function (res){
+                        if(res.code<1000){
+                            layer.msg(res.msg,{icon:1});
+                        } else{
+                            layer.msg(res.msg,{icon:5})
+                        }
+                        table.reload('logTable');
+                    }
+                })
             }
         });
     })

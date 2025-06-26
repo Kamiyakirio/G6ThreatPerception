@@ -84,4 +84,6 @@ public interface LogService {
      * 禁用日志同步
      */
     ResponseResult disableSync(Map<String, Object> data);
+
+    ResponseResult deleteAll(Map<String, Object> data);
 }

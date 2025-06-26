@@ -347,8 +347,6 @@ public class RabbitMQController {
                     channel.basicAck(deliveryTag, false);
                     return;
                 }
-
-
                 String macAddress = info.getString("macAddress");
                 String hostName = info.getString("hostName");
                 Integer infoId = info.getInteger("id");
