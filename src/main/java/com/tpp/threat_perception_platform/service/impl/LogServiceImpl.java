@@ -3,12 +3,14 @@ package com.tpp.threat_perception_platform.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.tpp.threat_perception_platform.dao.LogScanMapper;
+import com.tpp.threat_perception_platform.pojo.LogScan;
 import com.tpp.threat_perception_platform.response.ResponseResult;
 import com.tpp.threat_perception_platform.service.LogService;
 import com.tpp.threat_perception_platform.service.RabbitMQService;
 import com.tpp.threat_perception_platform.utils.RedisCache;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.TimeZone;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -56,8 +59,13 @@ public class LogServiceImpl implements LogService {
     // 存储定时任务信息
     private final ConcurrentHashMap<String, Map<String, Object>> syncTasks = new ConcurrentHashMap<>();
 
-    private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
+    private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_DATE_TIME.withZone(java.time.ZoneId.systemDefault());
     private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    
+    {
+        // 设置SimpleDateFormat使用系统默认时区
+        DATE_FORMATTER.setTimeZone(TimeZone.getDefault());
+    }
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
@@ -112,8 +120,6 @@ public class LogServiceImpl implements LogService {
             String sql = "SELECT COUNT(*) FROM log WHERE mac_address = ?";
             int count = jdbcTemplate.queryForObject(sql, Integer.class, macAddress);
 
-//            System.out.println("Checking logs for MAC: " + macAddress + ", found " + count + " records");
-
             return new ResponseResult(0, count > 0);
         } catch (Exception e) {
             e.printStackTrace();
@@ -125,12 +131,25 @@ public class LogServiceImpl implements LogService {
     public ResponseResult getLatestLogTime(Map<String, Object> data) {
         try {
             String macAddress = data.get("macAddress").toString();
+            String latestTime;
 
-            // 查询log表中该MAC地址最新的日志记录时间
-            String sql = "SELECT timestamp FROM log WHERE mac_address = ? ORDER BY timestamp DESC LIMIT 1";
-            String latestTime = jdbcTemplate.queryForObject(sql, String.class, macAddress);
+            // 先检查是否有日志记录
+            String countSql = "SELECT COUNT(*) FROM log WHERE mac_address = ?";
+            int count = jdbcTemplate.queryForObject(countSql, Integer.class, macAddress);
 
-//            System.out.println("Getting latest log time for MAC: " + macAddress + ", time: " + latestTime);
+            if (count > 0) {
+                // 有记录，查询log表中该MAC地址最新的日志记录时间
+                String sql = "SELECT timestamp FROM log WHERE mac_address = ? ORDER BY timestamp DESC LIMIT 1";
+                latestTime = jdbcTemplate.queryForObject(sql, String.class, macAddress);
+            } else {
+                // 无记录，使用当天0点作为起始时间
+                Calendar calendar = Calendar.getInstance();
+                calendar.set(Calendar.HOUR_OF_DAY, 0);
+                calendar.set(Calendar.MINUTE, 0);
+                calendar.set(Calendar.SECOND, 0);
+                calendar.set(Calendar.MILLISECOND, 0);
+                latestTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(calendar.getTime());
+            }
 
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("latestLogTime", latestTime);
@@ -149,22 +168,110 @@ public class LogServiceImpl implements LogService {
             String macAddress = data.get("macAddress").toString();
             Integer interval = Integer.parseInt(data.get("interval").toString());
 
-//            System.out.println("Setting sync interval - HostId: " + hostId + ", MAC: " + macAddress + ", Interval: " + interval);
-
-            // 获取最新日志时间
-            String sql = "SELECT timestamp, host_name FROM log WHERE mac_address = ? ORDER BY timestamp DESC LIMIT 1";
-            Map<String, Object> latestLog = jdbcTemplate.queryForMap(sql, macAddress);
-            String startTime = latestLog.get("timestamp").toString();
-            String hostName = latestLog.get("host_name").toString();
-
-            // 统一时间格式
-            LocalDateTime startDateTime = LocalDateTime.parse(startTime, ISO_FORMATTER);
-            String formattedStartTime = startDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-
-//            System.out.println("Latest log time: " + formattedStartTime + ", Host name: " + hostName);
-
             // 获取当前时间
             String currentTime = DATE_FORMATTER.format(new Date());
+            String hostName = null;
+            String formattedStartTime;
+
+            // 先尝试从请求参数中获取主机名
+            if (data.containsKey("hostName") && data.get("hostName") != null) {
+                hostName = data.get("hostName").toString();
+            }
+
+            // 查询是否有历史日志记录
+            try {
+                String sql = "SELECT COUNT(*) FROM log WHERE mac_address = ?";
+                int count = jdbcTemplate.queryForObject(sql, Integer.class, macAddress);
+
+                if (count > 0) {
+                    try {
+                        // 有历史记录，使用最新日志时间作为起始时间
+                        // 获取最新的记录，统一转换为标准日期时间格式进行比较
+                        sql = "SELECT id, timestamp, host_name FROM log WHERE mac_address = ? " +
+                            "ORDER BY CASE " +
+                            "  WHEN timestamp LIKE '%T%' THEN STR_TO_DATE(REPLACE(timestamp, 'T', ' '), '%Y-%m-%d %H:%i:%s') " +
+                            "  ELSE STR_TO_DATE(timestamp, '%Y-%m-%d %H:%i:%s') " +
+                            "END DESC, id DESC LIMIT 1";
+                        Map<String, Object> latestLog = jdbcTemplate.queryForMap(sql, macAddress);
+                        Object timestampObj = latestLog.get("timestamp");
+                        
+                        // 如果日志中有主机名且我们还没有主机名，使用日志中的主机名
+                        if (hostName == null && latestLog.get("host_name") != null && !latestLog.get("host_name").toString().isEmpty()) {
+                            hostName = latestLog.get("host_name").toString();
+                        }
+                        
+                        // 打印所有最近的日志记录用于调试
+                        sql = "SELECT id, timestamp, host_name, " +
+                            "CASE " +
+                            "  WHEN timestamp LIKE '%T%' THEN STR_TO_DATE(REPLACE(timestamp, 'T', ' '), '%Y-%m-%d %H:%i:%s') " +
+                            "  ELSE STR_TO_DATE(timestamp, '%Y-%m-%d %H:%i:%s') " +
+                            "END as parsed_time " +
+                            "FROM log WHERE mac_address = ? " +
+                            "ORDER BY parsed_time DESC LIMIT 5";
+                        List<Map<String, Object>> recentLogs = jdbcTemplate.queryForList(sql, macAddress);
+                        for (Map<String, Object> log : recentLogs) {
+                            System.out.println(String.format(
+                                    "ID: %s, Timestamp: %s, Parsed Time: %s, Host Name: %s",
+                                    log.get("id"), log.get("timestamp"), log.get("parsed_time"), log.get("host_name")
+                            ));
+                        }
+                        
+                        // 处理时间格式
+                        String timestamp = timestampObj.toString();
+                        if (timestamp.contains("T")) {
+                            // 如果是ISO格式，转换为标准格式
+                            LocalDateTime dateTime = LocalDateTime.parse(timestamp);
+                            formattedStartTime = dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                        } else {
+                            // 已经是标准格式
+                            formattedStartTime = timestamp;
+                        }
+                        if (hostName != null) {
+                            System.out.println("- Host: " + hostName);
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Error getting latest log: " + e.getMessage());
+                        e.printStackTrace();
+                        // 如果获取最新记录失败，使用默认值
+                        Calendar calendar = Calendar.getInstance();
+                        calendar.set(Calendar.HOUR_OF_DAY, 0);
+                        calendar.set(Calendar.MINUTE, 0);
+                        calendar.set(Calendar.SECOND, 0);
+                        calendar.set(Calendar.MILLISECOND, 0);
+                        formattedStartTime = DATE_FORMATTER.format(calendar.getTime());
+                    }
+                } else {
+                    // 无历史记录，使用当天0点作为起始时间
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.set(Calendar.HOUR_OF_DAY, 0);
+                    calendar.set(Calendar.MINUTE, 0);
+                    calendar.set(Calendar.SECOND, 0);
+                    calendar.set(Calendar.MILLISECOND, 0);
+                    formattedStartTime = DATE_FORMATTER.format(calendar.getTime());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                // 如果查询失败，使用默认值
+                Calendar calendar = Calendar.getInstance();
+                calendar.set(Calendar.HOUR_OF_DAY, 0);
+                calendar.set(Calendar.MINUTE, 0);
+                calendar.set(Calendar.SECOND, 0);
+                calendar.set(Calendar.MILLISECOND, 0);
+                formattedStartTime = DATE_FORMATTER.format(calendar.getTime());
+            }
+
+            // 如果还没有主机名，从Redis中获取
+            if (hostName == null) {
+                try {
+                    String redisKey = "Heartbeat from " + macAddress;
+                    Map<String, Object> heartbeatInfo = redisCache.getCacheMap(redisKey);
+                    hostName = heartbeatInfo != null && heartbeatInfo.containsKey("hostName") 
+                        ? heartbeatInfo.get("hostName").toString() 
+                        : macAddress; // 如果获取不到主机名，使用MAC地址代替
+                } catch (Exception e) {
+                    hostName = macAddress; // 如果出错，使用MAC地址代替
+                }
+            }
 
             // 存储任务信息
             Map<String, Object> taskInfo = new LinkedHashMap<>();
@@ -184,9 +291,6 @@ public class LogServiceImpl implements LogService {
             // 使用MAC地址作为key存储任务
             syncTasks.put(macAddress, taskInfo);
 
-//            System.out.println("Task stored in syncTasks. Current tasks count: " + syncTasks.size());
-//            System.out.println("Task details: " + JSON.toJSONString(taskInfo));
-
             // 立即发送一次消息
             Map<String, Object> messageMap = new LinkedHashMap<>();
             messageMap.put("hostName", hostName);
@@ -199,10 +303,14 @@ public class LogServiceImpl implements LogService {
 
             // 发送到队列
             String queueName = "agentQueue" + macAddress.replace(":", "");
-//            System.out.println("Sending initial message to queue: " + queueName);
-//            System.out.println("Message content: " + JSON.toJSONString(messageMap));
 
-            rabbitMQService.sendMessage("", queueName, JSON.toJSONString(messageMap));
+            try {
+                rabbitMQService.sendMessage("", queueName, JSON.toJSONString(messageMap));
+            } catch (Exception e) {
+                System.out.println("Error sending message to queue: " + e.getMessage());
+                e.printStackTrace();
+                return new ResponseResult(500, "发送同步消息失败：" + e.getMessage());
+            }
 
             return new ResponseResult(0, "定时同步设置成功");
         } catch (Exception e) {
@@ -228,7 +336,6 @@ public class LogServiceImpl implements LogService {
                     // 检查是否到达下次同步时间
                     Date nextSync = DATE_FORMATTER.parse(nextSyncTime);
                     if (now.after(nextSync)) {
-//                        System.out.println("Time to sync for MAC: " + macAddress);
                         executeSyncForTask(taskInfo, currentTime);
 
                         // 计算下次同步时间
@@ -237,15 +344,12 @@ public class LogServiceImpl implements LogService {
                         calendar.add(Calendar.MINUTE, interval);
                         String newNextSyncTime = DATE_FORMATTER.format(calendar.getTime());
                         taskInfo.put("nextSyncTime", newNextSyncTime);
-                        System.out.println("Next sync time set to: " + newNextSyncTime);
                     }
                 } catch (Exception e) {
-                    System.out.println("Error checking sync time: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
         } catch (Exception e) {
-//            System.out.println("Error in executeSyncTasks: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -253,28 +357,89 @@ public class LogServiceImpl implements LogService {
     private void executeSyncForTask(Map<String, Object> taskInfo, String currentTime) {
         try {
             String macAddress = (String) taskInfo.get("macAddress");
-//            System.out.println("Executing sync for MAC: " + macAddress);
-
-            // 构建消息体
-            Map<String, Object> messageMap = new LinkedHashMap<>();
-            messageMap.put("hostName", taskInfo.get("hostName"));
-            messageMap.put("macAddress", macAddress);
-            messageMap.put("id", taskInfo.get("hostId"));
-            messageMap.put("startTime", taskInfo.get("startTime"));
-            messageMap.put("endTime", currentTime);
-            messageMap.put("type", "log");
-            messageMap.put("detectLog", true);
-
+            String startTime;
+            
+            // 检查是否有历史记录
+            try {
+                String countSql = "SELECT COUNT(*) FROM log WHERE mac_address = ?";
+                int count = jdbcTemplate.queryForObject(countSql, Integer.class, macAddress);
+                
+                if (count > 0) {
+                    try {
+                        // 有历史记录，获取数据库中最新的日志时间作为起始时间
+                        String latestTimeSql = "SELECT timestamp FROM log WHERE mac_address = ? " +
+                                "ORDER BY CASE " +
+                                "  WHEN timestamp LIKE '%T%' THEN STR_TO_DATE(REPLACE(timestamp, 'T', ' '), '%Y-%m-%d %H:%i:%s') " +
+                                "  ELSE STR_TO_DATE(timestamp, '%Y-%m-%d %H:%i:%s') " +
+                                "END DESC, id DESC LIMIT 1";
+                        startTime = jdbcTemplate.queryForObject(latestTimeSql, String.class, macAddress);
+                        
+                        // 如果时间包含'T'，转换格式
+                        if (startTime.contains("T")) {
+                            LocalDateTime dateTime = LocalDateTime.parse(startTime);
+                            startTime = dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                        }
+                        
+                        // 更新任务信息中的起始时间，以便下次使用最新的时间
+                        taskInfo.put("startTime", startTime);
+                        
+                        String recentLogsSql = "SELECT id, timestamp, host_name, " +
+                                "CASE " +
+                                "  WHEN timestamp LIKE '%T%' THEN STR_TO_DATE(REPLACE(timestamp, 'T', ' '), '%Y-%m-%d %H:%i:%s') " +
+                                "  ELSE STR_TO_DATE(timestamp, '%Y-%m-%d %H:%i:%s') " +
+                                "END as parsed_time " +
+                                "FROM log WHERE mac_address = ? " +
+                                "ORDER BY parsed_time DESC LIMIT 5";
+                        List<Map<String, Object>> recentLogs = jdbcTemplate.queryForList(recentLogsSql, macAddress);
+                        for (Map<String, Object> log : recentLogs) {
+                            System.out.println(String.format(
+                                    "ID: %s, Timestamp: %s, Parsed Time: %s, Host Name: %s",
+                                    log.get("id"), log.get("timestamp"), log.get("parsed_time"), log.get("host_name")
+                            ));
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        // 如果获取最新记录失败，使用任务中保存的起始时间
+                        startTime = (String) taskInfo.get("startTime");
+                    }
+                } else {
+                    // 无历史记录，使用当天0点作为起始时间
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.set(Calendar.HOUR_OF_DAY, 0);
+                    calendar.set(Calendar.MINUTE, 0);
+                    calendar.set(Calendar.SECOND, 0);
+                    calendar.set(Calendar.MILLISECOND, 0);
+                    startTime = DATE_FORMATTER.format(calendar.getTime());
+                    
+                    // 更新任务信息中的起始时间
+                    taskInfo.put("startTime", startTime);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                // 如果查询失败，使用任务中保存的起始时间
+                startTime = (String) taskInfo.get("startTime");
+            }
+            
             // 发送到队列
-            String queueName = "agentQueue" + macAddress.replace(":", "");
-//            System.out.println("Message content: " + JSON.toJSONString(messageMap));
-
-            rabbitMQService.sendMessage("", queueName, JSON.toJSONString(messageMap));
-
-            // 更新最后同步时间
-            taskInfo.put("lastSyncTime", currentTime);
+            try {
+                String queueName = "agentQueue" + macAddress.replace(":", "");
+                Map<String, Object> messageMap = new LinkedHashMap<>();
+                messageMap.put("hostName", taskInfo.get("hostName"));
+                messageMap.put("macAddress", macAddress);
+                messageMap.put("id", taskInfo.get("hostId"));
+                messageMap.put("startTime", startTime);  // 使用最新的日志时间
+                messageMap.put("endTime", currentTime);
+                messageMap.put("type", "log");
+                messageMap.put("detectLog", true);
+                
+                rabbitMQService.sendMessage("", queueName, JSON.toJSONString(messageMap));
+                
+                // 更新最后同步时间
+                taskInfo.put("lastSyncTime", currentTime);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } catch (Exception e) {
-            System.out.println("Error in executeSyncForTask: " + e.getMessage());
             e.printStackTrace();
         }
     }
